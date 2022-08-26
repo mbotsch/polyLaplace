@@ -13,12 +13,6 @@ if (EMSCRIPTEN)
     add_library(poly STATIC ${HEADERS} ${SOURCES})
     target_link_libraries(poly pmp_vis VolumeMesh)
 
-   # add_executable(diamond_laplacian main.cpp SurfaceViewer.cpp SurfaceViewer.h VolumeViewer.cpp VolumeViewer.h)
-   # target_link_libraries(diamond_laplacian poly VolumeMesh cholmod)
-
-    add_executable(timings_surface timings_surface.cpp)
-    target_link_libraries(timings_surface ${OBJS}  poly cholmod)
-
     add_executable(run_surface_tests run_surface_tests.cpp)
     target_link_libraries(run_surface_tests ${OBJS} poly )
 
@@ -40,12 +34,6 @@ else ()
 
     add_library(poly STATIC ${HEADERS} ${SOURCES})
     target_link_libraries(poly pmp_vis VolumeMesh)
-
-  #  add_executable(diamond_laplacian main.cpp SurfaceViewer.cpp SurfaceViewer.h VolumeViewer.cpp VolumeViewer.h)
-  #  target_link_libraries(diamond_laplacian poly Misha cholmod)
-
-    add_executable(timings_surface timings_surface.cpp)
-    target_link_libraries(timings_surface ${OBJS}  poly Misha cholmod)
 
     add_executable(run_surface_tests run_surface_tests.cpp)
     target_link_libraries(run_surface_tests ${OBJS} poly cholmod )

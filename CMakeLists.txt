@@ -44,13 +44,6 @@ include_directories(/home/abunge/work/SuiteSparse-5.8.1/CHOLMOD/Include/)
 include_directories(/home/abunge/programs/libigl/external/triangle/)
 
 add_definitions(-DINCLUDE_TEMPLATES)
-#add_definitions(-DPMP_SCALAR_TYPE_64)
-# Misha's Code
-add_subdirectory(external/PolygonLaplacian)
-include_directories(${PROJECT_SOURCE_DIR}/external/PolygonLaplacian)
-
-add_subdirectory(external/PolygonLaplacian_old)
-include_directories(${PROJECT_SOURCE_DIR}/external/PolygonLaplacian_old)
 
 if (NOT EMSCRIPTEN)
   # for EMSCRIPTEN GLEW and GLFW are built-in
@@ -90,4 +83,3 @@ endif()
 
 # which directories to process
 add_subdirectory(src/)
-add_subdirectory(src/Basis_visualization)

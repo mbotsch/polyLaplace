@@ -8,6 +8,5 @@ int main(int argc, char **argv) {
     Viewer window("Polygon Modeling", 800, 600);
     window.load_mesh(argv[1]);
     return window.run();
-
 }
 //=============================================================================

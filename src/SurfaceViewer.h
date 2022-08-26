@@ -6,7 +6,6 @@
 //=============================================================================
 
 #include <pmp/visualization/MeshViewer.h>
-#include "Surface/Smoothing.h"
 #include "Surface/SpectralProcessing.h"
 
 //=============================================================================
@@ -16,7 +15,6 @@ class Viewer : public pmp::MeshViewer
 public: // public methods
     Viewer(const char* title, int width, int height)
         : MeshViewer(title, width, height),
-          smooth_(mesh_),
           compare_sphere(false),
           compare_cube(false)
     {
@@ -37,19 +35,14 @@ protected:
     void open_holes();
     void Centroid();
     void insert_points(unsigned int min_point);
-    void mirror_mesh();
 
 private: // private methods
-    Smoothing smooth_;
-
-    unsigned int laplace_matrix, min_point_, degree_;
+    unsigned int laplace_matrix, min_point_;
     CoarseDimension coarseningType_;
     bool compare_sphere;
     bool compare_cube;
     bool time_step_;
-    Eigen::MatrixXd basis_values;
     SurfaceMeshGL original = mesh_;
-
     std::vector<Face> holes_;
 };
 

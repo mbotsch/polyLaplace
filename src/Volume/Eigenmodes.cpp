@@ -2,7 +2,6 @@
 #include "Eigenmodes.h"
 #include <cmath>
 #include "LaplaceConstruction_3D.h"
-#include "AQAPoly_Laplacian_3D.h"
 #include "HarmonicBasis.h"
 #include "unsupported/Eigen/SparseExtra"
 #include <igl/slice.h>
@@ -34,10 +33,6 @@ double solve_eigenvalue_problem(VolumeMesh &mesh,std::string mesh_,Eigen::Vector
                                 int Laplace, int face_point, int cell_point,
                                 std::string meshname, int degree,CoarseDimension dof)
 {
-
-    if(Laplace == AQAPoly){
-        return solve_3D_AQAPoly_EigenModes( mesh_, dof, degree,meshname);
-    }
     std::string filename;
     if (Laplace == Diamond)
     {
@@ -91,8 +86,6 @@ double solve_eigenvalue_problem(VolumeMesh &mesh,std::string mesh_,Eigen::Vector
 
         file.close();
     }
-//    Eigen::saveMarket(S,"S_diamond.mtx");
-//    Eigen::saveMarket(M, "M_diamond.mtx");
 //    // collect indices of inner vertices
     std::vector<int> indices;
     for (auto v : mesh.vertices())

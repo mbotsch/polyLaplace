@@ -2,16 +2,15 @@
 //=============================================================================
 
 #include <pmp/SurfaceMesh.h>
-#include "PolyLaplace.h"
+#include "[AW11]Laplace.h"
 #include "GeodesicsInHeat.h"
 #include <Eigen/Sparse>
 #include <iostream>
 #include <pmp/algorithms/SurfaceNormals.h>
 #include <cfloat>
-#include "Diamond_2D.h"
-#include "DisneyLaplace.h"
-#include "SECLaplace.h"
-#include "diffgeo.h"
+#include "DiamondLaplace_2D.h"
+#include "[dGBD20]Laplace.h"
+ #include "diffgeo.h"
 #include "LaplaceConstruction.h"
 
 //=============================================================================
@@ -19,11 +18,11 @@
 enum LaplaceMethods
 {
 
-    SandwichLaplace = 0,
-    AlexaLaplace = 1,
+    PolySimpleLaplace = 0,
+    AlexaWardetzkyLaplace = 1,
     CotanLaplace = 2,
     Diamond = 3,
-    Disney = 5,
+    deGoesLaplace = 5,
     SEC = 6
 };
 
@@ -93,56 +92,6 @@ double GeodesicsInHeat::maxEdgeLength(const pmp::SurfaceMesh &mesh)
 }
 //-----------------------------------------------------------------------------
 
-void GeodesicsInHeat::buildGradientOperator()
-{
-
-    // Polylaplace Gradient Operator
-    if (laplace_ == AlexaLaplace)
-    {
-        setup_poly_gradient_operator(mesh_, gradOperator);
-        gradOperator *= 0.5;
-    }
-    else if (laplace_ == Disney)
-    {
-        setup_disney_gradient_operator(mesh_, gradOperator);
-    }
-    else if (laplace_ == SEC)
-    {
-        setup_sec_gradient_operator(mesh_, gradOperator);
-    }
-    else
-    {
-        gradOperator.resize(3 * mesh_.n_faces(), mesh_.n_vertices());
-        setup_sandwich_gradient_matrix(mesh_, gradOperator, min_point_);
-    }
-}
-
-//-----------------------------------------------------------------------------
-
-void GeodesicsInHeat::buildDivOperator()
-{
-
-    if (laplace_ == AlexaLaplace)
-    {
-        setup_poly_divergence_operator(mesh_, divOperator);
-    }
-    else if (laplace_ == Disney)
-    {
-        setup_disney_divergence_operator(mesh_, divOperator);
-    }
-    else if (laplace_ == SEC)
-    {
-        setup_sec_divergence_operator(mesh_, divOperator);
-    }
-    else
-    {
-        divOperator.resize(mesh_.n_vertices(), 3 * mesh_.n_faces());
-        setup_sandwich_divergence_matrix(mesh_, divOperator, min_point_);
-    }
-}
-
-//-----------------------------------------------------------------------------
-
 void GeodesicsInHeat::compute_geodesics(bool lumped)
 {
 
@@ -165,8 +114,8 @@ void GeodesicsInHeat::compute_geodesics(bool lumped)
     }
     else
     {
-        buildGradientOperator();
-        buildDivOperator();
+        setup_gradient(mesh_,gradOperator,laplace_,min_point_);
+        setup_divergence(mesh_,divOperator,laplace_,min_point_);
     }
 
     Eigen::SparseMatrix<double> L, A, M, M_bar;
@@ -218,15 +167,11 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
     Eigen::VectorXd grad = gradOperator * heat;
 
     // normalize gradients
-    if (laplace_ == AlexaLaplace)
+    if (laplace_ == AlexaWardetzkyLaplace)
     {
         normalize_poly_gradients(mesh_, grad, heat);
     }
-    else if (laplace_ == SEC)
-    {
-        normalize_sec_gradients(mesh_, grad, heat);
-    }
-    else if (laplace_ == Disney)
+    else if (laplace_ == deGoesLaplace)
     {
         for (int i = 0; i < grad.rows() / 3; i++)
         {
@@ -296,20 +241,14 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
         rms /= mesh_.n_vertices();
         rms = sqrt(rms);
         rms /= radius;
-        if (laplace_ == AlexaLaplace)
+        if (laplace_ == AlexaWardetzkyLaplace)
         {
             std::cout << "Distance deviation sphere (Alexa, l="
                       << poly_laplace_lambda_ << "): " << rms << std::endl;
         }
-        else if (laplace_ == SEC)
+        else if (laplace_ == deGoesLaplace)
         {
-            std::cout << "Distance deviation sphere (SEC, l="
-                      << poly_laplace_lambda_ << ", lvl=" << sec_laplace_lvl
-                      << ") : " << rms << std::endl;
-        }
-        else if (laplace_ == Disney)
-        {
-            std::cout << "Distance deviation sphere (Disney, l="
+            std::cout << "Distance deviation sphere (deGoes, l="
                       << disney_laplace_lambda_ << "): " << rms << std::endl;
         }
         else if (laplace_ == CotanLaplace)
@@ -319,17 +258,13 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
         }
         else
         {
-            if (laplace_ == SandwichLaplace)
+            if (laplace_ == PolySimpleLaplace)
             {
-                std::cout << "Distance deviation sphere (Sandwich laplace ";
+                std::cout << "Distance deviation sphere (Polysimple ";
             }
             else if (laplace_ == Diamond)
             {
-                std::cout << "Distance deviation sphere (Diamond laplace ";
-            }
-            if (min_point_ == AbsAreaMinimizer)
-            {
-                std::cout << "abs. area minimizer): " << rms << std::endl;
+                std::cout << "Distance deviation sphere (Diamond ";
             }
             else if (min_point_ == AreaMinimizer)
             {
@@ -345,21 +280,15 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
     {
         rms /= mesh_.n_vertices();
         rms = sqrt(rms);
-        if (laplace_ == AlexaLaplace)
+        if (laplace_ == AlexaWardetzkyLaplace)
         {
 
             std::cout << "Distance deviation plane (Alexa, l="
                       << poly_laplace_lambda_ << "): " << rms << std::endl;
         }
-        else if (laplace_ == SEC)
+        else if (laplace_ == deGoesLaplace)
         {
-            std::cout << "Distance deviation plane (SEC, l="
-                      << poly_laplace_lambda_ << ", lvl=" << sec_laplace_lvl
-                      << ") : " << rms << std::endl;
-        }
-        else if (laplace_ == Disney)
-        {
-            std::cout << "Distance deviation plane (Disney, l="
+            std::cout << "Distance deviation plane (deGoes, l="
                       << disney_laplace_lambda_ << "): " << rms << std::endl;
         }
         else if (laplace_ == CotanLaplace)
@@ -369,17 +298,13 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
         }
         else
         {
-            if (laplace_ == SandwichLaplace)
+            if (laplace_ == PolySimpleLaplace)
             {
-                std::cout << "Distance deviation plane (Sandwich laplace ";
+                std::cout << "Distance deviation plane (Polysimple ";
             }
             else if (laplace_ == Diamond)
             {
                 std::cout << "Distance deviation plane (Diamond laplace ";
-            }
-            if (min_point_ == AbsAreaMinimizer)
-            {
-                std::cout << "abs. area minimizer): " << rms << std::endl;
             }
             else if (min_point_ == AreaMinimizer)
             {
@@ -393,203 +318,6 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
     }
 
     distance_to_texture_coordinates();
-
-    mesh_.remove_vertex_property<Scalar>(distances);
-}
-
-//-----------------------------------------------------------------------------
-
-void GeodesicsInHeat::write_Distance_error(const int vertex,
-                                           Eigen::VectorXd &dist,
-                                           Eigen::VectorXd &orthodist,
-                                           bool lumped, std::ofstream &file)
-{
-
-    // diffuse heat
-    const int N = mesh_.n_vertices();
-
-    auto distances = mesh_.add_vertex_property<Scalar>("v:dist");
-
-    Eigen::SparseVector<double> b(N);
-    b.coeffRef(vertex) = 1.;
-    Eigen::SparseMatrix<double> M;
-    setup_mass_matrices(mesh_, M, laplace_, min_point_, lumped);
-    // compute gradients
-    Eigen::VectorXd heat = cholA.solve(b);
-    Eigen::VectorXd grad = gradOperator * heat;
-    // normalize gradients
-    if (laplace_ == AlexaLaplace)
-    {
-        normalize_poly_gradients(mesh_, grad, heat);
-    }
-    else if (laplace_ == SEC)
-    {
-        normalize_sec_gradients(mesh_, grad, heat);
-    }
-    else if (laplace_ == Disney)
-    {
-        for (int i = 0; i < grad.rows() / 3; i++)
-        {
-            dvec3 g = dvec3(grad(3 * i), grad(3 * i + 1), grad(3 * i + 2));
-            double n = norm(g);
-            if (n > DBL_MIN)
-                g /= n;
-
-            grad(3 * i) = g[0];
-            grad(3 * i + 1) = g[1];
-            grad(3 * i + 2) = g[2];
-        }
-    }
-    else if (laplace_ == Diamond)
-    {
-        for (int i = 0; i < grad.rows(); i += 2)
-        {
-            dvec2 &g = *reinterpret_cast<dvec2 *>(&grad[i]);
-            double n = norm(g);
-            if (n > DBL_MIN)
-                g /= n;
-        }
-    }
-    else
-    {
-        for (int i = 0; i < grad.rows(); i += 3)
-        {
-            dvec3 &g = *reinterpret_cast<dvec3 *>(&grad[i]);
-            double n = norm(g);
-            if (n > DBL_MIN)
-                g /= n;
-        }
-    }
-    dist = cholL.solve(divOperator * (-grad));
-
-    orthodist.resize(dist.size());
-
-    double mi = dist.minCoeff();
-    for (int i = 0; i < dist.rows(); ++i)
-        dist[i] -= mi;
-
-    int k = 0;
-    Vertex v0 = Vertex(vertex);
-    double rms = 0.0;
-    double radius = norm(mesh_.position(v0));
-    for (auto v : mesh_.vertices())
-    {
-        distances[v] = dist[k];
-
-        if (geodist_sphere_)
-        {
-            orthodist(k) = great_circle_distance(v0, v, radius);
-        }
-        if (geodist_cube_)
-        {
-            orthodist(k) = norm(mesh_.position(v0) - mesh_.position(v));
-        }
-        rms += (dist(k) - orthodist(k)) * (dist(k) - orthodist(k));
-
-        k++;
-    }
-
-    if (geodist_sphere_)
-    {
-        rms /= mesh_.n_vertices();
-        rms = sqrt(rms);
-        rms /= radius;
-        if (laplace_ == AlexaLaplace)
-        {
-            std::cout << "Distance deviation sphere (Alexa, l="
-                      << poly_laplace_lambda_ << "): " << rms << std::endl;
-        }
-        else if (laplace_ == SEC)
-        {
-            std::cout << "Distance deviation sphere (SEC, l="
-                      << poly_laplace_lambda_ << ", lvl=" << sec_laplace_lvl
-                      << ") : " << rms << std::endl;
-        }
-        else if (laplace_ == Disney)
-        {
-            std::cout << "Distance deviation sphere (Disney, l="
-                      << disney_laplace_lambda_ << "): " << rms << std::endl;
-        }
-        else if (laplace_ == CotanLaplace)
-        {
-            std::cout << "Distance deviation sphere (Cotan): " << rms
-                      << std::endl;
-        }
-        else
-        {
-            if (laplace_ == SandwichLaplace)
-            {
-                std::cout << "Distance deviation sphere (Sandwich laplace ";
-            }
-            else if (laplace_ == Diamond)
-            {
-                std::cout << "Distance deviation sphere (Diamond laplace ";
-            }
-            if (min_point_ == AbsAreaMinimizer)
-            {
-                std::cout << "abs. area minimizer): " << rms << std::endl;
-            }
-            else if (min_point_ == AreaMinimizer)
-            {
-                std::cout << "area minimizer): " << rms << std::endl;
-            }
-            else
-            {
-                std::cout << "centroid): " << rms << std::endl;
-            }
-        }
-    }
-    if (geodist_cube_)
-    {
-        rms /= mesh_.n_vertices();
-        rms = sqrt(rms);
-        if (laplace_ == AlexaLaplace)
-        {
-
-            std::cout << "Distance deviation plane (Alexa, l="
-                      << poly_laplace_lambda_ << "): " << rms << std::endl;
-        }
-        else if (laplace_ == SEC)
-        {
-            std::cout << "Distance deviation plane (SEC, l="
-                      << poly_laplace_lambda_ << ", lvl=" << sec_laplace_lvl
-                      << ") : " << rms << std::endl;
-        }
-        else if (laplace_ == Disney)
-        {
-            std::cout << "Distance deviation plane (Disney, l="
-                      << disney_laplace_lambda_ << "): " << rms << std::endl;
-        }
-        else if (laplace_ == CotanLaplace)
-        {
-            std::cout << "Distance deviation sphere (Cotan): " << rms
-                      << std::endl;
-        }
-        else
-        {
-            if (laplace_ == SandwichLaplace)
-            {
-                std::cout << "Distance deviation plane (Sandwich laplace ";
-            }
-            else if (laplace_ == Diamond)
-            {
-                std::cout << "Distance deviation plane (Diamond laplace ";
-            }
-            if (min_point_ == AbsAreaMinimizer)
-            {
-                std::cout << "abs. area minimizer): " << rms << std::endl;
-            }
-            else if (min_point_ == AreaMinimizer)
-            {
-                std::cout << "area minimizer): " << rms << std::endl;
-            }
-            else
-            {
-                std::cout << "centroid): " << rms << std::endl;
-            }
-        }
-    }
-    file << rms << ",";
     mesh_.remove_vertex_property<Scalar>(distances);
 }
 

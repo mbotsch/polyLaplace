@@ -1,10 +1,7 @@
 //=============================================================================
 
 #include "Curvature.h"
-#include "LaplaceConstruction.h"
-#include "DisneyLaplace.h"
-#include "SECLaplace.h"
-#include <pmp/algorithms/SurfaceNormals.h>
+
 
 //=============================================================================
 
@@ -16,29 +13,20 @@ using Triplet = Eigen::Triplet<double>;
 
 enum LaplaceMethods
 {
-
-    SandwichLaplace = 0,
-    AlexaLaplace = 1,
+    PolySimpleLaplace = 0,
+    AlexaWardetzkyLaplace = 1,
     CotanLaplace = 2,
     Diamond = 3,
-    IntrinsicDelaunay = 4,
-    Disney = 5,
-    SEC = 6,
-    AQAPoly_Laplace = 7,
-    quadratic_Triangle_Laplace = 8
+    deGoesLaplace = 4
 };
 
 enum InsertedPoint
 {
     Centroid = 0,
-    AbsAreaMinimizer = 1,
-    AreaMinimizer = 2,
-    Triangle_Circumcenter = 3
+    AreaMinimizer = 2
 };
 
-void Curvature::visualize_curvature(unsigned int laplace,
-                                    unsigned int min_point, bool lumped,
-                                    int degree, CoarseDimension coarseningType)
+void Curvature::visualize_curvature(unsigned int laplace, unsigned int min_point,bool lumped)
 {
 
     if (!mesh_.n_vertices())
@@ -57,12 +45,6 @@ void Curvature::visualize_curvature(unsigned int laplace,
     Eigen::SparseMatrix<double> M, S;
     Eigen::MatrixXd B(nv, 3);
     Eigen::VectorXd H(nv), test(3);
-    if ((laplace == AQAPoly_Laplace && coarseningType == Edges) ||
-        laplace == quadratic_Triangle_Laplace)
-    {
-        B.resize(nv + ne, 3);
-        H.resize(nv + ne);
-    }
 
     for (auto v : mesh_.vertices())
     {
@@ -70,23 +52,9 @@ void Curvature::visualize_curvature(unsigned int laplace,
         B(v.idx(), 1) = points[v][1];
         B(v.idx(), 2) = points[v][2];
     }
-    if ((laplace == AQAPoly_Laplace && coarseningType == Edges) ||
-        laplace == quadratic_Triangle_Laplace)
-    {
-        for (auto e : mesh_.edges())
-        {
-            pmp::Point e_point = 0.5 * (points[(mesh_.vertex(e, 0))] +
-                                        points[(mesh_.vertex(e, 1))]);
-            e_point.normalize();
-            B(nv + e.idx(), 0) = e_point[0];
-            B(nv + e.idx(), 1) = e_point[1];
-            B(nv + e.idx(), 2) = e_point[2];
-        }
-    }
-    setup_stiffness_matrices(mesh_, S, laplace, min_point, degree,
-                             coarseningType);
-    setup_mass_matrices(mesh_, M, laplace, min_point, degree, coarseningType,
-                        lumped);
+
+    setup_stiffness_matrices(mesh_, S, laplace, min_point);
+    setup_mass_matrices(mesh_, M, laplace, min_point, lumped);
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
     solver.analyzePattern(M);
     solver.factorize(M);
@@ -96,14 +64,6 @@ void Curvature::visualize_curvature(unsigned int laplace,
     for (unsigned int i = 0; i < nv; i++)
     {
         H(i) = B.row(i).norm();
-    }
-    if ((laplace == AQAPoly_Laplace && coarseningType == Edges) ||
-        laplace == quadratic_Triangle_Laplace)
-    {
-        for (unsigned int i = 0; i < ne; i++)
-        {
-            H(nv + i) = B.row(nv + i).norm();
-        }
     }
     double rms = 0.0;
     for (auto v : mesh_.vertices())
@@ -117,69 +77,27 @@ void Curvature::visualize_curvature(unsigned int laplace,
         }
         k++;
     }
-    if ((laplace == AQAPoly_Laplace && degree == 2 &&
-         coarseningType == Edges) ||
-        laplace == quadratic_Triangle_Laplace)
-    //    if (laplace == AQAPoly_Laplace && coarseningType == Edges)
-    {
-        if (compare_to_sphere)
-        {
-            for (unsigned int i = 0; i < ne; i++)
-            {
-                double c = 0.5 * H(k);
-//                                std::cout << c << std::endl;
-                rms += (c - 1.0) * (c - 1.0);
-                k++;
-            }
-        }
-    }
 
     if (compare_to_sphere)
     {
-        if ((laplace == AQAPoly_Laplace && coarseningType == Vertices) ||
-            (laplace != quadratic_Triangle_Laplace && degree != 2))
-        {
-            std::cout << "linear Dof" << std::endl;
-            rms /= (double)nv;
-        }
-        else
-        {
-            std::cout << "quadratic Dof" << std::endl;
-            rms /= (double)(nv + ne);
-        }
 
+        rms /= (double)nv;
         rms = sqrt(rms);
 
-        if (laplace == AlexaLaplace)
+        if (laplace == AlexaWardetzkyLaplace)
         {
             std::cout << "Curvature deviation (Alexa, l="
                       << poly_laplace_lambda_ << "): " << rms << std::endl;
-        }
-        else if (laplace == SEC)
-        {
-            std::cout << "Curvature deviation (SEC, l=" << sec_laplace_lambda_
-                      << ", lvl= " << sec_laplace_lvl << "): " << rms
-                      << std::endl;
-        }
-        else if (laplace == IntrinsicDelaunay)
-        {
-            std::cout << "Curvature deviation intrinsic Delaunay: " << rms
-                      << std::endl;
         }
         else if (laplace == CotanLaplace)
         {
             std::cout << "Curvature deviation Cotan Laplacian: " << rms
                       << std::endl;
         }
-        else if (laplace == Disney)
+        else if (laplace == deGoesLaplace)
         {
             std::cout << "Curvature deviation (Disney, l="
                       << disney_laplace_lambda_ << "): " << rms << std::endl;
-        }
-        else if (laplace == quadratic_Triangle_Laplace)
-        {
-            std::cout << "Curvature deviation quadratic Triangle Laplacian: "
-                      << rms << std::endl;
         }
         else
         {
@@ -187,41 +105,18 @@ void Curvature::visualize_curvature(unsigned int laplace,
             {
                 std::cout << "Diamond Laplace ";
             }
-            else if (laplace == AQAPoly_Laplace)
-            {
-                std::cout << "AQAPoly ";
-                if (degree == 2)
-                {
-                    std::cout << "quadratic: ";
-                }
-                else
-                {
-                    std::cout << "linear: ";
-                }
-            }
             else
             {
                 std::cout << "Sandwich Laplace ";
             }
-
-            if (min_point == AbsAreaMinimizer)
-            {
-                std::cout << "Curvature deviation (abs area): " << rms
-                          << std::endl;
-            }
-            else if (min_point == AreaMinimizer)
+           if (min_point == AreaMinimizer)
             {
                 std::cout << "Curvature deviation (our Point): " << rms
                           << std::endl;
             }
-            else if (min_point == Triangle_Circumcenter)
-            {
-                std::cout << "Curvature deviation (Triangle Circumcenter): "
-                          << rms << std::endl;
-            }
+
             else
             {
-
                 std::cout << "Curvature deviation (centroid): " << rms
                           << std::endl;
             }
@@ -235,9 +130,7 @@ void Curvature::visualize_curvature(unsigned int laplace,
 //-----------------------------------------------------------------------------
 
 double Curvature::compute_curvature_error(unsigned int laplace,
-                                          unsigned int min_point, bool lumped,
-                                          int degree,
-                                          CoarseDimension coarseningType)
+                                          unsigned int min_point, bool lumped)
 {
     if (!mesh_.n_vertices())
         return -10000;
@@ -251,12 +144,6 @@ double Curvature::compute_curvature_error(unsigned int laplace,
     Eigen::SparseMatrix<double> M, S;
     Eigen::MatrixXd B(nv, 3);
     Eigen::VectorXd H(nv), test(3);
-    if ((laplace == AQAPoly_Laplace && coarseningType == Edges) ||
-        laplace == quadratic_Triangle_Laplace)
-    {
-        B.resize(nv + ne, 3);
-        H.resize(nv + ne);
-    }
 
     for (auto v : mesh_.vertices())
     {
@@ -264,23 +151,10 @@ double Curvature::compute_curvature_error(unsigned int laplace,
         B(v.idx(), 1) = points[v][1];
         B(v.idx(), 2) = points[v][2];
     }
-    if ((laplace == AQAPoly_Laplace && coarseningType == Edges) ||
-        laplace == quadratic_Triangle_Laplace)
-    {
-        for (auto e : mesh_.edges())
-        {
-            pmp::Point e_point = 0.5 * (points[(mesh_.vertex(e, 0))] +
-                                        points[(mesh_.vertex(e, 1))]);
-            e_point.normalize();
-            B(nv + e.idx(), 0) = e_point[0];
-            B(nv + e.idx(), 1) = e_point[1];
-            B(nv + e.idx(), 2) = e_point[2];
-        }
-    }
-    setup_stiffness_matrices(mesh_, S, laplace, min_point, degree,
-                             coarseningType);
-    setup_mass_matrices(mesh_, M, laplace, min_point, degree, coarseningType,
-                        lumped);
+
+
+    setup_stiffness_matrices(mesh_, S, laplace, min_point);
+    setup_mass_matrices(mesh_, M, laplace, min_point,lumped);
 
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
     solver.analyzePattern(M);
@@ -292,14 +166,6 @@ double Curvature::compute_curvature_error(unsigned int laplace,
     for (unsigned int i = 0; i < nv; i++)
     {
         H(i) = B.row(i).norm();
-    }
-    if ((laplace == AQAPoly_Laplace && coarseningType == Edges) ||
-        laplace == quadratic_Triangle_Laplace)
-    {
-        for (unsigned int i = 0; i < ne; i++)
-        {
-            H(nv + i) = B.row(nv + i).norm();
-        }
     }
     double rms = 0.0;
     for (auto v : mesh_.vertices())
@@ -310,53 +176,22 @@ double Curvature::compute_curvature_error(unsigned int laplace,
 
         k++;
     }
-    if ((laplace == AQAPoly_Laplace && coarseningType == Edges) ||
-        laplace == quadratic_Triangle_Laplace)
-    {
-        for (unsigned int i = 0; i < ne; i++)
-        {
-            double c = 0.5 * H(k);
-            rms += (c - 1.0) * (c - 1.0);
-            k++;
-        }
-    }
 
-    if ((laplace == AQAPoly_Laplace &&
-         (degree == 1 || coarseningType == Vertices)) ||
-        laplace != quadratic_Triangle_Laplace)
-    {
-        std::cout << "linear Dof" << std::endl;
         rms /= (double)nv;
-    }
-    else
-    {
-        std::cout << "quadratic Dof" << std::endl;
-        rms /= (double)(nv + ne);
-    }
 
     rms = sqrt(rms);
 
-    if (laplace == AlexaLaplace)
+    if (laplace == AlexaWardetzkyLaplace)
     {
         std::cout << "Curvature deviation (Alexa, l=" << poly_laplace_lambda_
                   << "): " << rms << std::endl;
-    }
-    else if (laplace == SEC)
-    {
-        std::cout << "Curvature deviation (SEC, l=" << sec_laplace_lambda_
-                  << ", lvl= " << sec_laplace_lvl << "): " << rms << std::endl;
-    }
-    else if (laplace == IntrinsicDelaunay)
-    {
-        std::cout << "Curvature deviation intrinsic Delaunay: " << rms
-                  << std::endl;
     }
     else if (laplace == CotanLaplace)
     {
         std::cout << "Curvature deviation Cotan Laplacian: " << rms
                   << std::endl;
     }
-    else if (laplace == Disney)
+    else if (laplace == deGoesLaplace)
     {
         std::cout << "Curvature deviation (Disney, l=" << disney_laplace_lambda_
                   << "): " << rms << std::endl;
@@ -367,35 +202,15 @@ double Curvature::compute_curvature_error(unsigned int laplace,
         {
             std::cout << "Diamond Laplace ";
         }
-        else if (laplace == AQAPoly_Laplace)
-        {
-            std::cout << "AQAPoly ";
-            if (degree == 2)
-            {
-                std::cout << "quadratic: ";
-            }
-            else
-            {
-                std::cout << "linear: ";
-            }
-        }
+
         else
         {
             std::cout << "Sandwich Laplace ";
         }
 
-        if (min_point == AbsAreaMinimizer)
-        {
-            std::cout << "Curvature deviation (abs area): " << rms << std::endl;
-        }
-        else if (min_point == AreaMinimizer)
+      if (min_point == AreaMinimizer)
         {
             std::cout << "Curvature deviation (our Point): " << rms
-                      << std::endl;
-        }
-        else if (min_point == Triangle_Circumcenter)
-        {
-            std::cout << "Curvature deviation (Triangle Circumcenter): " << rms
                       << std::endl;
         }
         else
@@ -405,75 +220,6 @@ double Curvature::compute_curvature_error(unsigned int laplace,
         }
     }
 
-    return rms;
-}
-double Curvature::compute_quad_Tri_Laplace_curvature_error(
-    SurfaceMesh& initial_mesh)
-{
-    auto points = mesh_.vertex_property<Point>("v:point");
-    const unsigned int nv = mesh_.n_vertices();
-    const unsigned int ne = mesh_.n_edges();
-
-    const unsigned int nv_orig = initial_mesh.n_vertices();
-    const unsigned int ne_orig = initial_mesh.n_edges();
-
-    Eigen::SparseMatrix<double> M, S;
-    Eigen::MatrixXd B(nv + ne, 3);
-    Eigen::VectorXd H(nv + ne);
-
-    for (auto v : mesh_.vertices())
-    {
-        B(v.idx(), 0) = points[v][0];
-        B(v.idx(), 1) = points[v][1];
-        B(v.idx(), 2) = points[v][2];
-    }
-    for (auto e : mesh_.edges())
-    {
-        pmp::Point e_point =
-            0.5 * (points[(mesh_.vertex(e, 0))] + points[(mesh_.vertex(e, 1))]);
-        e_point.normalize();
-        B(nv + e.idx(), 0) = e_point[0];
-        B(nv + e.idx(), 1) = e_point[1];
-        B(nv + e.idx(), 2) = e_point[2];
-    }
-
-    setup_stiffness_matrices(mesh_, S, quadratic_Triangle_Laplace);
-    setup_mass_matrices(mesh_, M, quadratic_Triangle_Laplace);
-
-    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
-    solver.analyzePattern(M);
-    solver.factorize(M);
-    Eigen::MatrixXd X = solver.solve(S * B);
-    B = X;
-
-    //     compute mean curvature
-    for (unsigned int i = 0; i < nv; i++)
-    {
-        H(i) = B.row(i).norm();
-    }
-    for (unsigned int i = 0; i < ne; i++)
-    {
-        H(nv + i) = B.row(nv + i).norm();
-    }
-
-    double rms = 0.0;
-    for (auto v : initial_mesh.vertices())
-    {
-        double c = 0.5 * H(v.idx());
-        std::cout << c << std::endl;
-        rms += (c - 1.0) * (c - 1.0);
-    }
-
-    for (auto e : initial_mesh.edges())
-    {
-        double c = 0.5 * H(nv+e.idx());
-        rms += (c - 1.0) * (c - 1.0);
-    }
-
-    rms /= (double)(nv_orig + ne_orig);
-    rms = sqrt(rms);
-
-    std::cout << "quad Tri Laplace curvature: " << rms << std::endl;
     return rms;
 }
 

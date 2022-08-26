@@ -1,0 +1,14 @@
+.project
+.cproject
+CMakeLists.txt.user
+build*
+*.swp
+.settings
+
+cppcheck.log
+
+# gcov output files:
+
+*.gcda
+*.gcno
+.DS_Store

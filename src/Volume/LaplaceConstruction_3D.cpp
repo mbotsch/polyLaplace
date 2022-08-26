@@ -4,11 +4,10 @@
 #include "../Surface/diffgeo.h"
 #include "diffgeo_3D.h"
 #include "Diamond_3D.h"
-#include "AQAPoly_Laplacian_3D.h"
  #include <iostream>
 #include <Eigen/Sparse>
 #include <unsupported/Eigen/SparseExtra>
- #include <random>
+#include <random>
 //=============================================================================
 
 using SparseMatrix = Eigen::SparseMatrix<double>;

@@ -10,11 +10,11 @@
 enum LaplaceMethods
 {
 
-    SandwichLaplace = 0,
-    AlexaLaplace = 1,
+    PolySimpleLaplace = 0,
+    AlexaWardetzkyLaplace = 1,
     CotanLaplace = 2,
     Diamond = 3,
-    Disney = 5,
+    deGoesLaplace = 5,
     SEC = 6,
     AQAPoly_Laplace = 7,
     quadratic_Triangle_Laplace = 8,

@@ -2,13 +2,12 @@
 
 #include <pmp/SurfaceMesh.h>
 #include <fstream>
-#include "Surface/PolyLaplace.h"
+#include "Surface/[AW11]Laplace.h"
 #include "Surface/Curvature.h"
-#include "Surface/DisneyLaplace.h"
+#include "Surface/[dGBD20]Laplace.h"
 #include "Surface/Poisson_System.h"
 #include "Surface/SpectralProcessing.h"
 #include "Surface/HarmonicBasis2D.h"
-#include "Surface/SmoothSubdivBasis.h"
 
 //=============================================================================
 
@@ -19,12 +18,12 @@ using namespace pmp;
 enum LaplaceMethods
 {
 
-    SandwichLaplace = 0,
-    AlexaLaplace = 1,
+    PolySimpleLaplace = 0,
+    AlexaWardetzkyLaplace = 1,
     CotanLaplace = 2,
     Diamond = 3,
     IntrinsicDelaunay = 4,
-    Disney = 5,
+    deGoesLaplace = 5,
     SEC = 6,
     AQAPoly = 7,
     quadratic_Triangle_Laplace = 8,
@@ -70,8 +69,7 @@ void write_data(SurfaceMesh &mesh, int laplace, CoarseDimension coarseningType,
         {
             lumped = true;
         }
-        file << analyzer.compute_curvature_error(laplace, AreaMinimizer, lumped,
-                                                 degree, coarseningType);
+        file << analyzer.compute_curvature_error(laplace, AreaMinimizer, lumped);
         file << ",";
     }
     else if (function == SH)
@@ -80,12 +78,6 @@ void write_data(SurfaceMesh &mesh, int laplace, CoarseDimension coarseningType,
         if (laplace == Diamond)
         {
             lumped = false;
-        }
-        if (laplace == quadratic_Triangle_Laplace)
-        {
-            insert_points(mesh, AreaMinimizer);
-            file << rmse_sh(mesh, laplace, AreaMinimizer, lumped, degree,
-                            coarseningType);
         }
         else
         {
@@ -97,70 +89,23 @@ void write_data(SurfaceMesh &mesh, int laplace, CoarseDimension coarseningType,
     }
     else if (function == poisson_SH || function == Franke2d)
     {
-        if (laplace == AQAPoly_MG)
-        {
-            bool direct = true;
-            file << solve_AQAPoly_Poisson_mg(
-                mesh, coarseningType, degree, !direct,
-                RELAXER_PARALLEL_GAUSS_SEIDEL, vcycles);
-        }
-        else if (laplace == Harmonic)
+    if (laplace == Harmonic)
         {
             file << solve_2D_Franke_harmonic(mesh);
         }
-        else if(laplace == Smoothsubdiv)
-        {
-            file << solve_poisson_non_dirichlet(mesh,1, 1);
-
-        }
         else
         {
-            if (laplace == quadratic_Triangle_Laplace)
-            {
-                if (function == poisson_SH)
-                {
-                    insert_points(mesh, AreaMinimizer);
-                    double error = solve_poisson_system(
-                        mesh, laplace, AreaMinimizer, function, degree,
-                        coarseningType, l, m);
-                    file << error;
-                }
-                else
-                {
-                    double error =
-                        solve_poisson_system(mesh, AQAPoly, AreaMinimizer,
-                                             function, 2, Refined_mesh, l, m);
-                    file << error;
-                }
-            }
-            else
-            {
+
                 double error =
                     solve_poisson_system(mesh, laplace, AreaMinimizer, function,
-                                         degree, coarseningType, l, m);
+                                          l, m);
                 file << error;
             }
-        }
+
 
         file << ",";
     }
-    else if (function == cond_number)
-    {
-        if (laplace == AQAPoly)
-        {
-            std::vector<double> condnrs;
-            double cond =
-                AQAPoly_condition_nr(mesh, coarseningType, degree, condnrs);
-            file << condnrs[0] << "," << condnrs[1];
-        }
 
-        else
-        {
-            file << condition_number(mesh, laplace, AreaMinimizer, degree,
-                                     coarseningType);
-        }
-        file << ",";
-    }
 }
 
 
@@ -192,22 +137,11 @@ void write_all_laplace_data(SurfaceMesh &mesh, std::ofstream &file,
                             int function, int l = 2, int m = 2)
 {
     poly_laplace_lambda_ = 2.0;
-    write_data(mesh, AlexaLaplace, Vertices, 1, file, function, 10, l, m);
+    write_data(mesh, AlexaWardetzkyLaplace, Vertices, 1, file, function, 10, l, m);
     disney_laplace_lambda_ = 1.0;
-    write_data(mesh, Disney, Vertices, 1, file, function, 10, l, m);
-    write_data(mesh, SandwichLaplace, Vertices, 1, file, function, 10, l, m);
+    write_data(mesh, deGoesLaplace, Vertices, 1, file, function, 10, l, m);
+    write_data(mesh, PolySimpleLaplace, Vertices, 1, file, function, 10, l, m);
     write_data(mesh, Diamond, Vertices, 1, file, function, 10, l, m);
-    subdiv_lvl = 1;
-    write_data(mesh, Smoothsubdiv, Vertices, 1, file, function, 10, l, m);
-    subdiv_lvl = 4;
-    write_data(mesh, Smoothsubdiv, Vertices, 1, file, function, 10, l, m);
-//    subdiv_lvl = 6;
-//    write_data(mesh, Smoothsubdiv, Vertices, 1, file, function, 10, l, m);
-
-//    write_data(mesh, AQAPoly, Edges, 2, file, function, 10, l, m);
-//    write_data(mesh, AQAPoly, Refined_mesh, 2, file, function, 10, l, m);
-
-    //    write_data(mesh, SEC, Vertices, 1, file, function, 10, l, m);
 }
 void write_cond_numbers(SurfaceMesh &mesh, std::ofstream &file, int function,
                         int l = 2, int m = 2)
@@ -570,63 +504,6 @@ double write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
         //        }
         //        file_tri2.close();
     }
-}
-
-void write_nonstarshaped_convergence(int lvl)
-{
-    SurfaceMesh mesh;
-    std::string filename_;
-    std::ofstream file_franke_voronoi("error_2D_Franke_NonStarshaped.csv");
-    file_franke_voronoi << "Linear, Quadratic,res" << std::endl;
-    int c = 1;
-    for (int i = 1; i < lvl; i++)
-    {
-
-        //    int i=5;
-        std::string meshname = "../data/UMeshes/u" + std::to_string(c) + ".obj";
-        mesh.read(meshname);
-        //        filename_ = "../../NaiveProlongation/voronoi_" +
-        //                    std::to_string(i) + "c.trip";
-        //        filename_ = "../../NaiveProlongation/P" +
-        //                    std::to_string(i) + ".mtx";
-        //        double error = naive_Franke(mesh,filename_ );
-        double res = inverse_mean_edgelenth(mesh);
-        //        file_franke_voronoi << error <<",";
-
-        file_franke_voronoi << solve_2D_AQAPoly_Poisson(mesh, Vertices, 1)
-                            << ",";
-        file_franke_voronoi << solve_2D_AQAPoly_Poisson(mesh, Edges, 2) << ",";
-        file_franke_voronoi << res << "\n";
-        c *= 2;
-    }
-    file_franke_voronoi.close();
-}
-void write_naive_convergence(int lvl)
-{
-    SurfaceMesh mesh;
-    std::string filename_;
-    std::ofstream file_franke_voronoi("error_2D_Franke_NaiveProlontaion.csv");
-    file_franke_voronoi << "Naive Prolongation, Linear, Quadratic,res"
-                        << std::endl;
-    for (int i = 1; i < lvl; i++)
-    {
-        //    int i=5;
-        std::string meshname =
-            "../../NaiveProlongation/voronoi_" + std::to_string(i) + "c2.obj";
-        mesh.read(meshname);
-        //        filename_ = "../../NaiveProlongation/voronoi_" +
-        //                    std::to_string(i) + "c.trip";
-        filename_ = "../../NaiveProlongation/P" + std::to_string(i) + ".mtx";
-        double error = naive_Franke(mesh, filename_);
-        double res = inverse_mean_edgelenth(mesh);
-        file_franke_voronoi << error << ",";
-
-        file_franke_voronoi << solve_2D_AQAPoly_Poisson(mesh, Vertices, 1)
-                            << ",";
-        file_franke_voronoi << solve_2D_AQAPoly_Poisson(mesh, Edges, 2) << ",";
-        file_franke_voronoi << res << "\n";
-    }
-    file_franke_voronoi.close();
 }
 
 //=============================================================================

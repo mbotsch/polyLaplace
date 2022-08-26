@@ -1,0 +1,63 @@
+gcc-c++11:
+  script: "CI/ci-linux.sh gcc C++11"
+  tags:
+    - Linux
+
+clang-c++11:
+  script: "CI/ci-linux.sh clang C++11"
+  tags:
+    - Linux
+
+macos-c++11:
+  script: "CI/ci-mac.sh C++11"
+  tags:
+    - Apple
+
+cppcheck:
+  script: "CI/ci-cppcheck.sh"
+  tags:
+    - Linux
+  artifacts:
+    paths:
+      - cppcheck.log
+
+VS2017-64-bit:
+  variables:
+    BUILD_PLATFORM: "VS2017"
+    ARCHITECTURE:   "x64"
+  script: "CI\\Windows.bat"
+  tags:
+    - VS2015
+
+VS2017-32-bit:
+  variables:
+    BUILD_PLATFORM: "VS2017"
+    ARCHITECTURE:   "x32"
+  script: "CI\\Windows.bat"
+  tags:
+    - VS2017
+
+VS2015-64-bit:
+  variables:
+    BUILD_PLATFORM: "VS2015"
+    ARCHITECTURE:   "x64"
+  script: "CI\\Windows.bat"
+  tags:
+    - VS2015
+
+VS2015-32-bit:
+  variables:
+    BUILD_PLATFORM: "VS2015"
+    ARCHITECTURE:   "x32"
+  script: "CI\\Windows.bat"
+  tags:
+    - VS2015
+
+doc:
+  script: "CI/ci-doc.sh"
+  tags:
+    - Linux
+  artifacts:
+      paths:
+        - build-release/Build/share/OpenVolumeMesh/Doc/html
+

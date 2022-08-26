@@ -6,7 +6,6 @@
 //=============================================================================
 
 #include <VolumeMeshViewer.h>
-#include "Volume/AQAPoly_Laplacian_3D.h"
 
 //=============================================================================
 
@@ -31,8 +30,6 @@ protected:
     unsigned int face_point_;
     unsigned int cell_point_;
     unsigned degree_;
-    CoarseDimension coarseningType_;
-    bool ts_;
     unsigned int laplace_matrix;
     std::string filename_;
     // private methods

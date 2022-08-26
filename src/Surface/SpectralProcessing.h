@@ -4,8 +4,7 @@
 
 #include <pmp/SurfaceMesh.h>
 #include "diffgeo.h"
-#include "PolyLaplace.h"
-#include "AQAPoly_Laplacian.h"
+#include "[AW11]Laplace.h"
 
 //=============================================================================
 

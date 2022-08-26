@@ -4,8 +4,10 @@
 
 #include <pmp/SurfaceMesh.h>
 #include "diffgeo.h"
-#include "PolyLaplace.h"
-#include "AQAPoly_Laplacian.h"
+#include "[AW11]Laplace.h"
+#include "LaplaceConstruction.h"
+#include "[dGBD20]Laplace.h"
+#include <pmp/algorithms/SurfaceNormals.h>
 #define PMP_SCALAR_TYPE_64
 
 //=============================================================================
@@ -23,11 +25,10 @@ public:
     }
 
     //! Visualizes the mean curvature of our mesh.
-    void visualize_curvature(unsigned int laplace, unsigned int min_point_, bool lumped=true, int degree = 1,CoarseDimension coarseningType=Edges);
+    void visualize_curvature(unsigned int laplace, unsigned int min_point_, bool lumped=true);
 
-    double compute_curvature_error(unsigned int laplace, unsigned int min_point_, bool lumped=true, int degree = 1,CoarseDimension coarseningType=Edges);
+    double compute_curvature_error(unsigned int laplace, unsigned int min_point_, bool lumped=true);
 
-    double compute_quad_Tri_Laplace_curvature_error(SurfaceMesh& initial_mesh);
 private:
     SurfaceMesh& mesh_;
     bool compare_to_sphere;

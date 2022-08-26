@@ -1,0 +1,46 @@
+Version 2.1 (2019/09/09)
+- Modern target-based CMake 3 build system
+- !!!Break compatiblity with C++98, require C++11 as mininum!!!
+- Renamed *T.cc into *T_impl.hh to avoid ugly problems ith several IDEs
+- Fix bug in halfface reordering
+- Track if garbage collection is necessary.
+- Ignore non-serializable datatypes when saving properties instead of throwing exception. 
+- Add support for C++11 range-for for iterator pairs
+- mark vertex_cells and halfedge_cells as const
+- Implement Property copy(src_idx, dst_idx) analogue of OpenMesh properties
+- Append d to debug library
+- Add vertex vertex iterator to iterate over one-ring of a vertex
+- Add vertex face iterator to iterate over all faces incident to a vertex
+- Implement ptr::make_unique and clean up pre-c++11 ifdefs.
+- Disable file_converter if boost is not found.
+- Make handle constructors explicit
+- Made property handle constructors explicit
+- Enable range iterators on MSVC
+- Fix mesh copying by implementing copy constructors and clone methods
+- Fix bug in edge split of tetrahedral meshes
+- Ensure that halfface iterators start with a boundary halffaces when cells are deleted
+- Added new iterators (VertexIHalfEdgeIter, VertexEdgeIter, VertexHalfFaceIter, EdgeHalfFaceIter, EdgeFaceIter, EdgeCellIter)
+- Added `hidden` flag to StatusAttrib for visualisation purposes
+- Added InterfaceAttrib to denote interior interfaces
+
+
+
+Version 2.0 (2016/08/03)
+- Added Tetrahedral Mesh class
+- Implemented fast and deferred deletion of entities
+- Improved serializiers
+- Allow to force static casts when requesting properties
+- Fixed some bugs in swap methods
+- Fix bug in adding a hex cell with valence 2 edge
+- Fix a bug when swapping deleted cells
+- Updated vector class to latest OpenMesh vector
+- Move vector helpers into OpenVolumeMesh::Geometry namespace
+- Remove html literal operator
+
+Version 1.2 (2015/10/01)
+
+- Status Attribute offers a garbage collection which removes all elements previously tagged as deleted.
+- Circulators will now circulate as often as desired.
+- Property (de)serialization now done via (de)serialize functions allowing to customize (de)serialization for custom properties.
+- Fixed some compatibility issues.
+- Various smaller improvements and bugfixes.

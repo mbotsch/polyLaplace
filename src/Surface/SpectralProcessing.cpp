@@ -3,8 +3,7 @@
 
 #include "SpectralProcessing.h"
 #include "LaplaceConstruction.h"
-#include "DisneyLaplace.h"
-#include "SECLaplace.h"
+#include "[dGBD20]Laplace.h"
 #include <Spectra/MatOp/SparseGenMatProd.h>
 #include <Spectra/MatOp/SparseSymMatProd.h>
 #include <Spectra/SymGEigsSolver.h>
@@ -27,19 +26,12 @@ using Triplet = Eigen::Triplet<double>;
 
 enum LaplaceMethods
 {
-
-    SandwichLaplace = 0,
-    AlexaLaplace = 1,
+    PolySimpleLaplace = 0,
+    AlexaWardetzkyLaplace = 1,
     CotanLaplace = 2,
     Diamond = 3,
-    IntrinsicDelaunay = 4,
-    Disney = 5,
-    SEC = 6,
-    AQAPoly_Laplace = 7,
-    quadratic_Triangle_Laplace = 8,
-    Harmonic = 10
+    deGoesLaplace = 4
 };
-
 enum InsertedPoint
 {
     Centroid = 0,
@@ -57,59 +49,26 @@ double solve_eigenvalue_problem(SurfaceMesh &mesh, int laplace, int face_point,
        filename = "eigenvalues_[BBA21]_" + meshname + ".csv";
 
     }
-    else if (laplace == AlexaLaplace)
+    else if (laplace == AlexaWardetzkyLaplace)
     {
         filename = "eigenvalues_[AW11]_" + meshname + ".csv";
     }
-    else if (laplace == Disney)
+    else if (laplace == deGoesLaplace)
     {
         filename = "eigenvalues_[dGBD20]_" + meshname + ".csv";
     }
-    else if (laplace == SandwichLaplace)
+    else if (laplace == PolySimpleLaplace)
     {
         filename = "eigenvalues_[BHKB20]_" + meshname + ".csv";
     }
-    else if (laplace == SEC)
-    {
-        filename = "eigenvalues_dGBMD16_" + meshname + ".csv";
-    }
-    else if (laplace == AQAPoly_Laplace)
-    {
-        if(coarseningType == Edges)
-        {
-            if (degree == 2)
-            {
-                filename = "eigenvalues_[AQAPoly]_" + meshname + ".csv";
-            }
-        }else if(coarseningType == Vertices){
-            filename = "eigenvalues_[BHKB20]_" + meshname + ".csv";
-        }
-        else if(coarseningType == Refined_mesh)
-        {
-            if (degree == 2)
-            {
-                 filename = "eigenvalues_Refined-mesh_" + meshname + ".csv";
-            }
-        }
-    }
-    else if (laplace == quadratic_Triangle_Laplace)
-    {
-
-        filename = "eigenvalues_quadratic-Triangle-Laplace_" + meshname + ".csv";
-    }
-    else if (laplace == Harmonic){
-        Eigen::VectorXd evalues;
-        return solve_2D_harmonic_eigenvalue_problem( mesh,evalues, meshname);
-    }
-
     std::ofstream ev_file(filename);
 
     ev_file << "computed,analytic,offset" << std::endl;
     Eigen::SparseMatrix<double> M, S;
-    //    std::cout << degree << std::endl;
-    setup_stiffness_matrices(mesh, S, laplace, face_point, degree,
-                             coarseningType);
-    setup_mass_matrices(mesh, M, laplace, face_point, degree, coarseningType);
+
+    setup_stiffness_matrices(mesh, S, laplace, face_point);
+    setup_mass_matrices(mesh, M, laplace, face_point);
+
     // Construct matrix operation object using the wrapper class SparseGenMatProd
 
     int num_eval = 49;
@@ -131,28 +90,9 @@ double solve_eigenvalue_problem(SurfaceMesh &mesh, int laplace, int face_point,
         geigs(op, Bop, num_eval, converge_speed, 1e-8);
     geigs.init();
     geigs.compute(Spectra::SortRule::LargestMagn);
-    //    Spectra::SparseSymMatProd<double> op(S);
-    //    Spectra::SparseCholesky<double> Bop(M);
-    //
-    //    // Construct eigen solver object, requesting the smallest three eigenvalues
-    //    Spectra::SymGEigsSolver<Spectra::SparseSymMatProd<double>,
-    //                            Spectra::SparseCholesky<double>,
-    //                            Spectra::GEigsMode::Cholesky>
-    //        geigs(op, Bop, num_eval, converge_speed);
-
-    // Initialize and compute
-    //    geigs.init();
-    //    geigs.compute(Spectra::SortRule::SmallestMagn);
     std::cout << "compute & init" << std::endl;
 
     Eigen::VectorXd analytic, evalues;
-    //    Eigen::VectorXd y(mesh.n_vertices()) ;
-    //    if ((laplace == AQAPoly_Laplace && degree == 2) ||
-    //        laplace == quadratic_Triangle_Laplace)
-    //    {
-    //        y.resize(mesh.n_vertices() + mesh.n_edges());
-    //     }
-
     Eigen::MatrixXd evecs;
     // Retrieve results
     if (geigs.info() == Spectra::CompInfo::Successful)
@@ -160,8 +100,6 @@ double solve_eigenvalue_problem(SurfaceMesh &mesh, int laplace, int face_point,
         evalues.resize(num_eval);
         analytic.resize(num_eval);
         evalues = geigs.eigenvalues();
-        //        evecs = geigs.eigenvectors();
-        //        evecs.colwise().normalize();
     }
     else
     {
@@ -183,7 +121,6 @@ double solve_eigenvalue_problem(SurfaceMesh &mesh, int laplace, int face_point,
     error = sqrt(error / (double)evalues.size());
     std::cout << "Root mean squared error: " << error << std::endl;
     ev_file.close();
-    //    std::cout << "L2 norm evecs: " << sum << std::endl;
     return error;
 }
 
@@ -297,19 +234,11 @@ double rmse_sh(SurfaceMesh &mesh, unsigned int laplace, unsigned int min_point_,
     double sum = 0.0;
     int nv = mesh.n_vertices();
     Eigen::VectorXd y(mesh.n_vertices()), y2(mesh.n_vertices());
-    if ((laplace == AQAPoly_Laplace && coarseningType == Edges) ||
-        laplace == quadratic_Triangle_Laplace)
-    {
-        y.resize(mesh.n_vertices() + mesh.n_edges());
-        y2.resize(mesh.n_vertices() + mesh.n_edges());
-    }
+
 
     Eigen::SparseMatrix<double> S, M;
-    setup_stiffness_matrices(mesh, S, laplace, min_point_, degree,
-                             coarseningType);
-    setup_mass_matrices(mesh, M, laplace, min_point_, degree, coarseningType,
-                        lumped);
-    //    Eigen::SparseLU<Eigen::SparseMatrix<double>> solver;
+    setup_stiffness_matrices(mesh, S, laplace, min_point_);
+    setup_mass_matrices(mesh, M, laplace, min_point_, lumped);
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
     solver.analyzePattern(M);
     solver.factorize(M);
@@ -336,29 +265,6 @@ double rmse_sh(SurfaceMesh &mesh, unsigned int laplace, unsigned int min_point_,
                                   (7.0 * pow(z, 2.0) - 1.0);
                 }
             }
-            if ((laplace == AQAPoly_Laplace && coarseningType == Edges) ||
-                laplace == quadratic_Triangle_Laplace)
-            {
-                for (auto e : mesh.edges())
-                {
-                    Point p0, p1, pe;
-                    p0 = points[mesh.vertex(e, 0)];
-                    p1 = points[mesh.vertex(e, 1)];
-                    pe = 0.5 * (p0 + p1);
-                    pe.normalize();
-                    y(nv + e.idx()) = sphericalHarmonic(pe, l, m);
-                    if (l == 4 && m == 2)
-                    {
-                        double x, y_, z;
-                        x = pe[0];
-                        y_ = pe[1];
-                        z = pe[2];
-                        y2(nv + e.idx()) = (3.0 / 8.0 * sqrt(5.0 / M_PI)) *
-                                           (pow(x, 2.0) - pow(y_, 2.0)) *
-                                           (7.0 * pow(z, 2.0) - 1.0);
-                    }
-                }
-            }
             y.normalize();
             Eigen::MatrixXd X = solver.solve(S * y);
             Eigen::MatrixXd X2;
@@ -380,32 +286,15 @@ double rmse_sh(SurfaceMesh &mesh, unsigned int laplace, unsigned int min_point_,
             sum += error;
         }
     }
-
-    //    sum/=(double)n;
-    //    if ((laplace == AQAPoly_Laplace && degree == 2) || laplace == quadratic_Triangle_Laplace) {
-    //        sum = sqrt(sum / (double) (nv + mesh.n_edges()));
-    //    } else {
-    //        sum = sqrt(sum / (double) nv);
-    //    }
-    if (laplace == AlexaLaplace)
+    if (laplace == AlexaWardetzkyLaplace)
     {
         std::cout << "Error SH band recreation  (Alexa, l="
                   << poly_laplace_lambda_ << "): " << sum << std::endl;
     }
-    else if (laplace == Disney)
+    else if (laplace == deGoesLaplace)
     {
         std::cout << "Error SH band recreation  (Disney, l="
                   << disney_laplace_lambda_ << "): " << sum << std::endl;
-    }
-    else if (laplace == quadratic_Triangle_Laplace)
-    {
-        std::cout << "Error SH band recreation  (explicit Triangle Laplace): "
-                  << sum << std::endl;
-    }
-    else if (laplace == SEC)
-    {
-        std::cout << "Error SH band recreation  (SEC, l=" << sec_laplace_lambda_
-                  << ",lvl= " << sec_laplace_lvl << "): " << sum << std::endl;
     }
     else
     {
@@ -413,17 +302,9 @@ double rmse_sh(SurfaceMesh &mesh, unsigned int laplace, unsigned int min_point_,
         {
             std::cout << "Diamond Laplace: ";
         }
-        else if (laplace == SandwichLaplace)
+        else if (laplace == PolySimpleLaplace)
         {
-            std::cout << "Sandwich Laplace: ";
-        }
-        else if (laplace == AQAPoly_Laplace && coarseningType == Edges)
-        {
-            std::cout << "AQAPoly Laplace quadratic: ";
-        }
-        else if (laplace == AQAPoly_Laplace && coarseningType == Vertices)
-        {
-            std::cout << "AQAPoly Laplace linear: ";
+            std::cout << "Polysimple Laplace: ";
         }
         if (min_point_ == Centroid)
         {

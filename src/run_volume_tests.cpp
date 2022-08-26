@@ -202,32 +202,16 @@ void write_data(VolumeMesh &mesh, std::string meshname, int laplace,
             error_file << solve_franke_poisson(mesh, Diamond, Quadratic_Areas_,
                                                Quadratic_Volume_, 1);
         }
-        else if (laplace == AQAPoly)
-        {
-            error_file << solve_3D_AQAPoly_Poisson(meshname, Edges, 2);
-        }
-        else if (laplace == AQAPoly_MG)
-        {
-            error_file << solve_3D_AQAPoly_Poisson_mg(
-                meshname, timings_file, Edges, 2, false,
-                RELAXER_PARALLEL_GAUSS_SEIDEL, vcycle);
-        }
         else if (laplace == Sandwich)
         {
-            error_file << solve_3D_AQAPoly_Poisson(meshname, Vertices, 1);
+            error_file << solve_franke_poisson(mesh, Sandwich, Quadratic_Areas_,
+                                               Quadratic_Volume_, 1);
         }
         else if (laplace == Harmonic)
         {
             error_file << solve_franke_poisson(mesh, Harmonic, Quadratic_Areas_,
                                                Quadratic_Volume_, 1, meshname);
         }
-        else if (laplace == refinedTetLaplace)
-        {
-            //            error_file << solve_3D_AQAPoly_Poisson(meshname,Refined_mesh, 2);
-            error_file << solve_3D_AQAPoly_Poisson_mg(
-                meshname, timings_file, Refined_mesh, 2, false,
-                RELAXER_PARALLEL_GAUSS_SEIDEL, vcycle);
-        }
         error_file << ",";
     }
     else
@@ -236,32 +220,6 @@ void write_data(VolumeMesh &mesh, std::string meshname, int laplace,
     }
 }
 
-void write_mg_comparison_data(std::string meshname, int laplace,
-                              std::ofstream &error_file,
-                              std::ofstream &timings_file, int function,
-                              int vcycle = 10, int iterations = 10)
-{
-    if (function == Franke3d)
-    {
-        if (laplace == AQAPoly)
-        {
-
-            error_file << solve_3D_AQAPoly_Poisson_mg_extended(
-                meshname, timings_file, Edges, 2, true);
-        }
-        else if (laplace == AQAPoly_MG)
-        {
-            error_file << solve_3D_AQAPoly_Poisson_mg_extended(
-                meshname, timings_file, Edges, 2, false,
-                RELAXER_PARALLEL_GAUSS_SEIDEL, vcycle, iterations, false);
-        }
-        error_file << ",";
-    }
-    else
-    {
-        std::cout << " Function not implemented" << std::endl;
-    }
-}
 
 void write_all_laplace_data(VolumeMesh &mesh, std::string meshname,
                             std::ofstream &file, std::ofstream &timings_file)
@@ -269,53 +227,8 @@ void write_all_laplace_data(VolumeMesh &mesh, std::string meshname,
     write_data(mesh, meshname, Diamond, file, timings_file, Franke3d);
     write_data(mesh, meshname, Sandwich, file, timings_file, Franke3d);
     //    write_data(mesh, meshname, Harmonic, file, timings_file, Franke3d);
-    write_data(mesh, meshname, AQAPoly, file, timings_file, Franke3d);
-    write_data(mesh, meshname, refinedTetLaplace, file, timings_file, Franke3d);
-    //    write_data(mesh, meshname, AQAPoly_MG, file, timings_file, Franke3d);
 }
 
-void write_coarseDim_laplace_data(VolumeMesh &mesh, std::string meshname,
-                                  std::ofstream &file,
-                                  std::ofstream &timings_file)
-{
-
-    file << solve_3D_AQAPoly_Poisson_mg(meshname, timings_file, Vertices, 2,
-                                        true)
-         << ",";
-    file << solve_3D_AQAPoly_Poisson_mg(meshname, timings_file, Edges, 2, true)
-         << ",";
-    file << solve_3D_AQAPoly_Poisson_mg(meshname, timings_file, Virtual_Edges,
-                                        2, true)
-         << ",";
-    file << solve_3D_AQAPoly_Poisson_mg(meshname, timings_file, Refined_mesh, 2,
-                                        true)
-         << ",";
-}
-void write_all_mg_laplace_data(std::string meshname, std::ofstream &error_file,
-                               std::ofstream &timings_file)
-{
-    //    write_data(mesh, meshname, AQAPoly, error_file, timings_file, Franke3d);
-    //    write_data(mesh, meshname, AQAPoly_MG, error_file, timings_file, Franke3d,
-    //               1);
-    //    write_data(mesh, meshname, AQAPoly_MG, error_file, timings_file, Franke3d,
-    //               2);
-    //    write_data(mesh, meshname, AQAPoly_MG, error_file, timings_file, Franke3d,
-    //               3);
-    //    write_data(mesh, meshname, AQAPoly_MG, error_file, timings_file, Franke3d,
-    //               5);
-    //    write_data(mesh, meshname, AQAPoly_MG, error_file, timings_file, Franke3d,
-    //               10);
-    write_mg_comparison_data(meshname, AQAPoly, error_file, timings_file,
-                             Franke3d);
-    write_mg_comparison_data(meshname, AQAPoly_MG, error_file, timings_file,
-                             Franke3d, 3, 3);
-    //    write_mg_comparison_data( meshname, AQAPoly_MG, error_file, timings_file, Franke3d,3,10);
-    //    write_mg_comparison_data( meshname, AQAPoly_MG, error_file, timings_file, Franke3d,3,20);
-    //    write_mg_comparison_data( meshname, AQAPoly_MG, error_file, timings_file, Franke3d,10,3);
-    //    write_mg_comparison_data( meshname, AQAPoly_MG, error_file, timings_file, Franke3d,10,10);
-    //    write_mg_comparison_data( meshname, AQAPoly_MG, error_file, timings_file, Franke3d,10,30);
-    //    write_mg_comparison_data( meshname, AQAPoly_MG, error_file, timings_file, Franke3d,20,30);
-}
 void write_text_headers(Function function, std::ofstream &file_error,
                         std::ofstream &file_timings)
 {
@@ -395,16 +308,7 @@ double write_3D_convergence_data_csv(Function function, int lvl_end = 6,
             write_all_laplace_data(mesh, meshname, file_franke_hex,
                                    file_timings_hex);
         }
-        else if (function == Multigrid)
-        {
-            write_all_mg_laplace_data(meshname, file_franke_hex,
-                                      file_timings_hex);
-        }
-        else if (function == Coarse_Dim)
-        {
-            write_coarseDim_laplace_data(mesh, meshname, file_franke_hex,
-                                         file_timings_hex);
-        }
+
                 file_franke_hex << res << "," ;
                 VolumeSubdivision(mesh).tetrahedra(Quadratic_Areas_, Quadratic_Volume_);
                 res = inverse_mean_edgelenth(mesh);
@@ -452,16 +356,6 @@ double write_3D_convergence_data_csv(Function function, int lvl_end = 6,
             write_all_laplace_data(mesh, meshname, file_franke_pyramid,
                                    file_timings_pyramid);
         }
-        else if (function == Multigrid)
-        {
-            write_all_mg_laplace_data(meshname, file_franke_pyramid,
-                                      file_timings_pyramid);
-        }
-        else if (function == Coarse_Dim)
-        {
-            write_coarseDim_laplace_data(mesh, meshname, file_franke_pyramid,
-                                         file_timings_pyramid);
-        }
                 file_franke_pyramid << res << ",";
                 VolumeSubdivision(mesh).tetrahedra(Quadratic_Areas_, Quadratic_Volume_);
                 res = inverse_mean_edgelenth(mesh);
@@ -508,16 +402,7 @@ double write_3D_convergence_data_csv(Function function, int lvl_end = 6,
             write_all_laplace_data(mesh, meshname, file_franke_truncated,
                                    file_timings_truncated);
         }
-        else if (function == Multigrid)
-        {
-            write_all_mg_laplace_data(meshname, file_franke_truncated,
-                                      file_timings_truncated);
-        }
-        else if (function == Coarse_Dim)
-        {
-            write_coarseDim_laplace_data(mesh, meshname, file_franke_truncated,
-                                         file_timings_truncated);
-        }
+
                 file_franke_truncated << res << ",";
                 VolumeSubdivision(mesh).tetrahedra(Quadratic_Areas_, Quadratic_Volume_);
                 res = inverse_mean_edgelenth(mesh);
@@ -629,20 +514,7 @@ double write_3D_convergence_data_csv(Function function, int lvl_end = 6,
             write_all_laplace_data(mesh, meshname, file_franke_voronoi,
                                    file_timings_voronoi);
         }
-        else if (function == Multigrid)
-        {
-            write_all_mg_laplace_data(meshname, file_franke_voronoi,
-                                      file_timings_voronoi);
-            write_mg_comparison_data(meshname, AQAPoly_MG, file_franke_voronoi,
-                                     file_timings_voronoi, Franke3d, 30);
-            write_mg_comparison_data(meshname, AQAPoly_MG, file_franke_voronoi,
-                                     file_timings_voronoi, Franke3d, 60);
-        }
-        else if (function == Coarse_Dim)
-        {
-            write_coarseDim_laplace_data(mesh, meshname, file_franke_voronoi,
-                                         file_timings_voronoi);
-        }
+
                 file_franke_voronoi << res << ",";
                 VolumeSubdivision(mesh).tetrahedra(Quadratic_Areas_, Quadratic_Volume_);
                 res = inverse_mean_edgelenth(mesh);
@@ -657,36 +529,7 @@ double write_3D_convergence_data_csv(Function function, int lvl_end = 6,
     file_timings_voronoi.close();
 }
 
-void write_3D_mg()
-{
-    VolumeMesh mesh;
-    std::string filename_, timings_filename_;
 
-    // --------------hex cube----------------------------------
-
-    filename_ = "./errors_mg_selected.csv";
-    timings_filename_ = "./timings_mg_selected.csv";
-
-    std::ofstream file(filename_);
-    std::ofstream file_timings(timings_filename_);
-
-    write_text_headers(Multigrid, file, file_timings);
-    file_timings << "Polyfem Voronoi Cube 3 " << std::endl;
-    std::string meshname = "../data/polyfem/Volume/cube_voronoi_3_polyfem.ovm";
-    mesh.read(meshname);
-    std::cout << meshname << std::endl;
-    double res = inverse_mean_edgelenth(mesh);
-    write_all_mg_laplace_data(meshname, file, file_timings);
-    file << res << std::endl;
-
-    file_timings << "Dragon" << std::endl;
-    meshname = "../data/Dragon_hex.ovm";
-    mesh.read(meshname);
-    std::cout << meshname << std::endl;
-    res = inverse_mean_edgelenth(mesh);
-    write_all_mg_laplace_data(meshname, file, file_timings);
-    file << res << std::endl;
-}
 void write_DOF()
 {
     VolumeMesh mesh;

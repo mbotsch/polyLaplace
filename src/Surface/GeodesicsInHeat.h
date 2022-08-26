@@ -5,9 +5,8 @@
 #define PMP_SCALAR_TYPE_64
 
  #include <pmp/SurfaceMesh.h>
-#include "PolyLaplace.h"
+#include "[AW11]Laplace.h"
 #include <Eigen/Sparse>
-#include <fstream>
 #include <pmp/algorithms/SurfaceNormals.h>
 //=============================================================================
 
@@ -25,9 +24,6 @@ public:
 
     void compute_geodesics(bool lumped = true);
 
-    void write_Distance_error(const int vertex, Eigen::VectorXd& dist,
-                     Eigen::VectorXd& orthodist, bool lumped,std::ofstream& file);
-
 private:
     pmp::SurfaceMesh& mesh_;
 
@@ -42,10 +38,6 @@ private:
     double averageEdgeLength(const pmp::SurfaceMesh& mesh);
 
     double maxEdgeLength(const pmp::SurfaceMesh& mesh);
-
-    void buildDivOperator();
-
-    void buildGradientOperator();
 
     double great_circle_distance(pmp::Vertex v, pmp::Vertex vv, double r = 1.0);
 

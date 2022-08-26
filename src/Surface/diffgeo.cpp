@@ -2,7 +2,7 @@
 
 #include "diffgeo.h"
 #include <Eigen/Dense>
-#include "PolyLaplace.h"
+#include "[AW11]Laplace.h"
 #include <unsupported/Eigen/NonLinearOptimization>
 
 const double eps = 1e-10;

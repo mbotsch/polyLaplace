@@ -1,0 +1,6 @@
+build
+release
+debug
+.vscode
+.jekyll-cache
+.DS_store

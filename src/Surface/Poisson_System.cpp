@@ -32,7 +32,7 @@ double solve_poisson_system(pmp::SurfaceMesh &mesh, int laplace, int minpoint,
 #define PMP_SCALAR_TYPE_64
 
     Eigen::SparseMatrix<double> S, M;
-    int nv = mesh.n_vertices();
+    int nv = (int)mesh.n_vertices();
     Eigen::VectorXd b(nv), analytic_solution(nv);
 
     if (laplace == Harmonic) {
@@ -95,8 +95,6 @@ double solve_poisson_system(pmp::SurfaceMesh &mesh, int laplace, int minpoint,
         std::cout << "Franke RMSE error inner vertices: "
                   << sqrt(error / (double) mesh.n_vertices()) << std::endl;
         return sqrt(error / (double) mesh.n_vertices());
-
-
     } else {
         int k = nv;
         for (auto v: mesh.vertices()) {
@@ -118,7 +116,7 @@ double solve_poisson_system(pmp::SurfaceMesh &mesh, int laplace, int minpoint,
         std::cout << "error inner product : " << error << std::endl;
         return error;
     }
-}
+ }
 
 //-----------------------------------------------------------------------------
 
@@ -128,6 +126,8 @@ double poisson_function(pmp::Point &p, int function) {
         return franke_function(p[0], p[1]);
     } else if (function == poisson_SH) {
         return spherical_harmonic_function_scaled(p[0], p[1], p[2]);
+    }else{
+        std::cerr << "Function not implemented" << std::endl;
     }
 }
 
@@ -138,6 +138,8 @@ double laplace_of_poisson_function(Point &p, int function) {
         return laplace_franke_function(p[0], p[1]);
     } else if (function == poisson_SH) {
         return spherical_harmonic_function(p[0], p[1], p[2]);
+    }else{
+        std::cerr << "Function not implemented" << std::endl;
     }
 }
 
@@ -226,7 +228,7 @@ double spherical_harmonic_function_scaled(double x, double y, double z) {
 
 void solve_laplace_equation(SurfaceMesh &mesh, int laplace, int face_point) {
     Eigen::SparseMatrix<double> M, S, S_f;
-    Eigen::MatrixXd B = Eigen::MatrixXd::Zero(mesh.n_vertices(), 3);
+    Eigen::MatrixXd B = Eigen::MatrixXd::Zero((int)mesh.n_vertices(), 3);
 
     setup_stiffness_matrices(mesh, S, laplace, face_point);
     int nb = 0;
@@ -247,10 +249,10 @@ void solve_laplace_equation(SurfaceMesh &mesh, int laplace, int face_point) {
     for (auto v: mesh.vertices()) {
         // save indices of inner and outer vertices
         if (!mesh.is_boundary(v)) {
-            in(ins) = v.idx();
+            in(ins) = (int)v.idx();
             ins++;
         } else {
-            bound(out) = v.idx();
+            bound(out) = (int)v.idx();
             out++;
             // right-hand side: fix x coordinate of boundary vertices for the righthandsite
             B(v.idx(), 0) = mesh.position(v)[0];
@@ -285,6 +287,6 @@ void solve_laplace_equation(SurfaceMesh &mesh, int laplace, int face_point) {
             }
         }
     }
-    std::cout << "RMSE inner verticex positions : " << sqrt(error / (double) k)
+    std::cout << "RMSE inner vertex positions : " << sqrt(error / (double) k)
               << std::endl;
 }

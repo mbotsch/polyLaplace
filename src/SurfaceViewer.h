@@ -32,17 +32,15 @@ protected:
 
     void dualize();
     void close_holes();
-    void open_holes();
     void Centroid();
     void insert_points(unsigned int min_point);
 
 private: // private methods
-    unsigned int laplace_matrix, min_point_;
+    int laplace_matrix, min_point_;
     bool compare_sphere;
     bool compare_cube;
     bool time_step_;
     SurfaceMeshGL original = mesh_;
-    std::vector<Face> holes_;
 };
 
 //=============================================================================

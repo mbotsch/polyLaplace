@@ -25,9 +25,6 @@ void setup_diamond_gradient_divergence_intrinsic(
     SurfaceMesh &mesh, Eigen::SparseMatrix<double> &G,
     Eigen::SparseMatrix<double> &D);
 
-void setup_diamond_gradient_intrinsic(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &G);
-
-void setup_diamond_divergence_intrinsic(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &D);
 
 
 

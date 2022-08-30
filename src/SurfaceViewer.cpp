@@ -28,10 +28,9 @@ enum InsertedPoint
 enum LaplaceMethods {
     PolySimpleLaplace = 0,
     AlexaWardetzkyLaplace = 1,
-    CotanLaplace = 2,
-    Diamond = 3,
-    deGoesLaplace = 4,
-    Harmonic = 5
+    Diamond = 2,
+    deGoesLaplace = 3,
+    Harmonic = 4
 };
 
 void Viewer::keyboard(int key, int scancode, int action, int mods)
@@ -204,7 +203,7 @@ void Viewer::process_imgui()
 
             re.seed(42); // fixed seed
 
-            double rand;
+            double rand =0.0;
             if (fixed_)
             {
                 rand = unif(re);
@@ -394,7 +393,6 @@ void Viewer::close_holes()
             }
         }
     }
-    holes_ = holes;
     update_mesh();
 }
 
@@ -423,7 +421,7 @@ void Viewer::insert_points(unsigned int minpoint)
         Eigen::Vector3d p;
         if (minpoint == Centroid_)
         {
-            int val = poly.rows();
+            auto val = poly.rows();
             w = Eigen::MatrixXd::Ones(val, 1);
             w /= (double)val;
         }
@@ -453,16 +451,6 @@ void Viewer::Centroid()
     update_mesh();
 }
 
-void Viewer::open_holes()
-{
-    for (Face f : holes_)
-    {
-        mesh_.delete_face(f);
-    }
-    mesh_.garbage_collection();
-    update_mesh();
-}
-
 void Viewer::mouse(int button, int action, int mods)
 {
 
@@ -471,7 +459,7 @@ void Viewer::mouse(int button, int action, int mods)
     {
         double x, y;
         cursor_pos(x, y);
-        Vertex v = pick_vertex(x, y);
+        Vertex v = pick_vertex((int)x, (int)y);
         std::cout << "Vertex Idx: " << v.idx() << std::endl;
         if (mesh_.is_valid(v))
         {
@@ -480,7 +468,7 @@ void Viewer::mouse(int button, int action, int mods)
             Eigen::VectorXd dist, geodist;
 
             heat.compute_geodesics();
-            heat.getDistance(v.idx(), dist, geodist);
+            heat.getDistance((int)v.idx(), dist, geodist);
             update_mesh();
             mesh_.use_checkerboard_texture();
             set_draw_mode("Texture");

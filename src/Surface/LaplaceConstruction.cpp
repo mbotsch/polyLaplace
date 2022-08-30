@@ -36,11 +36,9 @@ void setup_stiffness_matrices(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &S,
         setup_stiffness_matrix(mesh, S, minpoint);
     } else if (Laplace == Diamond) {
         std::cout << "Properties stiffness" <<std::endl;
-        FaceProperty<pmp::Point> area_points;
-        FaceProperty<Eigen::VectorXd> area_weights;
         if (!mesh.has_face_property("f:point") || !mesh.has_face_property("f:weights")) {
-            area_points = mesh.add_face_property<pmp::Point>("f:point");
-            area_weights = mesh.add_face_property<Eigen::VectorXd>("f:weights");
+            mesh.add_face_property<pmp::Point>("f:point");
+            mesh.add_face_property<Eigen::VectorXd>("f:weights");
         }
         setup_face_point_properties(mesh, minpoint);
         Eigen::SparseMatrix<double> G, D, Gra, Div, P;
@@ -93,8 +91,8 @@ void setup_gradient(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &G, int Lapla
     } else if (Laplace == deGoesLaplace) {
         setup_disney_gradient_operator(mesh, G);
     } else if (Laplace == PolySimpleLaplace) {
-        G.resize(3 * mesh.n_faces(), mesh.n_vertices());
-        setup_sandwich_gradient_matrix(mesh, G, minpoint);
+        G.resize(3 * (int)mesh.n_faces(), (int)mesh.n_vertices());
+        setup_gradient_matrix(mesh, G, minpoint);
     }
 }
 //----------------------------------------------------------------------------------
@@ -105,7 +103,7 @@ void setup_divergence(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &D, int Lap
     } else if (Laplace == deGoesLaplace) {
         setup_disney_divergence_operator(mesh, D);
     } else {
-        D.resize(mesh.n_vertices(), 3 * mesh.n_faces());
-        setup_sandwich_divergence_matrix(mesh, D, minpoint);
+        D.resize((int)mesh.n_vertices(), 3 * (int)mesh.n_faces());
+        setup_divergence_matrix(mesh, D, minpoint);
     }
 }

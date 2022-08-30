@@ -28,7 +28,6 @@ enum LaplaceMethods
 enum InsertedPoint
 {
     Centroid = 0,
-    AbsAreaMinimizer = 1,
     AreaMinimizer = 2
 };
 
@@ -72,7 +71,7 @@ double GeodesicsInHeat::averageEdgeLength(const pmp::SurfaceMesh &mesh)
         avgLen += mesh.edge_length(e);
     }
 
-    return avgLen / mesh.n_edges();
+    return avgLen / (double)mesh.n_edges();
 }
 //-----------------------------------------------------------------------------
 
@@ -96,7 +95,7 @@ double GeodesicsInHeat::maxEdgeLength(const pmp::SurfaceMesh &mesh)
 void GeodesicsInHeat::compute_geodesics(bool lumped)
 {
 
-    pos.resize(mesh_.n_vertices(), 3);
+    pos.resize((int)mesh_.n_vertices(), 3);
 
     for (int i = 0; i < (int)mesh_.n_vertices(); ++i)
         for (int j = 0; j < 3; ++j)
@@ -150,7 +149,7 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
 {
 
     // diffuse heat
-    const int N = mesh_.n_vertices();
+    const int N = (int)mesh_.n_vertices();
 
     auto distances = mesh_.add_vertex_property<Scalar>("v:dist");
 
@@ -233,7 +232,7 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
 
     if (geodist_sphere_)
     {
-        rms /= mesh_.n_vertices();
+        rms /= (double)mesh_.n_vertices();
         rms = sqrt(rms);
         rms /= radius;
         if (laplace_ == AlexaWardetzkyLaplace)
@@ -256,7 +255,8 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
             {
                 std::cout << "Distance deviation sphere (Diamond ";
             }
-            else if (min_point_ == AreaMinimizer)
+
+            if (min_point_ == AreaMinimizer)
             {
                 std::cout << "area minimizer): " << rms << std::endl;
             }
@@ -268,7 +268,7 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
     }
     if (geodist_cube_)
     {
-        rms /= mesh_.n_vertices();
+        rms /= (double)mesh_.n_vertices();
         rms = sqrt(rms);
         if (laplace_ == AlexaWardetzkyLaplace)
         {
@@ -314,7 +314,7 @@ void GeodesicsInHeat::distance_to_texture_coordinates() const
     auto distances = mesh_.get_vertex_property<Scalar>("v:dist");
     assert(distances);
     // scale with boundingbox size for comparable geodesic rings
-    Scalar bb_size(0);
+    Scalar bb_size;
     bb_size = mesh_.bounds().size();
     auto tex = mesh_.vertex_property<TexCoord>("v:tex");
     for (auto v : mesh_.vertices())

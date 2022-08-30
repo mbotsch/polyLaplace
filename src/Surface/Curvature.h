@@ -25,9 +25,9 @@ public:
     }
 
     //! Visualizes the mean curvature of our mesh.
-    void visualize_curvature(unsigned int laplace, unsigned int min_point_, bool lumped=true);
+    void visualize_curvature(int laplace, int min_point_, bool lumped=true);
 
-    double compute_curvature_error(unsigned int laplace, unsigned int min_point_, bool lumped=true);
+    double compute_curvature_error(int laplace,  int min_point_, bool lumped=true);
 
 private:
     SurfaceMesh& mesh_;

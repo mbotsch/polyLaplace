@@ -17,7 +17,7 @@ public:
                     bool geodist, bool euklid, bool mean_edge_ = false);
     ~GeodesicsInHeat();
 
-    void getDistance(const int vertex, Eigen::VectorXd& dist,
+    void getDistance(int vertex, Eigen::VectorXd& dist,
                      Eigen::VectorXd& orthodist);
 
     void distance_to_texture_coordinates() const;
@@ -27,7 +27,7 @@ public:
 private:
     pmp::SurfaceMesh& mesh_;
 
-    unsigned int laplace_, min_point_;
+    int laplace_, min_point_;
 
     Eigen::MatrixXd pos;
 
@@ -35,9 +35,9 @@ private:
 
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> cholL, cholA;
 
-    double averageEdgeLength(const pmp::SurfaceMesh& mesh);
+    static double averageEdgeLength(const pmp::SurfaceMesh& mesh);
 
-    double maxEdgeLength(const pmp::SurfaceMesh& mesh);
+    static double maxEdgeLength(const pmp::SurfaceMesh& mesh);
 
     double great_circle_distance(pmp::Vertex v, pmp::Vertex vv, double r = 1.0);
 

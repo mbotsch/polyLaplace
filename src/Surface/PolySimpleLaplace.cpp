@@ -3,64 +3,41 @@
 #include "diffgeo.h"
 
 //----------------------------------------------------------------------------------
-enum InsertedPoint
-{
+enum InsertedPoint {
     Centroid = 0,
-    AbsAreaMinimizer = 1,
     AreaMinimizer = 2,
-    Triangle_Circumcenter = 3
 };
 
 void setup_stiffness_matrix(SurfaceMesh &mesh,
                             Eigen::SparseMatrix<double> &S,
-                            int minpoint)
-{
+                            int minpoint) {
 
-    const int nv = mesh.n_vertices();
+    const int nv = (int)mesh.n_vertices();
 
     Eigen::MatrixXd Si;
-    Eigen::Vector3d min;
     Eigen::VectorXd w;
     Eigen::Vector3d p;
     Eigen::MatrixXd poly;
 
     std::vector<Eigen::Triplet<double>> trip;
 
-    for (Face f : mesh.faces())
-    {
-        const int n = mesh.valence(f);
+    for (Face f: mesh.faces()) {
+        int n = (int)mesh.valence(f);
         poly.resize(n, 3);
         int i = 0;
-        for (Vertex v : mesh.vertices(f))
-        {
-            for (int h = 0; h < 3; h++)
-            {
+        for (Vertex v: mesh.vertices(f)) {
+            for (int h = 0; h < 3; h++) {
                 poly.row(i)(h) = mesh.position(v)[h];
             }
             i++;
         }
 
         // compute weights for the polygon
-        if (minpoint == Centroid)
-        {
-            int val = poly.rows();
+        if (minpoint == Centroid) {
+            int val = (int)poly.rows();
             w = Eigen::MatrixXd::Ones(val, 1);
-            w /= (double)val;
-        }
-        else if (minpoint == AbsAreaMinimizer)
-        {
-            Eigen::Vector3d point;
-            optimizeAbsoluteTriangleArea(poly, point);
-            find_weights_for_point(poly, point, w);
-        }
-        else if (minpoint == Triangle_Circumcenter)
-        {
-            Eigen::Vector3d point;
-            point = triangle_circumcenter(poly);
-            barycentric_weights_triangle(poly, point, w);
-        }
-        else
-        {
+            w /= (double) val;
+        } else {
             find_area_minimizer_weights(poly, w);
         }
         Eigen::Vector3d min;
@@ -70,11 +47,9 @@ void setup_stiffness_matrix(SurfaceMesh &mesh,
 
         int j = 0;
         int k;
-        for (Vertex v : mesh.vertices(f))
-        {
+        for (Vertex v: mesh.vertices(f)) {
             k = 0;
-            for (Vertex vv : mesh.vertices(f))
-            {
+            for (Vertex vv: mesh.vertices(f)) {
 
                 trip.emplace_back(vv.idx(), v.idx(), Si(k, j));
                 k++;
@@ -90,47 +65,32 @@ void setup_stiffness_matrix(SurfaceMesh &mesh,
 //----------------------------------------------------------------------------------
 
 void setup_mass_matrix(SurfaceMesh &mesh,
-                       Eigen::SparseMatrix<double> &M, int minpoint)
-{
-    const int nv = mesh.n_vertices();
-    const int nf = mesh.n_faces();
+                       Eigen::SparseMatrix<double> &M, int minpoint) {
+    const int nv = (int)mesh.n_vertices();
 
     Eigen::MatrixXd Mi;
-    Eigen::Vector3d min;
     Eigen::VectorXd w;
     Eigen::MatrixXd poly;
 
     std::vector<Eigen::Triplet<double>> trip;
 
-    for (Face f : mesh.faces())
-    {
-        const int n = mesh.valence(f);
+    for (Face f: mesh.faces()) {
+        const int n = (int)mesh.valence(f);
         poly.resize(n, 3);
         int i = 0;
-        for (Vertex v : mesh.vertices(f))
-        {
-            for (int h = 0; h < 3; h++)
-            {
+        for (Vertex v: mesh.vertices(f)) {
+            for (int h = 0; h < 3; h++) {
                 poly.row(i)(h) = mesh.position(v)[h];
             }
             i++;
         }
 
         // setup polygon weights
-        if (minpoint == Centroid)
-        {
-            int val = poly.rows();
+        if (minpoint == Centroid) {
+            int val = (int)poly.rows();
             w = Eigen::MatrixXd::Ones(val, 1);
-            w /= (double)val;
-        }
-        else if (minpoint == AbsAreaMinimizer)
-        {
-            Eigen::Vector3d point;
-            optimizeAbsoluteTriangleArea(poly, point);
-            find_weights_for_point(poly, point, w);
-        }
-        else
-        {
+            w /= (double) val;
+        } else {
             find_area_minimizer_weights(poly, w);
         }
 
@@ -139,11 +99,9 @@ void setup_mass_matrix(SurfaceMesh &mesh,
 
         int j = 0;
         int k;
-        for (Vertex v : mesh.vertices(f))
-        {
+        for (Vertex v: mesh.vertices(f)) {
             k = 0;
-            for (Vertex vv : mesh.vertices(f))
-            {
+            for (Vertex vv: mesh.vertices(f)) {
 
                 trip.emplace_back(vv.idx(), v.idx(), Mi(k, j));
                 k++;
@@ -157,16 +115,13 @@ void setup_mass_matrix(SurfaceMesh &mesh,
 
 //----------------------------------------------------------------------------------
 
-void setup_sandwich_gradient_matrix(SurfaceMesh &mesh,
-                                    Eigen::SparseMatrix<double> &G,
-                                    int minpoint)
-{
+void setup_gradient_matrix(SurfaceMesh &mesh,
+                           Eigen::SparseMatrix<double> &G,
+                           int minpoint) {
 
-    const int nv = mesh.n_vertices();
-    const int nf = mesh.n_faces();
+    const int nv = (int)mesh.n_vertices();
 
     Eigen::MatrixXd Gi;
-    Eigen::Vector3d min;
     Eigen::VectorXd w;
     Eigen::Vector3d p;
     Eigen::MatrixXd poly;
@@ -174,45 +129,32 @@ void setup_sandwich_gradient_matrix(SurfaceMesh &mesh,
     std::vector<Eigen::Triplet<double>> trip;
     int nr_triangles = 0;
     int s = 0;
-    for (Face f : mesh.faces())
-    {
-        const int n = mesh.valence(f);
+    for (Face f: mesh.faces()) {
+        const int n = (int)mesh.valence(f);
         nr_triangles += n;
         poly.resize(n, 3);
-        int i = 0;
-
-        for (auto h : mesh.halfedges(f))
-        {
+        int row = 0;
+        for (auto h: mesh.halfedges(f)) {
             Vertex v = mesh.from_vertex(h);
-            for (int h = 0; h < 3; h++)
-            {
-                poly.row(i)(h) = mesh.position(v)[h];
+            for (int j = 0; j < 3; j++) {
+                poly.row(row)(j) = mesh.position(v)[j];
             }
-            i++;
+            row++;
         }
         // compute weights for the polygon
-        if (minpoint == Centroid)
-        {
-            int val = poly.rows();
+        if (minpoint == Centroid) {
+            int val = (int)poly.rows();
             w = Eigen::MatrixXd::Ones(val, 1);
-            w /= (double)val;
-        }
-        else if (minpoint == AbsAreaMinimizer)
-        {
-            Eigen::Vector3d point;
-            optimizeAbsoluteTriangleArea(poly, point);
-            find_weights_for_point(poly, point, w);
-        }
-        else
-        {
+            w /= (double) val;
+        } else {
             find_area_minimizer_weights(poly, w);
         }
         Eigen::Vector3d min;
 
         min = poly.transpose() * w;
-        localGradientMatrix(poly, min, w, Gi);
+        localGradientMatrix(poly, min, Gi);
 
-        // Sandwichen
+        // Prolongation
         for (int j = 0; j < n; ++j)
             for (int i = 0; i < n; ++i)
                 for (int k = 0; k < 3; k++)
@@ -220,14 +162,11 @@ void setup_sandwich_gradient_matrix(SurfaceMesh &mesh,
 
         int j = 0;
         int k;
-        for (auto vv : mesh.vertices(f))
-        {
+        for (auto vv: mesh.vertices(f)) {
             k = 0;
-            for (auto h : mesh.halfedges(f))
-            {
+            for (auto h: mesh.halfedges(f)) {
                 Vertex v = mesh.from_vertex(h);
-                for (int i = 0; i < 3; i++)
-                {
+                for (int i = 0; i < 3; i++) {
                     trip.emplace_back(3 * s + i, v.idx(), Gi(3 * j + i, k));
                 }
                 k++;
@@ -242,15 +181,12 @@ void setup_sandwich_gradient_matrix(SurfaceMesh &mesh,
 }
 //----------------------------------------------------------------------------------
 
-void setup_sandwich_divergence_matrix(SurfaceMesh &mesh,
-                                      Eigen::SparseMatrix<double> &D,
-                                      int minpoint)
-{
-    const int nv = mesh.n_vertices();
-    const int nf = mesh.n_faces();
+void setup_divergence_matrix(SurfaceMesh &mesh,
+                             Eigen::SparseMatrix<double> &D,
+                             int minpoint) {
+    const int nv = (int)mesh.n_vertices();
 
     Eigen::MatrixXd Gi, Di;
-    Eigen::Vector3d min;
     Eigen::VectorXd w;
     Eigen::Vector3d p;
     Eigen::MatrixXd poly;
@@ -258,71 +194,55 @@ void setup_sandwich_divergence_matrix(SurfaceMesh &mesh,
     std::vector<Eigen::Triplet<double>> trip;
     int nr_triangles = 0;
     int s = 0;
-    for (Face f : mesh.faces())
-    {
+    for (Face f: mesh.faces()) {
 
-        const int n = mesh.valence(f);
+        const int n = (int)mesh.valence(f);
         nr_triangles += n;
         poly.resize(n, 3);
-        int i = 0;
+        int row = 0;
 
-        for (auto h : mesh.halfedges(f))
-        {
+        for (auto h: mesh.halfedges(f)) {
             Vertex v = mesh.from_vertex(h);
-            for (int h = 0; h < 3; h++)
-            {
-                poly.row(i)(h) = mesh.position(v)[h];
+            for (int j = 0; j < 3; j++) {
+                poly.row(row)(j) = mesh.position(v)[j];
             }
-            i++;
+            row++;
         }
 
         // compute weights for the polygon
-        if (minpoint == Centroid)
-        {
-            int val = poly.rows();
+        if (minpoint == Centroid) {
+            int val = (int)poly.rows();
             w = Eigen::MatrixXd::Ones(val, 1);
-            w /= (double)val;
-        }
-        else if (minpoint == AbsAreaMinimizer)
-        {
-            Eigen::Vector3d point;
-            optimizeAbsoluteTriangleArea(poly, point);
-            find_weights_for_point(poly, point, w);
-        }
-        else
-        {
+            w /= (double) val;
+        } else {
             find_area_minimizer_weights(poly, w);
         }
 
         Eigen::Vector3d min = poly.transpose() * w;
-        localGradientMatrix(poly, min, w, Gi);
+        localGradientMatrix(poly, min, Gi);
         Di = -Gi.transpose();
 
         //Triangle Area Diagonal matrix
         Eigen::MatrixXd Ai;
         Ai.resize(3 * n, 3 * n);
         Ai.setZero();
-        for (int i = 0; i < n; ++i)
-        {
+        for (int i = 0; i < n; ++i) {
             const int i1 = (i + 1) % n;
 
             Eigen::Vector3d p0 = poly.row(i);
             Eigen::Vector3d p1 = poly.row(i1);
 
             double area = 0.5 * ((p0 - min).cross(p1 - min)).norm();
-            for (int k = 0; k < 3; k++)
-            {
+            for (int k = 0; k < 3; k++) {
                 Ai(3 * i + k, 3 * i + k) = area;
             }
         }
         Di *= Ai;
 
-        // Sandwichen
+        // prolongation
 
-        for (int j = 0; j < n; ++j)
-        {
-            for (int i = 0; i < n; ++i)
-            {
+        for (int j = 0; j < n; ++j) {
+            for (int i = 0; i < n; ++i) {
                 for (int k = 0; k < 3; k++)
                     Di(i, 3 * j + k) += w(i) * Di(n, 3 * j + k);
             }
@@ -330,14 +250,11 @@ void setup_sandwich_divergence_matrix(SurfaceMesh &mesh,
 
         int j = 0;
         int k;
-        for (auto vv : mesh.vertices(f))
-        {
+        for (auto vv: mesh.vertices(f)) {
             k = 0;
-            for (auto h : mesh.halfedges(f))
-            {
+            for (auto h: mesh.halfedges(f)) {
                 Vertex v = mesh.from_vertex(h);
-                for (int i = 0; i < 3; i++)
-                {
+                for (int i = 0; i < 3; i++) {
                     trip.emplace_back(v.idx(), 3 * s + i, Di(k, 3 * j + i));
                 }
                 k++;
@@ -353,9 +270,8 @@ void setup_sandwich_divergence_matrix(SurfaceMesh &mesh,
 //----------------------------------------------------------------------------------
 
 void localCotanMatrix(const Eigen::MatrixXd &poly, const Eigen::Vector3d &min,
-                      Eigen::VectorXd &w, Eigen::MatrixXd &L)
-{
-    const int n = (int)poly.rows();
+                      Eigen::VectorXd &w, Eigen::MatrixXd &L) {
+    const int n = (int) poly.rows();
 
     L.resize(n, n);
     L.setZero();
@@ -365,8 +281,7 @@ void localCotanMatrix(const Eigen::MatrixXd &poly, const Eigen::Vector3d &min,
 
     double l[3], l2[3];
 
-    for (int i = 0; i < n; ++i)
-    {
+    for (int i = 0; i < n; ++i) {
         const int i1 = (i + 1) % n;
 
         l2[2] = (poly.row(i) - poly.row(i1)).squaredNorm();
@@ -380,8 +295,7 @@ void localCotanMatrix(const Eigen::MatrixXd &poly, const Eigen::Vector3d &min,
         const double arg = (l[0] + (l[1] + l[2])) * (l[2] - (l[0] - l[1])) *
                            (l[2] + (l[0] - l[1])) * (l[0] + (l[1] - l[2]));
         const double area = 0.5 * sqrt(arg);
-        if (area > 1e-9)
-        {
+        if (area > 1e-9) {
             l[0] = 0.25 * (l2[1] + l2[2] - l2[0]) / area;
             l[1] = 0.25 * (l2[2] + l2[0] - l2[1]) / area;
             l[2] = 0.25 * (l2[0] + l2[1] - l2[2]) / area;
@@ -409,9 +323,8 @@ void localCotanMatrix(const Eigen::MatrixXd &poly, const Eigen::Vector3d &min,
 //----------------------------------------------------------------------------------
 
 void localMassMatrix(const Eigen::MatrixXd &poly, const Eigen::Vector3d &min,
-                     Eigen::VectorXd &w, Eigen::MatrixXd &M)
-{
-    const int n = (int)poly.rows();
+                     Eigen::VectorXd &w, Eigen::MatrixXd &M) {
+    const int n = (int) poly.rows();
 
     M.resize(n, n);
 
@@ -422,8 +335,7 @@ void localMassMatrix(const Eigen::MatrixXd &poly, const Eigen::Vector3d &min,
 
     double l[3], l2[3];
 
-    for (int i = 0; i < n; ++i)
-    {
+    for (int i = 0; i < n; ++i) {
 
         const int i1 = (i + 1) % n;
 
@@ -460,11 +372,10 @@ void localMassMatrix(const Eigen::MatrixXd &poly, const Eigen::Vector3d &min,
 //----------------------------------------------------------------------------------
 
 void localGradientMatrix(const Eigen::MatrixXd &poly,
-                         const Eigen::Vector3d &min, Eigen::VectorXd &w,
-                         Eigen::MatrixXd &G)
-{
+                         const Eigen::Vector3d &min,
+                         Eigen::MatrixXd &G) {
 
-    const int n = (int)poly.rows();
+    const int n = (int) poly.rows();
 
     G.resize(3 * n, n + 1);
 
@@ -473,8 +384,7 @@ void localGradientMatrix(const Eigen::MatrixXd &poly,
     Eigen::Vector3d gradient_p, gradient_p0, gradient_p1, p, p0, p1;
 
     p = min;
-    for (int i = 0; i < n; ++i)
-    {
+    for (int i = 0; i < n; ++i) {
 
         const int i1 = (i + 1) % n;
 
@@ -484,8 +394,8 @@ void localGradientMatrix(const Eigen::MatrixXd &poly,
         gradient_p = gradient_hat_function(p, p0, p1);
         gradient_p0 = gradient_hat_function(p0, p1, p);
         gradient_p1 = gradient_hat_function(p1, p, p0);
-        for (int j = 0; j < 3; j++)
-        {
+
+        for (int j = 0; j < 3; j++) {
             G(3 * i + j, n) = gradient_p(j);
             G(3 * i + j, i) = gradient_p0(j);
             G(3 * i + j, i1) = gradient_p1(j);
@@ -493,3 +403,19 @@ void localGradientMatrix(const Eigen::MatrixXd &poly,
     }
 }
 //----------------------------------------------------------------------------------
+
+Eigen::Vector3d gradient_hat_function(Eigen::Vector3d &i, Eigen::Vector3d &j, Eigen::Vector3d &k) {
+    Eigen::Vector3d gradient, side, base, grad;
+    double area = 0.5 * ((j - i).cross(k - i)).norm();
+    side = i - j;
+    base = k - j;
+    const double eps = 1e-10;
+    grad = side - (side.dot(base) / base.norm()) * base / base.norm();
+    if (area < eps) {
+        gradient = Eigen::Vector3d(0, 0, 0);
+    } else {
+        grad = base.norm() * grad / grad.norm();
+        gradient = grad / (2.0 * area);
+    }
+    return gradient;
+}

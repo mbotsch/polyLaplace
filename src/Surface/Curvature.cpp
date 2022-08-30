@@ -11,8 +11,7 @@ using Triplet = Eigen::Triplet<double>;
 
 //=============================================================================
 
-enum LaplaceMethods
-{
+enum LaplaceMethods {
     PolySimpleLaplace = 0,
     AlexaWardetzkyLaplace = 1,
     Diamond = 2,
@@ -20,14 +19,12 @@ enum LaplaceMethods
     Harmonic = 4
 };
 
-enum InsertedPoint
-{
+enum InsertedPoint {
     Centroid = 0,
     AreaMinimizer = 2
 };
 
-void Curvature::visualize_curvature(unsigned int laplace, unsigned int min_point,bool lumped)
-{
+void Curvature::visualize_curvature(int laplace, int min_point, bool lumped) {
 
     if (!mesh_.n_vertices())
         return;
@@ -38,7 +35,6 @@ void Curvature::visualize_curvature(unsigned int laplace, unsigned int min_point
     auto curvatures = mesh_.add_vertex_property<Scalar>("v:curv");
 
     const unsigned int nv = mesh_.n_vertices();
-    const unsigned int ne = mesh_.n_edges();
 
     unsigned k = 0;
 
@@ -46,8 +42,7 @@ void Curvature::visualize_curvature(unsigned int laplace, unsigned int min_point
     Eigen::MatrixXd B(nv, 3);
     Eigen::VectorXd H(nv), test(3);
 
-    for (auto v : mesh_.vertices())
-    {
+    for (auto v: mesh_.vertices()) {
         B(v.idx(), 0) = points[v][0];
         B(v.idx(), 1) = points[v][1];
         B(v.idx(), 2) = points[v][2];
@@ -61,16 +56,13 @@ void Curvature::visualize_curvature(unsigned int laplace, unsigned int min_point
     Eigen::MatrixXd X = solver.solve(S * B);
     B = X;
     //     compute mean curvature
-    for (unsigned int i = 0; i < nv; i++)
-    {
+    for (unsigned int i = 0; i < nv; i++) {
         H(i) = B.row(i).norm();
     }
     double rms = 0.0;
-    for (auto v : mesh_.vertices())
-    {
+    for (auto v: mesh_.vertices()) {
         curvatures[v] = fabs(0.5 * H(k));
-        if (compare_to_sphere)
-        {
+        if (compare_to_sphere) {
             double c = 0.5 * H(k);
 //            std::cout << c << std::endl;
             rms += (c - 1.0) * (c - 1.0);
@@ -78,40 +70,27 @@ void Curvature::visualize_curvature(unsigned int laplace, unsigned int min_point
         k++;
     }
 
-    if (compare_to_sphere)
-    {
+    if (compare_to_sphere) {
 
-        rms /= (double)nv;
+        rms /= (double) nv;
         rms = sqrt(rms);
 
-        if (laplace == AlexaWardetzkyLaplace)
-        {
+        if (laplace == AlexaWardetzkyLaplace) {
             std::cout << "Curvature deviation (Alexa, l="
                       << poly_laplace_lambda_ << "): " << rms << std::endl;
-        }
-        else if (laplace == deGoesLaplace)
-        {
+        } else if (laplace == deGoesLaplace) {
             std::cout << "Curvature deviation (Disney, l="
                       << disney_laplace_lambda_ << "): " << rms << std::endl;
-        }
-        else
-        {
-            if (laplace == Diamond)
-            {
+        } else {
+            if (laplace == Diamond) {
                 std::cout << "Diamond Laplace ";
-            }
-            else
-            {
+            } else {
                 std::cout << "Sandwich Laplace ";
             }
-           if (min_point == AreaMinimizer)
-            {
+            if (min_point == AreaMinimizer) {
                 std::cout << "Curvature deviation (our Point): " << rms
                           << std::endl;
-            }
-
-            else
-            {
+            } else {
                 std::cout << "Curvature deviation (centroid): " << rms
                           << std::endl;
             }
@@ -124,85 +103,61 @@ void Curvature::visualize_curvature(unsigned int laplace, unsigned int min_point
 
 //-----------------------------------------------------------------------------
 
-double Curvature::compute_curvature_error(unsigned int laplace,
-                                          unsigned int min_point, bool lumped)
-{
+double Curvature::compute_curvature_error(int laplace, int min_point, bool lumped) {
     if (!mesh_.n_vertices())
         return -10000;
 
     auto points = mesh_.vertex_property<Point>("v:point");
     const unsigned int nv = mesh_.n_vertices();
-    const unsigned int ne = mesh_.n_edges();
-
-    unsigned k = 0;
-
     Eigen::SparseMatrix<double> M, S;
     Eigen::MatrixXd B(nv, 3);
     Eigen::VectorXd H(nv), test(3);
 
-    for (auto v : mesh_.vertices())
-    {
+    for (auto v: mesh_.vertices()) {
         B(v.idx(), 0) = points[v][0];
         B(v.idx(), 1) = points[v][1];
         B(v.idx(), 2) = points[v][2];
     }
 
-
     setup_stiffness_matrices(mesh_, S, laplace, min_point);
-    setup_mass_matrices(mesh_, M, laplace, min_point,lumped);
+    setup_mass_matrices(mesh_, M, laplace, min_point, lumped);
 
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
     solver.analyzePattern(M);
     solver.factorize(M);
     Eigen::MatrixXd X = solver.solve(S * B);
     B = X;
-
     //     compute mean curvature
-    for (unsigned int i = 0; i < nv; i++)
-    {
+    for (unsigned int i = 0; i < nv; i++) {
         H(i) = B.row(i).norm();
     }
     double rms = 0.0;
-    for (auto v : mesh_.vertices())
-    {
-        double c = 0.5 * H(k);
+    for (auto v: mesh_.vertices()) {
+        double c = 0.5 * H(v.idx());
         rms += (c - 1.0) * (c - 1.0);
-        k++;
     }
 
-        rms /= (double)nv;
+    rms /= (double) nv;
 
     rms = sqrt(rms);
 
-    if (laplace == AlexaWardetzkyLaplace)
-    {
+    if (laplace == AlexaWardetzkyLaplace) {
         std::cout << "Curvature deviation (Alexa, l=" << poly_laplace_lambda_
                   << "): " << rms << std::endl;
-    }
-    else if (laplace == deGoesLaplace)
-    {
+    } else if (laplace == deGoesLaplace) {
         std::cout << "Curvature deviation (Disney, l=" << disney_laplace_lambda_
                   << "): " << rms << std::endl;
-    }
-    else
-    {
-        if (laplace == Diamond)
-        {
+    } else {
+        if (laplace == Diamond) {
             std::cout << "Diamond Laplace ";
-        }
-
-        else
-        {
+        } else {
             std::cout << "Sandwich Laplace ";
         }
 
-      if (min_point == AreaMinimizer)
-        {
+        if (min_point == AreaMinimizer) {
             std::cout << "Curvature deviation (our Point): " << rms
                       << std::endl;
-        }
-        else
-        {
+        } else {
 
             std::cout << "Curvature deviation (centroid): " << rms << std::endl;
         }
@@ -210,8 +165,7 @@ double Curvature::compute_curvature_error(unsigned int laplace,
     return rms;
 }
 
-void Curvature::curvature_to_texture_coordinates() const
-{
+void Curvature::curvature_to_texture_coordinates() const {
     auto curvatures = mesh_.get_vertex_property<Scalar>("v:curv");
     assert(curvatures);
 
@@ -219,8 +173,7 @@ void Curvature::curvature_to_texture_coordinates() const
     std::vector<Scalar> values;
     values.reserve(mesh_.n_vertices());
 
-    for (auto v : mesh_.vertices())
-    {
+    for (auto v: mesh_.vertices()) {
         values.push_back(curvatures[v]);
     }
     std::sort(values.begin(), values.end());
@@ -236,15 +189,12 @@ void Curvature::curvature_to_texture_coordinates() const
     if (kmin < 0.0) // signed
     {
         kmax = std::max(fabs(kmin), fabs(kmax));
-        for (auto v : mesh_.vertices())
-        {
+        for (auto v: mesh_.vertices()) {
             tex[v] = TexCoord((0.5f * curvatures[v] / kmax) + 0.5f, 0.0);
         }
-    }
-    else // unsigned
+    } else // unsigned
     {
-        for (auto v : mesh_.vertices())
-        {
+        for (auto v: mesh_.vertices()) {
             tex[v] = TexCoord((curvatures[v] - kmin) / (kmax - kmin), 0.0);
         }
     }
@@ -254,5 +204,6 @@ void Curvature::curvature_to_texture_coordinates() const
     if (htex)
         mesh_.remove_halfedge_property(htex);
 }
+
 
 //=============================================================================

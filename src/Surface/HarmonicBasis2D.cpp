@@ -5,11 +5,10 @@
 #include "Spectra/SymGEigsShiftSolver.h"
 #include "Poisson_System.h"
 #include "Eigen/CholmodSupport"
-#include "igl/slice.h"
 #include "SpectralProcessing.h"
 #include "../HarmonicBase3D2D/HarmonicPolygon.hpp"
 
-void buildStiffnessAndMass2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>& K, Eigen::SparseMatrix<double>& M)
+void buildStiffnessAndMass2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>& S, Eigen::SparseMatrix<double>& M)
 {
     Eigen::MatrixXd V(mesh.n_vertices(),3);
     std::vector<std::vector<int>> poly;
@@ -27,11 +26,11 @@ void buildStiffnessAndMass2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>
     }
 
     const int nv = (int)V.rows();
-    std::vector<Eigen::Triplet<double>> tripK, tripM;
+    std::vector<Eigen::Triplet<double>> tripS, tripM;
 
     for(auto& p : poly) {
         Eigen::MatrixXd pts(p.size(), 3);
-        for(int i = 0; i < p.size(); ++i) {
+        for(unsigned int i = 0; i < p.size(); ++i) {
             pts(i, 0) = V(p[i], 0);
             pts(i, 1) = V(p[i], 1);
             pts(i, 2) = V(p[i], 2);
@@ -39,21 +38,21 @@ void buildStiffnessAndMass2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>
 
         HarmonicPolygon hp(pts);
 
-        Eigen::MatrixXd Ki, Mi;
+        Eigen::MatrixXd Si, Mi;
 
-        hp.stiffnessMatrix(Ki);
+        hp.stiffnessMatrix(Si);
         hp.massMatrix(Mi);
 
-        for(int i = 0; i < p.size(); ++i) {
-            for(int j = 0; j < p.size(); ++j) {
-                tripK.emplace_back(p[i], p[j], Ki(i, j));
+        for(unsigned int i = 0; i < p.size(); ++i) {
+            for(unsigned int j = 0; j < p.size(); ++j) {
+                tripS.emplace_back(p[i], p[j], Si(i, j));
                 tripM.emplace_back(p[i], p[j], Mi(i, j));
             }
         }
     }
 
-    K.resize(nv, nv);
-    K.setFromTriplets(tripK.begin(), tripK.end());
+    S.resize(nv, nv);
+    S.setFromTriplets(tripS.begin(), tripS.end());
 
     M.resize(nv, nv);
     M.setFromTriplets(tripM.begin(), tripM.end());
@@ -101,25 +100,35 @@ double solve_2D_Franke_harmonic(pmp::SurfaceMesh &mesh)
             else if (mesh.is_boundary(col)) iter.valueRef() = 0;
         }
 
-//    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
     //    Eigen::SimplicialLLT< Eigen::SparseMatrix< double > > solver;
-        Eigen::CholmodSupernodalLLT<Eigen::SparseMatrix<double> > solver;
+    Eigen::CholmodSupernodalLLT<Eigen::SparseMatrix<double> > solver;
 
     solver.compute(S);
     Eigen::VectorXd x = solver.solve(b);
     std::cout << "Size x :" << x.size() << std::endl;
     double error = 0.0;
-    for (auto v: mesh.vertices())
-    {
-
-//        std::cout << "x: " << x[v.idx()] << " Franke : " << franke_function(mesh.position(v)[0], mesh.position(v)[1]) << std::endl;
-        error += pow(x[v.idx()] - franke_function(mesh.position(v)[0], mesh.position(v)[1]), 2.);
+    int k = 0;
+    if (solver.info() != Eigen::Success) {
+        std::cerr << "harmonic(): Could not solve linear system\n";
+    } else {
+        // copy solution
+        for (auto v: mesh.vertices()) {
+            if (!mesh.is_boundary(v)) {
+                error += pow(x(v.idx()) - franke_function(mesh.position(v)[0],mesh.position(v)[1]), 2.0);
+                k++;
+            }
+        }
     }
+//    for (auto v: mesh.vertices())
+//    {
+////        std::cout << "x: " << x[v.idx()] << " Franke : " << franke_function(mesh.position(v)[0], mesh.position(v)[1]) << std::endl;
+//        error += pow(x[v.idx()] - franke_function(mesh.position(v)[0], mesh.position(v)[1]), 2.);
+//    }
 
     std::cout << "DoF " << mesh.n_vertices() << std::endl;
     std::cout << "Franke RMSE error inner vertices: "
-              << sqrt(error / (double)mesh.n_vertices()) << std::endl;
-    return sqrt(error / (double)mesh.n_vertices());
+              << sqrt(error / (double)k) << std::endl;
+    return sqrt(error / (double)k);
 }
 
 double solve_2D_harmonic_eigenvalue_problem(pmp::SurfaceMesh &mesh, Eigen::VectorXd &evalues, std::string& meshname_file)

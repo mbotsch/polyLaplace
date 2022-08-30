@@ -7,7 +7,7 @@
 #include <Eigen/SparseCore>
 #include <pmp/SurfaceMesh.h>
 
-void buildStiffnessAndMass2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>& K, Eigen::SparseMatrix<double>& M);
+void buildStiffnessAndMass2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>& S, Eigen::SparseMatrix<double>& M);
 
 double solve_2D_Franke_harmonic(pmp::SurfaceMesh &mesh);
 

@@ -20,31 +20,28 @@ enum LaplaceMethods
 {
     PolySimpleLaplace = 0,
     AlexaWardetzkyLaplace = 1,
-    CotanLaplace = 2,
-    Diamond = 3,
-    deGoesLaplace = 4
+    Diamond = 2,
+    deGoesLaplace = 3,
+    Harmonic = 4
 };
 
 
 void setup_stiffness_matrices(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &S,
-                              int Laplace, int minpoint)
-{
+                              int Laplace, int minpoint) {
 
-    if (Laplace == AlexaWardetzkyLaplace)
-    {
+    if (Laplace == AlexaWardetzkyLaplace) {
         setup_poly_Laplace_matrix(mesh, S);
         S *= 0.5;
-    }
-    else if (Laplace == CotanLaplace)
-    {
-        setup_triangle_Laplace_matrix(mesh, S);
-    }
-    else if (Laplace == PolySimpleLaplace)
-    {
+    }else if (Laplace == PolySimpleLaplace) {
         setup_stiffness_matrix(mesh, S, minpoint);
-    }
-    else if (Laplace == Diamond)
-    {
+    } else if (Laplace == Diamond) {
+        std::cout << "Properties stiffness" <<std::endl;
+        FaceProperty<pmp::Point> area_points;
+        FaceProperty<Eigen::VectorXd> area_weights;
+        if (!mesh.has_face_property("f:point") || !mesh.has_face_property("f:weights")) {
+            area_points = mesh.add_face_property<pmp::Point>("f:point");
+            area_weights = mesh.add_face_property<Eigen::VectorXd>("f:weights");
+        }
         setup_face_point_properties(mesh, minpoint);
         Eigen::SparseMatrix<double> G, D, Gra, Div, P;
         setup_prolongation_matrix(mesh, P);
@@ -53,8 +50,8 @@ void setup_stiffness_matrices(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &S,
         Gra = G * P;
         Div = P.transpose() * D;
         S = Div * Gra;
-    }
-    else if (Laplace == deGoesLaplace) {
+
+    } else if (Laplace == deGoesLaplace) {
         setup_disney_laplace_operator(mesh, S);
     }
 }
@@ -62,41 +59,26 @@ void setup_stiffness_matrices(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &S,
 //----------------------------------------------------------------------------------
 
 void setup_mass_matrices(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &M,
-                         int Laplace, int minpoint,bool lumped)
-{
+                         int Laplace, int minpoint, bool lumped) {
 
-    if (Laplace == AlexaWardetzkyLaplace)
-    {
+    if (Laplace == AlexaWardetzkyLaplace) {
         setup_poly_mass_matrix(mesh, M);
-    }
-    else if (Laplace == CotanLaplace)
-    {
-        setup_triangle_mass_matrix(mesh, M);
-    }
-    else if (Laplace == PolySimpleLaplace)
-    {
+    }else if (Laplace == PolySimpleLaplace) {
         setup_mass_matrix(mesh, M, minpoint);
-        if (lumped)
-        {
+        if (lumped) {
             lump_matrix(M);
         }
-    }
-    else if (Laplace == Diamond)
-    {
+    } else if (Laplace == Diamond) {
         Eigen::SparseMatrix<double> M_, P;
         setup_prolongation_matrix(mesh, P);
         setup_diamond_mass_matrix(mesh, M_);
         M = P.transpose() * M_ * P;
-    }
-    else if (Laplace == deGoesLaplace)
-    {
+    } else if (Laplace == deGoesLaplace) {
         setup_disney_mass_matrix(mesh, M);
     }
     double area = 0.0;
-    for (int k = 0; k < M.outerSize(); ++k)
-    {
-        for (SparseMatrix::InnerIterator it(M, k); it; ++it)
-        {
+    for (int k = 0; k < M.outerSize(); ++k) {
+        for (SparseMatrix::InnerIterator it(M, k); it; ++it) {
             area += it.value();
         }
     }
@@ -104,35 +86,25 @@ void setup_mass_matrices(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &M,
 }
 //----------------------------------------------------------------------------------
 
-void setup_gradient(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &G, int Laplace, int minpoint ){
-    if (Laplace == AlexaWardetzkyLaplace)
-    {
+void setup_gradient(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &G, int Laplace, int minpoint) {
+    if (Laplace == AlexaWardetzkyLaplace) {
         setup_poly_gradient_operator(mesh, G);
         G *= 0.5;
-    }
-    else if (Laplace == deGoesLaplace)
-    {
+    } else if (Laplace == deGoesLaplace) {
         setup_disney_gradient_operator(mesh, G);
-    }
-    else if (Laplace == PolySimpleLaplace)
-    {
+    } else if (Laplace == PolySimpleLaplace) {
         G.resize(3 * mesh.n_faces(), mesh.n_vertices());
         setup_sandwich_gradient_matrix(mesh, G, minpoint);
     }
 }
 //----------------------------------------------------------------------------------
 
-void setup_divergence(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &D, int Laplace, int minpoint ){
-    if (Laplace == AlexaWardetzkyLaplace)
-    {
+void setup_divergence(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &D, int Laplace, int minpoint) {
+    if (Laplace == AlexaWardetzkyLaplace) {
         setup_poly_divergence_operator(mesh, D);
-    }
-    else if (Laplace == deGoesLaplace)
-    {
+    } else if (Laplace == deGoesLaplace) {
         setup_disney_divergence_operator(mesh, D);
-    }
-    else
-    {
+    } else {
         D.resize(mesh.n_vertices(), 3 * mesh.n_faces());
         setup_sandwich_divergence_matrix(mesh, D, minpoint);
     }

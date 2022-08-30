@@ -27,7 +27,7 @@ enum InsertedPoint
 void compute_primal_points(SurfaceMesh &mesh, int minpoint)
 {
 
-    auto primal_points = mesh.get_face_property<Point>("f:point");
+    FaceProperty<pmp::Point> area_points = mesh.get_face_property<pmp::Point>("f:point");
     Eigen::VectorXd w;
     Eigen::MatrixXd poly;
     Eigen::Vector3d point;
@@ -58,7 +58,7 @@ void compute_primal_points(SurfaceMesh &mesh, int minpoint)
         }
         Eigen::Vector3d min = poly.transpose() * w;
         Point p = Point(min[0], min[1], min[2]);
-        primal_points[f] = p;
+        area_points[f] = p;
     }
 }
 

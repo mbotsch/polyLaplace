@@ -13,9 +13,6 @@ if (EMSCRIPTEN)
     add_library(poly STATIC ${HEADERS} ${SOURCES})
     target_link_libraries(poly pmp_vis VolumeMesh)
 
-    add_executable(run_surface_tests run_surface_tests.cpp)
-    target_link_libraries(run_surface_tests ${OBJS} poly )
-
     add_executable(run_volume_tests run_volume_tests.cpp)
     target_link_libraries(run_volume_tests ${OBJS} poly VolumeMesh cholmod)
 
@@ -34,9 +31,6 @@ else ()
 
     add_library(poly STATIC ${HEADERS} ${SOURCES})
     target_link_libraries(poly pmp_vis VolumeMesh)
-
-    add_executable(run_surface_tests run_surface_tests.cpp)
-    target_link_libraries(run_surface_tests ${OBJS} poly cholmod )
 
     add_executable(run_volume_tests run_volume_tests.cpp)
     target_link_libraries(run_volume_tests ${OBJS} poly VolumeMesh cholmod)

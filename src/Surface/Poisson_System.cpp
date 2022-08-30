@@ -6,13 +6,13 @@
 
 using namespace std;
 
-enum LaplaceMethods {
+enum LaplaceMethods
+{
     PolySimpleLaplace = 0,
     AlexaWardetzkyLaplace = 1,
-    CotanLaplace = 2,
-    Diamond = 3,
-    deGoesLaplace = 4,
-    Harmonic = 5
+    Diamond = 2,
+    deGoesLaplace = 3,
+    Harmonic = 4
 };
 
 enum InsertedPoint {
@@ -224,8 +224,7 @@ double spherical_harmonic_function_scaled(double x, double y, double z) {
 
 //-----------------------------------------------------------------------------
 
-void solve_laplace_equation(SurfaceMesh &mesh, int laplace, int face_point,
-                            int degree, CoarseDimension coarseningType) {
+void solve_laplace_equation(SurfaceMesh &mesh, int laplace, int face_point) {
     Eigen::SparseMatrix<double> M, S, S_f;
     Eigen::MatrixXd B = Eigen::MatrixXd::Zero(mesh.n_vertices(), 3);
 

@@ -79,10 +79,9 @@ void Viewer::process_imgui()
         static int laplace = 0;
         ImGui::RadioButton("Polysimple Laplace", &laplace, 0);
         ImGui::RadioButton("AlexaWardetzky Laplace", &laplace, 1);
-        ImGui::RadioButton("Cotan Laplace", &laplace, 2);
-        ImGui::RadioButton("Diamond", &laplace, 3);
-        ImGui::RadioButton("deGoes Laplace", &laplace, 4);
-        ImGui::RadioButton("Harmonic", &laplace, 5);
+        ImGui::RadioButton("Diamond", &laplace, 2);
+        ImGui::RadioButton("deGoes Laplace", &laplace, 3);
+        ImGui::RadioButton("Harmonic", &laplace, 4);
 
         ImGui::Spacing();
 

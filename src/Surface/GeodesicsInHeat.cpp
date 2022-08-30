@@ -17,13 +17,12 @@
 
 enum LaplaceMethods
 {
-
     PolySimpleLaplace = 0,
     AlexaWardetzkyLaplace = 1,
-    CotanLaplace = 2,
-    Diamond = 3,
-    deGoesLaplace = 5,
-    SEC = 6
+    Diamond = 2,
+    deGoesLaplace = 3,
+    Harmonic = 4
+
 };
 
 enum InsertedPoint
@@ -44,8 +43,10 @@ GeodesicsInHeat::GeodesicsInHeat(pmp::SurfaceMesh &mesh, int laplace,
       mean_edge_(mean_edge)
 {
     SurfaceNormals::compute_face_normals(mesh_);
-    mesh_.add_face_property<Point>("f:point");
-    mesh_.add_face_property<Eigen::VectorXd>("f:weights");
+    if (!mesh.has_face_property("f:point") || !mesh.has_face_property("f:weights")) {
+         mesh_.add_face_property<pmp::Point>("f:point");
+         mesh_.add_face_property<Eigen::VectorXd>("f:weights");
+    }
     setup_face_point_properties(mesh_, min_point);
 }
 
@@ -106,6 +107,8 @@ void GeodesicsInHeat::compute_geodesics(bool lumped)
 
     if (laplace_ == Diamond)
     {
+        std::cout << "Properties gradient" <<std::endl;
+
         Eigen::SparseMatrix<double> G, D;
         compute_primal_points(mesh_, min_point_);
         setup_diamond_gradient_divergence_intrinsic(mesh_, G, D);
@@ -118,17 +121,9 @@ void GeodesicsInHeat::compute_geodesics(bool lumped)
         setup_divergence(mesh_,divOperator,laplace_,min_point_);
     }
 
-    Eigen::SparseMatrix<double> L, A, M, M_bar;
+    Eigen::SparseMatrix<double> S, A, M;
 
-    if (laplace_ == CotanLaplace)
-    {
-        //boundary handling in triangle laplace matrix
-        L = divOperator * gradOperator;
-    }
-    else
-    {
-        setup_stiffness_matrices(mesh_, L, laplace_, min_point_);
-    }
+    setup_stiffness_matrices(mesh_, S, laplace_, min_point_);
     setup_mass_matrices(mesh_, M, laplace_, min_point_, lumped);
 
     double h;
@@ -140,10 +135,10 @@ void GeodesicsInHeat::compute_geodesics(bool lumped)
     {
         h = pow(maxEdgeLength(mesh_), 2);
     }
-    A = M - h * L;
+    A = M - h * S;
 
-    cholL.analyzePattern(L);
-    cholL.factorize(L);
+    cholL.analyzePattern(S);
+    cholL.factorize(S);
 
     cholA.analyzePattern(A);
     cholA.factorize(A);
@@ -251,11 +246,6 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
             std::cout << "Distance deviation sphere (deGoes, l="
                       << disney_laplace_lambda_ << "): " << rms << std::endl;
         }
-        else if (laplace_ == CotanLaplace)
-        {
-            std::cout << "Distance deviation sphere (Cotan): " << rms
-                      << std::endl;
-        }
         else
         {
             if (laplace_ == PolySimpleLaplace)
@@ -290,11 +280,6 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
         {
             std::cout << "Distance deviation plane (deGoes, l="
                       << disney_laplace_lambda_ << "): " << rms << std::endl;
-        }
-        else if (laplace_ == CotanLaplace)
-        {
-            std::cout << "Distance deviation sphere (Cotan): " << rms
-                      << std::endl;
         }
         else
         {

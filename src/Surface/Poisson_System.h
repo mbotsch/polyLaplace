@@ -28,5 +28,3 @@ double spherical_harmonic_function(double x, double y, double z);
 double spherical_harmonic_function_scaled(double x, double y, double z);
 
 void solve_laplace_equation(pmp::SurfaceMesh &mesh, int laplace, int face_point);
-
-double condition_number(pmp::SurfaceMesh &mesh, int laplace, int minpoint);

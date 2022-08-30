@@ -9,130 +9,21 @@ const double eps = 1e-10;
 
 #include <pmp/Timer.h>
 
-
 //=============================================================================
 
 using SparseMatrix = Eigen::SparseMatrix<double>;
 using Triplet = Eigen::Triplet<double>;
 
-bool clamp_cotan_ = false;
-
 //=============================================================================
 
 enum InsertedPoint {
     Centroid = 0,
-    AbsAreaMinimizer = 1,
     AreaMinimizer = 2,
-    Triangle_Circumcenter = 3
 };
 
-//=================== Setup Laplace matrices ==========================================================
+//=================== Setup P matrix ==========================================================
 
-
-unsigned int num_negative(const SparseMatrix &_mat) {
-    unsigned int count(0);
-
-    for (int k = 0; k < _mat.outerSize(); ++k)
-        for (SparseMatrix::InnerIterator it(_mat, k); it; ++it)
-            if (it.value() < -0.00000001 && it.row() != it.col())
-                ++count;
-
-    return count;
-}
-
-
-//-----------------------------------------------------------------------------
-
-unsigned int num_nonzero(const Eigen::SparseMatrix<double> &_mat) {
-    unsigned int count(0);
-
-    for (int k = 0; k < _mat.outerSize(); ++k)
-        for (SparseMatrix::InnerIterator it(_mat, k); it; ++it)
-            if (fabs(it.value()) > 1e-10 && it.row() != it.col())
-                ++count;
-
-    return count;
-}
-
-
-//-----------------------------------------------------------------------------
-
-unsigned int sparsity(const SparseMatrix &_mat) {
-    unsigned int count(0);
-
-    for (int k = 0; k < _mat.outerSize(); ++k)
-        for (SparseMatrix::InnerIterator it(_mat, k); it; ++it)
-            if (fabs(it.value()) > 1e-10)
-                ++count;
-
-    return count;
-}
-
-//-----------------------------------------------------------------------------
-
-double cot_angle(const pmp::Point &i, const pmp::Point &j, const pmp::Point &k) {
-    double weight = 0.0;
-
-    const pmp::dvec3 d0 = (pmp::dvec3) i - (pmp::dvec3) k;
-    const pmp::dvec3 d1 = (pmp::dvec3) j - (pmp::dvec3) k;
-    const double area = norm(cross(d0, d1));
-    if (0.5 * area > eps) {
-        const double cot = dot(d0, d1) / area;
-        weight += pmp::clamp_cot(cot);
-    }
-
-    assert(!std::isnan(weight));
-    assert(!std::isinf(weight));
-
-    return clamp_cotan_ ? std::max(0.0, weight) : weight;
-}
-
-//-----------------------------------------------------------------------------
-
-void setup_triangle_Laplace_matrix(pmp::SurfaceMesh &mesh,
-                                   Eigen::SparseMatrix<double> &L) {
-
-    const unsigned int nv = mesh.n_vertices();
-
-    // nonzero elements of L as triplets: (row, column, value)
-    std::vector<Triplet> triplets;
-
-    // setup matrix L
-    double ww, weight;
-    pmp::Vertex v, vv;
-    pmp::Edge e;
-
-    // compute nonzero elements of existing vertices for L
-    for (unsigned int i = 0; i < nv; ++i) {
-        v = pmp::Vertex(i);
-        if (!mesh.is_boundary(v)) {
-            ww = 0.0;
-            for (auto h : mesh.halfedges(v)) {
-                vv = mesh.to_vertex(h);
-                e = mesh.edge(h);
-                weight = pmp::cotan_weight(mesh, e);
-
-                // clamping cotan if it was choosen in the settings
-                weight = clamp_cotan_ ? std::max(0.0, weight) : weight;
-                ww -= weight;
-
-                triplets.emplace_back(i, vv.idx(), 0.5 * weight);
-            }
-            // center vertex -> matrix
-            triplets.emplace_back(i, i, 0.5 * ww);
-        } else {
-            triplets.emplace_back(i, i, 1.0);
-        }
-    }
-
-    // build sparse matrix from triplets
-    L.resize(mesh.n_vertices(), mesh.n_vertices());
-    L.setFromTriplets(triplets.begin(), triplets.end());
-}
-
-//=================== Setup A matrix ==========================================================
-
-void setup_prolongation_matrix(pmp::SurfaceMesh &mesh, SparseMatrix &A) {
+void setup_prolongation_matrix(pmp::SurfaceMesh &mesh, SparseMatrix &P) {
 
     auto area_weights = mesh.get_face_property<Eigen::VectorXd>("f:weights");
 
@@ -159,27 +50,8 @@ void setup_prolongation_matrix(pmp::SurfaceMesh &mesh, SparseMatrix &A) {
     }
 
     // build sparse matrix from triplets
-    A.resize(nv + nf, nv);
-    A.setFromTriplets(tripletsA.begin(), tripletsA.end());
-}
-
-
-//=================== Setup mass matrices ==========================================================
-
-
-void setup_triangle_mass_matrix(pmp::SurfaceMesh &mesh,
-                                Eigen::SparseMatrix<double> &M) {
-    const unsigned int nv = mesh.n_vertices();
-    M.resize(nv, nv);
-    // nonzero elements of M
-    std::vector<Triplet> tripletsM;
-    for (auto v : mesh.vertices()) {
-        double area(0.0);
-        area = pmp::voronoi_area(mesh, v);
-        tripletsM.emplace_back(v.idx(), v.idx(), area);
-    }
-    // build sparse matrix from triplets
-    M.setFromTriplets(tripletsM.begin(), tripletsM.end());
+    P.resize(nv + nf, nv);
+    P.setFromTriplets(tripletsA.begin(), tripletsA.end());
 }
 
 //-----------------------------------------------------------------------------
@@ -194,84 +66,6 @@ void lump_matrix(SparseMatrix &D) {
         }
     }
     D.setFromTriplets(triplets.begin(), triplets.end());
-}
-
-//-----------------------------------------------------------------------------
-
-void abs_lump_matrix(SparseMatrix &D) {
-
-    std::vector<Triplet> triplets;
-    triplets.reserve(D.rows() * 20);
-    for (int k = 0; k < D.outerSize(); ++k) {
-        for (SparseMatrix::InnerIterator it(D, k); it; ++it) {
-            if (it.row() == it.col()) {
-                triplets.emplace_back(it.row(), it.row(), it.value());
-
-            }
-        }
-    }
-    D.setFromTriplets(triplets.begin(), triplets.end());
-}
-
-//-----------------------------------------------------------------------------
-
-void invert_mass_matrix(SparseMatrix &M) {
-
-    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
-    solver.compute(M);
-    Eigen::SparseMatrix<double> I(M.rows(), M.cols());
-    I.setIdentity();
-    auto M_inv = solver.solve(I);
-    M = M_inv;
-}
-
-//===================Area Computations ==========================================================
-
-
-pmp::Scalar my_surface_area(const pmp::SurfaceMesh &mesh) {
-    pmp::Scalar area(0);
-    for (auto f : mesh.faces()) {
-        area += face_area(mesh, f);
-    }
-    return area;
-}
-
-//-----------------------------------------------------------------------------
-
-double face_area(const pmp::SurfaceMesh &mesh, pmp::Face f) {
-     double a = 0.0;
-    pmp::Point C = centroid(mesh, f);
-    pmp::Point Q, R;
-    for (auto h : mesh.halfedges(f)) {
-        // three vertex positions
-        Q = mesh.position(mesh.from_vertex(h));
-        R = mesh.position(mesh.to_vertex(h));
-
-        a += pmp::triangle_area(C, Q, R);
-    }
-
-    return a;
-}
-
-//-----------------------------------------------------------------------------
-
-pmp::Point my_centroid(const pmp::SurfaceMesh &mesh) {
-    pmp::Point center(0, 0, 0), c;
-    pmp::Scalar area(0), a;
-    for (auto f : mesh.faces()) {
-        int count = 0;
-        c = pmp::Point(0, 0, 0);
-        for (auto v : mesh.vertices(f)) {
-            c += mesh.position(v);
-            count++;
-        }
-        c /= (pmp::Scalar) count;
-        a = (pmp::Scalar) face_area(mesh, f);
-        area += a;
-        center += a * c;
-    }
-    return center /= area;
-
 }
 
 //===================Gradient matrix Computation ==========================================================
@@ -307,143 +101,7 @@ Eigen::Vector3d gradient_hat_function(Eigen::Vector3d i, Eigen::Vector3d j, Eige
         grad = base.norm() * grad / grad.norm();
         gradient = grad / (2.0 * area);
     }
-
     return gradient;
-}
-//-----------------------------------------------------------------------------
-
-void setup_Gradient_Matrix(pmp::SurfaceMesh &mesh, SparseMatrix &G) {
-
-    SparseMatrix A;
-    setup_prolongation_matrix(mesh, A);
-
-    const unsigned int nv = mesh.n_vertices();
-    const unsigned int nf = mesh.n_faces();
-    pmp::Point p, p0, p1;
-    pmp::Vertex v0, v1;
-    int nr_triangles = 0;
-    int k = 0;
-    auto area_points = mesh.get_face_property<pmp::Point>("f:point");
-    Eigen::Vector3d gradient_p, gradient_p0, gradient_p1;
-    // nonzero elements of G as triplets: (row, column, value)
-    std::vector<Triplet> triplets;
-
-    for (pmp::Face f : mesh.faces()) {
-        nr_triangles += mesh.valence(f);
-        p = area_points[f];
-        for (auto h : mesh.halfedges(f)) {
-            v0 = mesh.from_vertex(h);
-            v1 = mesh.to_vertex(h);
-
-            p0 = mesh.position(v0);
-            p1 = mesh.position(v1);
-
-            gradient_p = gradient_hat_function(p, p0, p1);
-            gradient_p0 = gradient_hat_function(p0, p1, p);
-            gradient_p1 = gradient_hat_function(p1, p, p0);
-
-            for (int j = 0; j < 3; j++) {
-                triplets.emplace_back(3 * k + j, nv + f.idx(), gradient_p(j));
-                triplets.emplace_back(3 * k + j, v0.idx(), gradient_p0(j));
-                triplets.emplace_back(3 * k + j, v1.idx(), gradient_p1(j));
-            }
-            k++;
-        }
-    }
-
-    G.resize(3 * nr_triangles, nv + nf);
-    G.setFromTriplets(triplets.begin(), triplets.end());
-    G = G * A;
-}
-
-//-----------------------------------------------------------------------------
-void setup_triangle_Gradient_Matrix(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double> &G) {
-
-    const unsigned int nv = mesh.n_vertices();
-    const unsigned int nf = mesh.n_faces();
-    pmp::Point p2, p0, p1;
-    int k = 0;
-    Eigen::Vector3d gradient_p0, gradient_p1, gradient_p2;
-
-    // nonzero elements of G as triplets: (row, column, value)
-    std::vector<Triplet> triplets;
-    for (pmp::Face f : mesh.faces()) {
-        std::vector<pmp::Vertex> vertex_idx;
-        if (mesh.valence(f) != 3) { std::cerr << "NOT A TRIANGLE MESH!" << std::endl; }
-        for (auto v : mesh.vertices(f)) {
-            vertex_idx.push_back(v);
-        }
-        p0 = mesh.position(vertex_idx[0]);
-        p1 = mesh.position(vertex_idx[1]);
-        p2 = mesh.position(vertex_idx[2]);
-
-        gradient_p0 = gradient_hat_function(p0, p1, p2);
-        gradient_p1 = gradient_hat_function(p1, p2, p0);
-        gradient_p2 = gradient_hat_function(p2, p0, p1);
-
-        for (int j = 0; j < 3; j++) {
-            triplets.emplace_back(3 * f.idx() + j, vertex_idx[0].idx(), gradient_p0(j));
-            triplets.emplace_back(3 * f.idx() + j, vertex_idx[1].idx(), gradient_p1(j));
-            triplets.emplace_back(3 * f.idx() + j, vertex_idx[2].idx(), gradient_p2(j));
-
-        }
-
-    }
-
-    G.resize(3 * nf, nv);
-    G.setFromTriplets(triplets.begin(), triplets.end());
-}
-
-void setup_triangle_Gradient_Mass_Matrix(pmp::SurfaceMesh &mesh,
-                                         Eigen::SparseMatrix<double> &M) {
-
-    std::vector<Eigen::Triplet<double>> triplets;
-    for (auto f : mesh.faces()) {
-        double area = triangle_area(mesh, f);
-        for (int j = 0; j < 3; j++) {
-            int idx = 3 * f.idx() + j;
-            triplets.emplace_back(idx, idx, area);
-        }
-    }
-    M.resize(3 * mesh.n_faces(), 3 * mesh.n_faces());
-    M.setFromTriplets(triplets.begin(), triplets.end());
-}
-//-----------------------------------------------------------------------------
-
-void setup_Divergence_Matrix(pmp::SurfaceMesh &mesh, SparseMatrix &Gt) {
-    SparseMatrix G, M;
-    setup_Gradient_Matrix(mesh, G);
-    setup_Gradient_Mass_Matrix(mesh, M);
-//    std::cout << M << std::endl;
-    Gt = -G.transpose() * M;
-}
-
-//-----------------------------------------------------------------------------
-
-void setup_Gradient_Mass_Matrix(pmp::SurfaceMesh &mesh,
-                                Eigen::SparseMatrix<double> &M) {
-    auto area_points = mesh.get_face_property<pmp::Point>("f:point");
-    double area;
-    std::vector<Eigen::Triplet<double>> triplets;
-    int valence, idx, c = 0;
-    for (auto f : mesh.faces()) {
-        valence = mesh.valence(f);
-        int i = 0;
-        for (auto h : mesh.halfedges(f)) {
-            pmp::Point p0 = mesh.position(mesh.from_vertex(h));
-            pmp::Point p1 = mesh.position(mesh.to_vertex(h));
-            area = triangle_area(p0, p1, area_points[f]);
-            for (int j = 0; j < 3; j++) {
-                idx = c + 3 * i + j;
-                triplets.emplace_back(idx, idx, area);
-            }
-            i++;
-        }
-        c += valence * 3;
-    }
-    M.resize(c, c);
-
-    M.setFromTriplets(triplets.begin(), triplets.end());
 }
 
 //===================Minimization for Squared Area Point through vertex weights derivatives=============================
@@ -474,12 +132,6 @@ void setup_face_point_properties(pmp::SurfaceMesh &mesh, unsigned int min_point)
             int val = poly.rows();
             w = Eigen::MatrixXd::Ones(val, 1);
             w /= (double) val;
-        } else if (min_point == AbsAreaMinimizer) {
-            optimizeAbsoluteTriangleArea(poly, p);
-            find_weights_for_point(poly, p, w);
-        } else if (min_point == Triangle_Circumcenter) {
-            p = triangle_circumcenter(poly);
-            barycentric_weights_triangle(poly, p, w);
         } else {
             // All other methods not relevant atm, so squared triangle area minimization is default
             find_area_minimizer_weights(poly, w);
@@ -554,11 +206,12 @@ void find_area_minimizer_weights(const Eigen::MatrixXd &poly,
 
 
 //====================================================================
+
     Eigen::MatrixXd M(val + 1, val);
     M.block(0, 0, val, val) = 4 * J;
     M.block(val, 0, 1, val).setOnes();
 
-//===========================Mario ===================================
+//====================================================================
 
     Eigen::VectorXd b_(val + 1);
     b_.block(0, 0, val, 1) = 4 * b;
@@ -780,42 +433,4 @@ void barycentric_weights_triangle(const Eigen::MatrixXd &poly,
     weights(1) = (d11 * d20 - d01 * d21) / denom;
     weights(2) = (d00 * d21 - d01 * d20) / denom;
     weights(0) = 1.0f - weights(1) - weights(2);
-}
-void insert_points(pmp::SurfaceMesh& mesh_,unsigned int minpoint)
-{
-
-    Eigen::MatrixXd poly;
-    Eigen::VectorXd w;
-
-    for (pmp::Face f : mesh_.faces())
-    {
-        const int n = mesh_.valence(f);
-        poly.resize(n, 3);
-        int i = 0;
-        for (pmp::Vertex v : mesh_.vertices(f))
-        {
-            for (int h = 0; h < 3; h++)
-            {
-                poly.row(i)(h) = mesh_.position(v)[h];
-            }
-            i++;
-        }
-
-        // compute weights for the polygon
-        Eigen::Vector3d p;
-        if (minpoint == Centroid)
-        {
-            int val = poly.rows();
-            w = Eigen::MatrixXd::Ones(val, 1);
-            w /= (double)val;
-        }
-        else
-        {
-            find_area_minimizer_weights(poly, w);
-        }
-        Eigen::Vector3d point = poly.transpose() * w;
-        pmp::Vertex ver = mesh_.add_vertex(pmp::Point(point(0), point(1), point(2)));
-        mesh_.split(f, ver);
-    }
-    mesh_.garbage_collection();
 }

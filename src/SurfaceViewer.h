@@ -38,7 +38,6 @@ protected:
 
 private: // private methods
     unsigned int laplace_matrix, min_point_;
-    CoarseDimension coarseningType_;
     bool compare_sphere;
     bool compare_cube;
     bool time_step_;

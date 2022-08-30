@@ -31,7 +31,7 @@ enum VolumePoints
 
 double solve_eigenvalue_problem(VolumeMesh &mesh,std::string mesh_,Eigen::VectorXd &evalues,
                                 int Laplace, int face_point, int cell_point,
-                                std::string meshname, int degree,CoarseDimension dof)
+                                std::string meshname)
 {
     std::string filename;
     if (Laplace == Diamond)
@@ -60,8 +60,8 @@ double solve_eigenvalue_problem(VolumeMesh &mesh,std::string mesh_,Eigen::Vector
     Eigen::SparseMatrix<double> M, S;
     Eigen::VectorXd b(mesh.n_vertices());
 
-    setup_3D_stiffness_matrix(mesh, S, Laplace, face_point, cell_point, degree);
-    setup_3D_mass_matrix(mesh, M, Laplace, face_point, cell_point, degree);
+    setup_3D_stiffness_matrix(mesh, S, Laplace, face_point, cell_point);
+    setup_3D_mass_matrix(mesh, M, Laplace, face_point, cell_point);
     {
         std::ofstream file("M_diamond2.mtx");
         file <<  std::setprecision(32);

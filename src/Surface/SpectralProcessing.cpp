@@ -28,10 +28,11 @@ enum LaplaceMethods
 {
     PolySimpleLaplace = 0,
     AlexaWardetzkyLaplace = 1,
-    CotanLaplace = 2,
-    Diamond = 3,
-    deGoesLaplace = 4
+    Diamond = 2,
+    deGoesLaplace = 3,
+    Harmonic = 4
 };
+
 enum InsertedPoint
 {
     Centroid = 0,
@@ -39,7 +40,6 @@ enum InsertedPoint
 };
 
 double solve_eigenvalue_problem(SurfaceMesh &mesh, int laplace, int face_point,
-                                int degree, CoarseDimension coarseningType,
                                 std::string meshname)
 {
     std::string filename;
@@ -223,7 +223,7 @@ double sphericalHarmonic(pmp::Point p, int l, int m)
 //----------------------------------------------------------------------------
 
 double rmse_sh(SurfaceMesh &mesh, unsigned int laplace, unsigned int min_point_,
-               bool lumped, int degree, CoarseDimension coarseningType)
+               bool lumped)
 {
     auto points = mesh.vertex_property<Point>("v:point");
 

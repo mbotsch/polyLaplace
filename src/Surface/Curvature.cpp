@@ -15,9 +15,9 @@ enum LaplaceMethods
 {
     PolySimpleLaplace = 0,
     AlexaWardetzkyLaplace = 1,
-    CotanLaplace = 2,
-    Diamond = 3,
-    deGoesLaplace = 4
+    Diamond = 2,
+    deGoesLaplace = 3,
+    Harmonic = 4
 };
 
 enum InsertedPoint
@@ -88,11 +88,6 @@ void Curvature::visualize_curvature(unsigned int laplace, unsigned int min_point
         {
             std::cout << "Curvature deviation (Alexa, l="
                       << poly_laplace_lambda_ << "): " << rms << std::endl;
-        }
-        else if (laplace == CotanLaplace)
-        {
-            std::cout << "Curvature deviation Cotan Laplacian: " << rms
-                      << std::endl;
         }
         else if (laplace == deGoesLaplace)
         {
@@ -172,8 +167,6 @@ double Curvature::compute_curvature_error(unsigned int laplace,
     {
         double c = 0.5 * H(k);
         rms += (c - 1.0) * (c - 1.0);
-//        std::cout << c << std::endl;
-
         k++;
     }
 
@@ -185,11 +178,6 @@ double Curvature::compute_curvature_error(unsigned int laplace,
     {
         std::cout << "Curvature deviation (Alexa, l=" << poly_laplace_lambda_
                   << "): " << rms << std::endl;
-    }
-    else if (laplace == CotanLaplace)
-    {
-        std::cout << "Curvature deviation Cotan Laplacian: " << rms
-                  << std::endl;
     }
     else if (laplace == deGoesLaplace)
     {
@@ -219,7 +207,6 @@ double Curvature::compute_curvature_error(unsigned int laplace,
             std::cout << "Curvature deviation (centroid): " << rms << std::endl;
         }
     }
-
     return rms;
 }
 

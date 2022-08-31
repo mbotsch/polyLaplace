@@ -68,17 +68,12 @@ setup_3D_mass_matrix(VolumeMesh &mesh, Eigen::SparseMatrix<double> &M, int Lapla
         M /= 2.0;
     } else if (Laplace == PolySimpleLaplace) {
         setup_3D_sandwich_mass_matrix(mesh, M, face_point, cell_point);
-        std::cout << "-----------------------" << std::endl;
-        std::cout << "Sandwich mass: \n" << M << std::endl;
     } else if (Laplace == Dual_Laplace) {
         setup_3D_dual_mass_matrix_libigl(mesh, M);
     }
     double count = 0;
     for (int k = 0; k < M.outerSize(); ++k) {
         for (SparseMatrix::InnerIterator it(M, k); it; ++it) {
-            if (it.row() == it.col()) {
-                double val = it.value();
-            }
             count += it.value();
         }
     }

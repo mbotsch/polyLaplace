@@ -16,7 +16,7 @@ if (EMSCRIPTEN)
     add_executable(run_volume_tests run_volume_tests.cpp)
     target_link_libraries(run_volume_tests ${OBJS} poly VolumeMesh cholmod)
 
-    add_executable(run_surface_convergence run_surface_convergence.cpp)
+    add_executable(run_surface_convergence run_surface_tests.cpp)
     target_link_libraries(run_surface_convergence ${OBJS} poly)
 
     add_executable(surface_viewer surface_viewer_main.cpp  SurfaceViewer.cpp)
@@ -35,7 +35,7 @@ else ()
     add_executable(run_volume_tests run_volume_tests.cpp)
     target_link_libraries(run_volume_tests ${OBJS} poly VolumeMesh cholmod)
 
-    add_executable(run_surface_convergence run_surface_convergence.cpp)
+    add_executable(run_surface_convergence run_surface_tests.cpp)
     target_link_libraries(run_surface_convergence ${OBJS} pmp poly cholmod)
 
     add_executable(surface_viewer surface_viewer_main.cpp  SurfaceViewer.cpp SurfaceViewer.h )

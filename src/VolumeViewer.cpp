@@ -76,27 +76,25 @@ void VolumeViewer::process_imgui() {
 
     static int laplace = 0;
     ImGui::RadioButton("Diamond", &laplace, 0);
-    ImGui::RadioButton("Primal Laplace", &laplace, 1);
-    ImGui::RadioButton("Dual Laplace", &laplace, 2);
+    ImGui::RadioButton("Dual Laplace", &laplace, 1);
+    ImGui::RadioButton("Polysimple Laplace", &laplace, 2);
     ImGui::RadioButton("Harmonic Basis", &laplace, 3);
-    ImGui::RadioButton("Sandwich Laplace", &laplace, 4);
-    ImGui::RadioButton("AQAPoly", &laplace, 6);
     ImGui::Spacing();
-    laplace_matrix = (unsigned) laplace;
+    laplace_matrix = laplace;
     ImGui::Spacing();
     ImGui::Spacing();
 
     static int face_point = 0;
     ImGui::RadioButton("Area minimizer", &face_point, Quadratic_Areas_);
     ImGui::RadioButton("Face Centroid", &face_point, Face_Centroid);
-    face_point_ = (unsigned) face_point;
+    face_point_ = face_point;
     ImGui::Spacing();
     ImGui::Spacing();
 
     static int cell_point = 0;
     ImGui::RadioButton("Volume minimizer", &cell_point, Quadratic_Volume_);
     ImGui::RadioButton("Cell Centroid", &cell_point, Cell_Centroid_);
-    cell_point_ = (unsigned) cell_point;
+    cell_point_ = cell_point;
     if (ImGui::Button("Kugelize")) {
         kugelize(mesh_);
         update_mesh();
@@ -122,7 +120,7 @@ void VolumeViewer::process_imgui() {
         for (auto e: mesh_.edges()) {
             mean += mesh_.length(e);
         }
-        std::cout << "mean edge length: " << mean / mesh_.n_edges() << std::endl;
+        std::cout << "mean edge length: " << mean / (double) mesh_.n_edges() << std::endl;
         std::cout << "Quad DOF: " << mesh_.n_edges() + mesh_.n_vertices() << std::endl;
         std::cout << "Linear DOF: " << mesh_.n_vertices() << std::endl;
     }
@@ -132,16 +130,8 @@ void VolumeViewer::process_imgui() {
                                  cell_point_, "");
     }
     if (ImGui::Button("RMSE Franke Poisson System")) {
-        if (laplace_matrix == 6) {
-            std::ofstream timings_file("test.csv");
 
-        } else {
-            solve_franke_poisson(mesh_, laplace_matrix, face_point_, cell_point_, 2, filename_);
-        }
-    }
-    if (ImGui::Button("RMSE Franke Poisson System MG")) {
-
-        solve_franke_poisson(mesh_, laplace_matrix, face_point_, cell_point_, 2, filename_);
+        solve_franke_poisson(mesh_, laplace_matrix, face_point_, cell_point_, filename_);
 
     }
     if (ImGui::Button("Linear Precision")) {
@@ -176,22 +166,18 @@ void VolumeViewer::process_imgui() {
             VolumeSubdivision(mesh_).tetrahedra(face_point_, cell_point_);
             update_mesh();
         }
-
         if (ImGui::Button("irregular pyrmaids")) {
             VolumeSubdivision(mesh_).irregular_mesh(5);
             update_mesh();
         }
-
         if (ImGui::Button("full truncation")) {
             VolumeSubdivision(mesh_).full_truncation();
             update_mesh();
         }
-
         if (ImGui::Button("Quads")) {
             VolumeSubdivision(mesh_).quads();
             update_mesh();
         }
-
         if (ImGui::Button("Linear Subdivision")) {
             VolumeSubdivision(mesh_).linear_subdivision();
             update_mesh();

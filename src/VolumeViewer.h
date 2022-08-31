@@ -27,10 +27,9 @@ protected:
     virtual void process_imgui() override;
     virtual void mouse(int button, int action, int mods) override;
 
-    unsigned int face_point_;
-    unsigned int cell_point_;
-    unsigned degree_;
-    unsigned int laplace_matrix;
+    int face_point_;
+    int cell_point_;
+    int laplace_matrix;
     std::string filename_;
     // private methods
 };

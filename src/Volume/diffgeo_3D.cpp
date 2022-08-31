@@ -3,7 +3,6 @@
 #include "diffgeo_3D.h"
 #include "../Surface/diffgeo.h"
 #include<Eigen/StdVector>
-#include <values.h>
 #include <VolumeMesh.h>
 
 //-----------------------------------------------------------------------------
@@ -58,7 +57,7 @@ void compute_3D_virtual_points_and_weights(VolumeMesh &mesh, int face_point, int
         auto c_f_it_pair = mesh.cell_faces(*c_it);
         for (auto c_f_it = c_f_it_pair.first; c_f_it != c_f_it_pair.second; ++c_f_it) {
 
-            int val = mesh.face(*c_f_it).halfedges().size(); //valence of the face
+            int val = (int)mesh.face(*c_f_it).halfedges().size(); //valence of the face
             Eigen::VectorXd w_f(val); // weight vector for virtual face vertex
             Eigen::MatrixXd poly(val, 3); // Polygon vertex positions
             auto f_v_it_pair = mesh.face_vertices(*c_f_it);
@@ -133,158 +132,6 @@ void compute_3D_virtual_points_and_weights(VolumeMesh &mesh, int face_point, int
     }
 }
 
-void compute_3D_virtual_points_cf(VolumeMesh &mesh,int cell_point, int face_point){
-    // save barycenter vertex for faces and cells
-    auto f_prop = mesh.request_face_property<VolumeMesh::PointT>("face points");
-    auto c_prop = mesh.request_cell_property<VolumeMesh::PointT>("cell points");
-
-    // we precompute them so they are ordered
-    for (auto c_it = mesh.c_iter(); c_it.valid(); ++c_it) {
-
-        std::vector<Eigen::Matrix3d, Eigen::aligned_allocator<Eigen::Matrix3d> > triangles;
-        std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d> > cell_v;
-
-        auto c_f_it_pair = mesh.cell_faces(*c_it);
-        for (auto c_f_it = c_f_it_pair.first; c_f_it != c_f_it_pair.second; ++c_f_it) {
-
-            int val = mesh.face(*c_f_it).halfedges().size(); //valence of the face
-            Eigen::VectorXd w_f(val); // weight vector for virtual face vertex
-            Eigen::MatrixXd poly(val, 3); // Polygon vertex positions
-            auto f_v_it_pair = mesh.face_vertices(*c_f_it);
-            int i = 0;
-            for (auto f_v_it = f_v_it_pair.first;
-                 f_v_it != f_v_it_pair.second; ++f_v_it) {
-                VolumeMesh::PointT p = mesh.vertex(*f_v_it);
-                for (int h = 0; h < 3; h++) {
-                    poly.row(i)(h) = p[h];
-                }
-                i++;
-            }
-            Eigen::Vector3d min;
-            if (face_point == Quadratic_Areas_) {
-                find_area_minimizer_weights(poly, w_f);
-                min = poly.transpose() * w_f; //compute point obtained through weights
-                VolumeMesh::PointT virtual_point(min(0), min(1), min(2));
-                f_prop[*c_f_it] = virtual_point;
-            } else if (face_point == Face_Centroid) {
-                VolumeMesh::PointT bary = mesh.barycenter(*c_f_it);
-                f_prop[*c_f_it] = bary;
-                min << bary[0], bary[1], bary[2];
-            }
-
-            cell_v.push_back(min); // Virtual face vertex is part of the affine combination for the volume minimizer
-
-            for (int k = 0; k < val; k++) {
-                // Triangle always contains face minimizer and vertices sharing an edge of polygon
-                Eigen::Matrix3d triangle;
-                triangle.row(0) = min;
-                triangle.row(1) = poly.row(k);
-                if (k + 1 < val) {
-                    triangle.row(2) = poly.row(k + 1);
-                } else {
-                    triangle.row(2) = poly.row(0);
-                }
-                triangles.push_back(triangle);
-            }
-        }
-        auto c_v_it_pair = mesh.cell_vertices(*c_it); // iterate over cell vertices
-        for (auto c_v_it = c_v_it_pair.first;
-             c_v_it != c_v_it_pair.second; ++c_v_it) {
-            VolumeMesh::PointT p = mesh.vertex(*c_v_it);
-            cell_v.emplace_back(Eigen::Vector3d(p[0], p[1], p[2]));
-        }
-
-        Eigen::Vector3d vol_minimizer;
-        if (cell_point == Quadratic_Volume_) {
-            find_volume_minimizing_point(triangles, vol_minimizer);
-            VolumeMesh::PointT virtual_point(vol_minimizer(0), vol_minimizer(1), vol_minimizer(2));
-            c_prop[*c_it] = virtual_point;
-        } else if (cell_point == Cell_Centroid_) {
-            int cell_val = 0;
-            VolumeMesh::PointT bary = VolumeMesh::PointT(0.0, 0.0, 0.0);
-            for (auto c_v : cell_v) {
-                bary += VolumeMesh::PointT(c_v[0], c_v[1], c_v[2]);
-                cell_val++;
-            }
-            bary /= (double) cell_val;
-            c_prop[*c_it] = bary;
-        }
-    }
-}
-
-//-----------------------------------------------------------------------------
-
-void compute_3D_virtual_points_and_weights_for_cells(VolumeMesh &mesh, int cell_point) {
-
-    auto c_prop = mesh.request_cell_property<VolumeMesh::PointT>("cell points");
-    auto c_w_prop = mesh.request_cell_property<Eigen::VectorXd>("cell weights");
-
-
-    // we precompute them so they are ordered
-    for (auto c_it = mesh.c_iter(); c_it.valid(); ++c_it) {
-        std::vector<Eigen::Matrix3d, Eigen::aligned_allocator<Eigen::Matrix3d> > triangles;
-        std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d> > cell_v;
-        auto c_f_it_pair = mesh.cell_faces(*c_it);
-
-        // for loop needed for triangles to form virtual tetrahedrons
-        for (auto c_f_it = c_f_it_pair.first; c_f_it != c_f_it_pair.second; ++c_f_it) {
-            int val = mesh.face(*c_f_it).halfedges().size(); //valence of the face
-            Eigen::MatrixXd poly(val, 3); // Polygon vertex positions
-            auto f_v_it_pair = mesh.face_vertices(*c_f_it);
-            int i = 0;
-            for (auto f_v_it = f_v_it_pair.first;
-                 f_v_it != f_v_it_pair.second; ++f_v_it) {
-                VolumeMesh::PointT p = mesh.vertex(*f_v_it);
-                for (int h = 0; h < 3; h++) {
-                    poly.row(i)(h) = p[h];
-                }
-                i++;
-            }
-            Eigen::Vector3d min;
-            VolumeMesh::PointT bary = mesh.barycenter(*c_f_it);
-            min << bary[0], bary[1], bary[2];
-            for (int k = 0; k < val; k++) {
-                // Triangle always contains face minimizer and vertices sharing an edge of polygon
-                Eigen::Matrix3d triangle;
-                triangle.row(0) = min;
-                triangle.row(1) = poly.row(k);
-                if (k + 1 < val) {
-                    triangle.row(2) = poly.row(k + 1);
-                } else {
-                    triangle.row(2) = poly.row(0);
-                }
-                triangles.push_back(triangle);
-            }
-        }
-
-        auto c_v_it_pair = mesh.cell_vertices(*c_it); // iterate over cell vertices
-        for (auto c_v_it = c_v_it_pair.first;
-             c_v_it != c_v_it_pair.second; ++c_v_it) {
-            VolumeMesh::PointT p = mesh.vertex(*c_v_it);
-            cell_v.emplace_back(Eigen::Vector3d(p[0], p[1], p[2]));
-        }
-        Eigen::Vector3d vol_minimizer;
-        Eigen::VectorXd cell_weights;
-        if (cell_point == Quadratic_Volume_) {
-            find_volume_minimizing_point(triangles, vol_minimizer);
-            find_weights_for_point_3d(cell_v, vol_minimizer, cell_weights);
-            VolumeMesh::PointT virtual_point(vol_minimizer(0), vol_minimizer(1), vol_minimizer(2));
-            c_prop[*c_it] = virtual_point;
-            c_w_prop[*c_it] = cell_weights;
-        } else if (cell_point == Cell_Centroid_) {
-            int cell_val = 0;
-            VolumeMesh::PointT bary = mesh.barycenter(*c_it);
-            for (auto c_v : cell_v) {
-                cell_val++;
-            }
-            c_prop[*c_it] = bary;
-            cell_weights = Eigen::MatrixXd::Ones(cell_val, 1);
-            cell_weights /= double(cell_val);
-            c_w_prop[*c_it] = cell_weights;
-        }
-    }
-}
-
 void find_volume_minimizing_point(
         const std::vector<Eigen::Matrix3d, Eigen::aligned_allocator<Eigen::Matrix3d> > &tetrahedrons,
         Eigen::Vector3d &point) {
@@ -293,11 +140,9 @@ void find_volume_minimizing_point(
     // find minimizer for sum of squared tetrahedron volumes per cell.
     //  std::vector<Eigen::MatrixXd> &tetrahedrons contains 3x3 matrices with the positions of the faces triangle vertices. (site of tetrahedron)
 
-
     Eigen::Matrix3d J = Eigen::MatrixXd::Zero(3, 3);
     Eigen::Vector3d b_ = Eigen::MatrixXd::Zero(3, 1);
 
-//   std::cout<< "size of triangles: " << tetrahedrons.size() << std::endl;
     for (const auto & tetrahedron : tetrahedrons) {
 
         Eigen::Vector3d b, c, d;
@@ -353,7 +198,7 @@ void find_weights_for_point_3d(const std::vector<Eigen::Vector3d, Eigen::aligned
 
     const int n = (int) poly.size();
     Eigen::MatrixXd M(3, n - 1), M_(3, n);
-    Eigen::Vector3d pn = poly[n - 1];
+    const Eigen::Vector3d& pn = poly[n - 1];
     M_.col(n - 1) = poly[n - 1];
     for (int i = 0; i < n - 1; i++) {
         M.col(i) = poly[i] - pn;
@@ -368,8 +213,6 @@ void find_weights_for_point_3d(const std::vector<Eigen::Vector3d, Eigen::aligned
     w = M.completeOrthogonalDecomposition().solve(b);
     weights.topRows(n - 1) = w;
     weights(n - 1) = 1.0 - w.sum();
-
-//    std::cout << "norm point - vertices*w:  " << (point-M_*weights).norm() << std::endl;
 }
 
 //-----------------------------------------------------------------------------
@@ -379,10 +222,6 @@ VolumeMesh::PointT compute_triangle_normal(VolumeMesh::PointT a, VolumeMesh::Poi
     return n.normalize();
 }
 
-//-----------------------------------------------------------------------------
-double compute_triangle_area(VolumeMesh::PointT p0, VolumeMesh::PointT p1, VolumeMesh::PointT p2) {
-    return 0.5 * ((p1 - p0) % (p2 - p0)).norm();
-}
 //-----------------------------------------------------------------------------
 
 void kugelize(VolumeMesh &mesh) {

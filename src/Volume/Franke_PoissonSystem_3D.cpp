@@ -79,7 +79,7 @@ double laplace_franke3d(VolumeMesh::PointT vec) {
 //-----------------------------------------------------------------------------
 
 double solve_franke_poisson(VolumeMesh &mesh, int Laplace, int face_point,
-                            int cell_point, int degree, std::string meshname) {
+                            int cell_point,std::string meshname) {
 
     if (Laplace == Harmonic) {
         return solve_3D_Franke_harmonic(meshname);
@@ -89,8 +89,8 @@ double solve_franke_poisson(VolumeMesh &mesh, int Laplace, int face_point,
 
         auto c_prop = mesh.request_cell_property<VolumeMesh::PointT>("cell points");
         auto f_prop = mesh.request_face_property<VolumeMesh::PointT>("face points");
-        setup_3D_stiffness_matrix(mesh, S, Laplace, face_point, cell_point, degree, meshname);
-        setup_3D_mass_matrix(mesh, M, Laplace, face_point, cell_point, degree, meshname);
+        setup_3D_stiffness_matrix(mesh, S, Laplace, face_point, cell_point);
+        setup_3D_mass_matrix(mesh, M, Laplace, face_point, cell_point);
 
         for (auto v: mesh.vertices()) {
             b(v.idx()) = laplace_franke3d(mesh.vertex(v));
@@ -109,8 +109,8 @@ double solve_franke_poisson(VolumeMesh &mesh, int Laplace, int face_point,
         // Adjust the right-hand-side to account for the locked nodes
         for (unsigned int i = 0; i < S.outerSize(); i++)
             for (Eigen::SparseMatrix<double>::InnerIterator iter(S, i); iter; ++iter) {
-                OpenVolumeMesh::VertexHandle row = OpenVolumeMesh::VertexHandle(iter.row());
-                OpenVolumeMesh::VertexHandle col = OpenVolumeMesh::VertexHandle(iter.col());
+                OpenVolumeMesh::VertexHandle row = OpenVolumeMesh::VertexHandle((int)iter.row());
+                OpenVolumeMesh::VertexHandle col = OpenVolumeMesh::VertexHandle((int)iter.col());
                 if (!mesh.is_boundary(row) && mesh.is_boundary(col)) {
                     b[iter.row()] -= b[iter.col()] * iter.value();
                 }
@@ -119,8 +119,8 @@ double solve_franke_poisson(VolumeMesh &mesh, int Laplace, int face_point,
         // Adjust the system matrix to account for the locked nodes
         for (unsigned int i = 0; i < S.outerSize(); i++)
             for (Eigen::SparseMatrix<double>::InnerIterator iter(S, i); iter; ++iter) {
-                OpenVolumeMesh::VertexHandle row = OpenVolumeMesh::VertexHandle(iter.row());
-                OpenVolumeMesh::VertexHandle col = OpenVolumeMesh::VertexHandle(iter.col());
+                OpenVolumeMesh::VertexHandle row = OpenVolumeMesh::VertexHandle((int)iter.row());
+                OpenVolumeMesh::VertexHandle col = OpenVolumeMesh::VertexHandle((int)iter.col());
                 if (mesh.is_boundary(row)) iter.valueRef() = iter.row() == iter.col() ? 1. : 0.;
                 else if (mesh.is_boundary(col)) iter.valueRef() = 0;
             }
@@ -148,16 +148,15 @@ double solve_franke_poisson(VolumeMesh &mesh, int Laplace, int face_point,
 //-----------------------------------------------------------------------------
 
 void solve_laplace_equation(VolumeMesh &mesh, int laplace, int face_point,
-                            int cell_point, int degree) {
+                            int cell_point) {
     Eigen::SparseMatrix<double> M, S, S_f;
-    Eigen::MatrixXd B = Eigen::MatrixXd::Zero(mesh.n_vertices(), 3);
+    Eigen::MatrixXd B = Eigen::MatrixXd::Zero((int)mesh.n_vertices(), 3);
 
     auto c_prop = mesh.request_cell_property<VolumeMesh::PointT>("cell points");
     auto f_prop = mesh.request_face_property<VolumeMesh::PointT>("face points");
 
-    setup_3D_stiffness_matrix(mesh, S, laplace, face_point, cell_point, degree);
+    setup_3D_stiffness_matrix(mesh, S, laplace, face_point, cell_point);
     int nb = 0;
-
 
     for (auto v: mesh.vertices()) {
         //count nr outer vertices

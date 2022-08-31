@@ -18,12 +18,10 @@ void setup_3D_cell_face_prolongation_matrix(VolumeMesh &mesh,
                                             Eigen::SparseMatrix<double> &Pf);
 
 void setup_3D_stiffness_matrix(VolumeMesh &mesh, Eigen::SparseMatrix<double> &S,
-                               int Laplace, int face_point, int cell_point,
-                               int degree = 2,std::string file = "");
+                               int Laplace, int face_point, int cell_point);
 
 void setup_3D_mass_matrix(VolumeMesh &mesh, Eigen::SparseMatrix<double> &M,
-                          int Laplace, int face_point, int cell_point,
-                          int degree = 2,std::string file = "");
+                          int Laplace, int face_point, int cell_point);
 
 //--------------------------- Dual Laplacian----------------------------------------------
 
@@ -56,13 +54,5 @@ void setup_3D_sandwich_mass_matrix(VolumeMesh &mesh,
                                    Eigen::SparseMatrix<double> &M,
                                    int face_point, int cell_point);
 
-void local_3D_jacobian(VolumeMesh::PointT a, VolumeMesh::PointT b,
-                       VolumeMesh::PointT c, VolumeMesh::PointT f,
-                       Eigen::MatrixXd &J);
 
-Eigen::Vector3d grad_phi_i(int i);
-
-//---------------prolongation matrix--------------------------------------------
-
-void setup_simple_3D_prolongation(VolumeMesh &mesh, Eigen::SparseMatrix<double> &P);
 

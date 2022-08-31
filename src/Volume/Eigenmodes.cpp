@@ -14,13 +14,11 @@
 #include <Spectra/SymGEigsShiftSolver.h>
 #include <iomanip>
 
-enum LaplaceMethods
-{
+enum LaplaceMethods {
     Diamond = 0,
-    Dual_Laplace = 2,
-    Harmonic = 3,
-    Sandwich = 4,
-    AQAPoly = 6
+    Dual_Laplace = 1,
+    PolySimpleLaplace = 2,
+    Harmonic = 3
 };
 
 enum VolumePoints
@@ -42,7 +40,7 @@ double solve_eigenvalue_problem(VolumeMesh &mesh,std::string mesh_,Eigen::Vector
     {
         filename = "eigenmodes_Dual-" + meshname + ".csv";
     }
-    else if (Laplace == Sandwich)
+    else if (Laplace == PolySimpleLaplace)
     {
 
         filename = "eigenmodes_[BHBK20]" + meshname + ".csv";
@@ -98,7 +96,7 @@ double solve_eigenvalue_problem(VolumeMesh &mesh,std::string mesh_,Eigen::Vector
     Eigen::VectorXi in(indices.size());
     std::cout << "inner indices: " << indices.size() << std::endl;
     //Rewrite indices to Eigen::Vector
-    for (int i = 0; i < indices.size(); ++i)
+    for (int i = 0; i < (int)indices.size(); ++i)
     {
         in(i) = indices[i];
     }
@@ -164,52 +162,42 @@ void analytic_eigenvalues_unitBall(Eigen::VectorXd &eval, int n)
         if (i == 0)
         {
             //Bessel j zero (1/2,1)
-            //            eval(i) = 9.8696;
             eval(i) = 9.869604401089358;
         }
         else if (i > 0 && i < 4)
         {
             //Bessel j zero (3/2,1)
-
-            //            eval(i) = 20.1907;
             eval(i) = 20.190728556426629;
         }
         else if (i >= 4 && i < 9)
         {
             //Bessel j zero (5/2,1)
-
-            //            eval(i) = 33.2175;
             eval(i) = 33.217461914268368;
         }
         else if (i == 9)
         {
             //Bessel j zero (1/2,2)
 
-            //            eval(i) = 39.4784;
             eval(i) = 39.47841760435743447;
         }
         else if (i > 9 && i < 17)
         {
             //Bessel j zero (7/2,1)
-            //            eval(i) = 48.8312;
             eval(i) = 48.831193643619198876;
         }
         else if (i >= 17 && i < 20)
         {
             //Bessel j zero (3/2,2)
-            //            eval(i) = 59.6795;
             eval(i) = 59.6795159441094188805;
         }
         else if (i >= 20 && i < 29)
         {
             //Bessel j zero (9/2,1)
-            //            eval(i) = 66.9543;
             eval(i) = 66.95431192510480532587;
         }
         else if (i >= 29 && i < 34)
         {
             //Bessel j zero (5/2,2)
-            //            eval(i) = 82.7192;
             eval(i) = 82.719231101493279988217;
         }
     }

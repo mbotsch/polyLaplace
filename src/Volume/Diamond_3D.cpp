@@ -24,18 +24,16 @@ void setup_3D_diamond_mass_matrix(VolumeMesh &mesh,
     auto f_w_prop = mesh.request_face_property<Eigen::VectorXd>("face weights");
     auto c_w_prop = mesh.request_cell_property<Eigen::VectorXd>("cell weights");
 
-    triplets.reserve(mesh.n_cells() * 4 * 4);
-    int n_v = mesh.n_vertices();
-    int n_f = mesh.n_faces();
-    int n_c = mesh.n_cells();
+    triplets.reserve((int)mesh.n_cells() * 4 * 4);
+    int n_v = (int)mesh.n_vertices();
+    int n_f = (int)mesh.n_faces();
+    int n_c = (int)mesh.n_cells();
 
     VolumeMesh::PointT A, B, E_AB, E_AF, E_BF, F, K, L, E, D;
     Eigen::Vector3d N_kl, N_ab, N_ef;
     int l_idx, k_idx, a_idx, b_idx, f_idx;
-    int f_count = 0;
     for (auto f : mesh.faces())
     {
-        f_count++;
         // face midpoint
         F = f_prop[f];
         f_idx = n_v + f.idx();
@@ -108,9 +106,9 @@ void setup_3D_diamond_gradient(VolumeMesh &mesh, Eigen::SparseMatrix<double> &G,
 
     triplets.reserve(mesh.n_cells() * 4 * 4);
     triplets_volume.reserve(mesh.n_cells() * 4 * 4);
-    int n_v = mesh.n_vertices();
-    int n_f = mesh.n_faces();
-    int n_c = mesh.n_cells();
+    int n_v = (int)mesh.n_vertices();
+    int n_f = (int)mesh.n_faces();
+    int n_c = (int)mesh.n_cells();
     int diamond_valence;
     VolumeMesh::PointT A, B, F, C0, C1;
     int c1_idx, c0_idx, a_idx, b_idx, f_idx;
@@ -238,10 +236,10 @@ void setup_3D_diamond_gradient(VolumeMesh &mesh, Eigen::SparseMatrix<double> &G,
 
 //===========================Gradient computations=============================================================
 
-Eigen::MatrixXd cc_gradient_operator(Eigen::MatrixXd X)
+Eigen::MatrixXd cc_gradient_operator(const Eigen::MatrixXd& X)
 {
     // We assume first two entries in X are the tips
-    int n = X.rows() - 2;
+    int n = (int)X.rows() - 2;
 
     // local 3x3 matrices per diamond
     Eigen::Matrix3d A, scaledInverseA;
@@ -284,10 +282,10 @@ Eigen::MatrixXd cc_gradient_operator(Eigen::MatrixXd X)
     return G;
 }
 
-Eigen::MatrixXd cc_bdy_gradient_operator(Eigen::MatrixXd X)
+Eigen::MatrixXd cc_bdy_gradient_operator(const Eigen::MatrixXd& X)
 {
-    // We assuem first entry in in X is the tip
-    int n = X.rows() - 1;
+    // We assume first entry in X is the tip
+    int n = (int)X.rows() - 1;
 
     // vector (0, 0, 1/n, ..., 1/n)
     Eigen::RowVectorXd one_over_n = Eigen::VectorXd::Constant(n + 1, 1.0 / n);

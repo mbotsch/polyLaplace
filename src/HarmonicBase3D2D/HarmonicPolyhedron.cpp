@@ -2,7 +2,7 @@
 #include "Tetrahedralize.hpp"
 #include <iostream>
 
-void loadPoly(std::string fname, std::vector<Eigen::Vector3d>& vertices, std::vector<std::vector<int>>& faces) {
+void loadPoly(const std::string& fname, std::vector<Eigen::Vector3d>& vertices, std::vector<std::vector<int>>& faces) {
     
     std::ifstream file(fname);
     
@@ -76,13 +76,13 @@ const Normal& Normal::operator+=(const Eigen::Vector3d& v) {
 
 void HarmonicPolyhedron::dumpProbesAndKernels() {
     std::ofstream fk("kernels");
-    for(auto v : kernelCenters) fk << ((v + mean) / scale).transpose() << std::endl;
+    for(const auto& v : kernelCenters) fk << ((v + mean) / scale).transpose() << std::endl;
     fk.close();
     
     std::ofstream fs("probes");
     
     // first face samples
-    for(int i = 0; i < harmonicFaces.size(); ++i) {
+    for(int i = 0; i < (int)harmonicFaces.size(); ++i) {
         auto samples3d = harmonicFaces[i].unproject(faceSamples2d[i]);
         
         for(auto& s : samples3d) {
@@ -92,7 +92,7 @@ void HarmonicPolyhedron::dumpProbesAndKernels() {
     
     // second edge/vertex samples
     Eigen::MatrixXd vertexMatrix(vertices.size(), 3);
-    for(int i = 0; i < vertices.size(); ++i) vertexMatrix.row(i) = vertices[i].transpose();
+    for(int i = 0; i < (int)vertices.size(); ++i) vertexMatrix.row(i) = vertices[i].transpose();
     Eigen::MatrixXd evSamples = PEdgeSamples * vertexMatrix;
     
     for(int i = 0; i < evSamples.rows(); ++i) {
@@ -123,10 +123,10 @@ void HarmonicPolyhedron::dumpCrossection() {
 }
 
 bool HarmonicPolyhedron::insideConvex(const Eigen::Vector3d& p) {
-    for(int i = 0; i < harmonicFaces.size(); ++i) {
-        if(p.dot(harmonicFaces[i].getNormal()) > harmonicFaces[i].getD()) return false;
+    for(auto & harmonicFace : harmonicFaces) {
+        if(p.dot(harmonicFace.getNormal()) > harmonicFace.getD()) return false;
     }
-    
+
     return true;
 }
 
@@ -152,7 +152,7 @@ bool HarmonicPolyhedron::inside(const Eigen::Vector3d& p) {
 }
 
 int HarmonicPolyhedron::globalToLocalIdMap(const int vid, const int fid) {
-    for(int i = 0; i < faces[fid].size(); ++i) {
+    for(int i = 0; i < (int)faces[fid].size(); ++i) {
         if(faces[fid][i] == vid) return i;
     }
     
@@ -226,7 +226,7 @@ void HarmonicPolyhedron::massMatrix(Eigen::MatrixXd& M) {
 
 HarmonicPolyhedron::HarmonicPolyhedron() {}
 
-HarmonicPolyhedron::HarmonicPolyhedron(std::string fname) {
+HarmonicPolyhedron::HarmonicPolyhedron(const std::string& fname) {
     loadPoly(fname, vertices, faces);
     init();
 }
@@ -259,15 +259,15 @@ void HarmonicPolyhedron::init() {
     
     for(auto& f : faces) {
         const int n = (int)f.size();
-        Eigen::Vector3d mean(.0, .0, .0);
+        Eigen::Vector3d Mean(.0, .0, .0);
         for(int i = 0; i < n; ++i) {
-            mean += vertices[f[i]];
+            Mean += vertices[f[i]];
         }
-        
-        mean /= (double)n;
+
+        Mean /= (double)n;
         
         for(int i = 0; i < n; ++i) {
-            triPoints.push_back(vector<Eigen::Vector3d>{vertices[f[i]], vertices[f[(i + 1) % n]] , mean});
+            triPoints.push_back(vector<Eigen::Vector3d>{vertices[f[i]], vertices[f[(i + 1) % n]] , Mean});
         }
     }
     
@@ -277,22 +277,22 @@ void HarmonicPolyhedron::init() {
     // sample faces for boundary conditions
     for(auto& f : faces) {
         Eigen::MatrixXd poly(f.size(), 3);
-        for(int i = 0; i < f.size(); ++i) poly.row(i) = vertices[f[i]];
+        for(int i = 0; i < (int)f.size(); ++i) poly.row(i) = vertices[f[i]];
         harmonicFaces.emplace_back(poly);
         faceSamples2d.push_back(harmonicFaces.back().generateRandomSamples(probesPerFace));
-        nProbes += faceSamples2d.back().size();
+        nProbes += (int)faceSamples2d.back().size();
     }
     
     // generate unique edge and vertex samples.
     vector<Normal> vertexNormals(vertices.size());
     map<Edge, Normal> edgeNormals;
     
-    for(int k = 0; k < faces.size(); ++k) {
+    for(int k = 0; k < (int)faces.size(); ++k) {
         auto& f = faces[k];
         const int n = (int)f.size();
         const Eigen::Vector3d areaVector = harmonicFaces[k].getScaledNormal();
         
-        for(int i = 0; i < f.size(); ++i) {
+        for(int i = 0; i < (int)f.size(); ++i) {
             vertexNormals[f[i]] += areaVector;
             edges.emplace_back(f[i], f[(i+1)%n]);
             edgeNormals[edges.back()] += areaVector;
@@ -309,20 +309,20 @@ void HarmonicPolyhedron::init() {
     vector<Eigen::Triplet<double>> trip;
     int cnt = 0;
     
-    for(int i = 0; i < vertices.size(); ++i) {
+    for(int i = 0; i < (int)vertices.size(); ++i) {
         trip.emplace_back(cnt++, i, 1.);
     }
     
-    for(int i = 0; i < edges.size(); ++i) {
+    for(auto & edge : edges) {
         for(int j = 1; j < probesPerEdge; ++j) {
             const double w = j / (double)probesPerEdge;
-            trip.emplace_back(cnt, edges[i].i, 1. - w);
-            trip.emplace_back(cnt, edges[i].j, w);
+            trip.emplace_back(cnt, edge.i, 1. - w);
+            trip.emplace_back(cnt, edge.j, w);
             ++cnt;
         }
     }
     
-    PEdgeSamples.resize(cnt, vertices.size());
+    PEdgeSamples.resize(cnt, (int)vertices.size());
     PEdgeSamples.setFromTriplets(trip.begin(), trip.end());
     nProbes += cnt;
     
@@ -331,7 +331,7 @@ void HarmonicPolyhedron::init() {
     
     for(auto& hf : harmonicFaces) {
         auto samples = hf.unproject(hf.generateRandomSamples(kernelsPerFace));
-        for(auto& s : samples) kernelCenters.push_back(s + eps * hf.getNormal());
+        for(auto& s : samples) kernelCenters.emplace_back(s + eps * hf.getNormal());
     }
     
     for(auto& e : edges) {
@@ -339,12 +339,12 @@ void HarmonicPolyhedron::init() {
         
         for(int i = 1; i < kernelsPerEdge; ++i) {
             const double w = i / (double)kernelsPerEdge;
-            kernelCenters.push_back((1. - w) * vertices[e.i] + w * vertices[e.j] + eps * nrml);
+            kernelCenters.emplace_back((1. - w) * vertices[e.i] + w * vertices[e.j] + eps * nrml);
         }
     }
     
-    for(int i = 0; i < vertices.size(); ++i) {
-        kernelCenters.push_back(vertices[i] + eps * vertexNormals[i].n);
+    for(int i = 0; i < (int)vertices.size(); ++i) {
+        kernelCenters.emplace_back(vertices[i] + eps * vertexNormals[i].n);
     }
     
     
@@ -357,11 +357,11 @@ void HarmonicPolyhedron::init() {
     cnt = 0;
     
     // first face samples
-    for(int i = 0; i < harmonicFaces.size(); ++i) {
+    for(int i = 0; i < (int)harmonicFaces.size(); ++i) {
         auto samples3d = harmonicFaces[i].unproject(faceSamples2d[i]);
         
         for(auto& s : samples3d) {
-            for(int j = 0; j < kernelCenters.size(); ++j) {
+            for(int j = 0; j < (int)kernelCenters.size(); ++j) {
                 A(cnt, j) = 1. / ((s - kernelCenters[j]).norm());
             }
             
@@ -374,13 +374,13 @@ void HarmonicPolyhedron::init() {
     
     // second edge/vertex samples
     Eigen::MatrixXd vertexMatrix(vertices.size(), 3);
-    for(int i = 0; i < vertices.size(); ++i) vertexMatrix.row(i) = vertices[i].transpose();
+    for(int i = 0; i < (int)vertices.size(); ++i) vertexMatrix.row(i) = vertices[i].transpose();
     Eigen::MatrixXd evSamples = PEdgeSamples * vertexMatrix;
     
     for(int i = 0; i < evSamples.rows(); ++i) {
         Eigen::Vector3d s = evSamples.row(i);
         
-        for(int j = 0; j < kernelCenters.size(); ++j) {
+        for(int j = 0; j < (int)kernelCenters.size(); ++j) {
             A(cnt, j) = 1. / ((s - kernelCenters[j]).norm());
         }
         
@@ -397,19 +397,19 @@ void HarmonicPolyhedron::init() {
     
     // for each vertex node build the correct rhs
     Eigen::VectorXd b(nProbes);
-    coefficients.resize(vertices.size(), nKernels + 4);
+    coefficients.resize((int)vertices.size(), nKernels + 4);
     
-    for(int i = 0; i < vertices.size(); ++i) {
+    for(int i = 0; i < (int)vertices.size(); ++i) {
         cnt = 0;
         
         // first evaluate at face probes
-        for(int j = 0; j < harmonicFaces.size(); ++j) {
+        for(int j = 0; j < (int)harmonicFaces.size(); ++j) {
             const auto vals = harmonicFaces[j].evaluateAtPoints(globalToLocalIdMap(i, j), faceSamples2d[j]);
             for(auto x : vals) b(cnt++) = x;
         }
         
         // now evaluate at edge/vertex probes
-        b.bottomRows(PEdgeSamples.rows()) = PEdgeSamples * Eigen::VectorXd::Unit(vertices.size(), i);
+        b.bottomRows(PEdgeSamples.rows()) = PEdgeSamples * Eigen::VectorXd::Unit((int)vertices.size(), i);
         
         // solve for coefficients (one for each rbf, 4 for the linear part)
         coefficients.row(i) = chol.solve(A.transpose() * b);

@@ -6,9 +6,8 @@
 /*=====================================================================================*/
 
 #include "GaussQuadrature.h"
-#include <assert.h>
+#include <cassert>
 #include <iostream>
-#include <fstream>
 
 #define MAX_GAUSS_QUAD_POINTS 10
 
@@ -21,7 +20,7 @@ struct GaussQuadRule
 	double m_weights[(MAX_GAUSS_QUAD_POINTS + 1) / 2];
 
 	//! Degree of polynomials that are integrated correctly by the method
-	int m_degree;
+      int m_degree;
 };
 
 // Values from: http://pathfinder.scar.utoronto.ca/~dyer/csca57/book_P/node44.html
@@ -111,7 +110,7 @@ double gaussQuadratureTriangle(const Eigen::Vector2d& p,
                                const Eigen::Vector2d& r,
                                const std::function<double(double, double)>& g,  int n) {
     
-    if(n >= gaussRules2d.size()) n = (int)gaussRules2d.size() - 1;
+    if(n >= (int)gaussRules2d.size()) n = (int)gaussRules2d.size() - 1;
     if(n < 1) n = 1;
     
     double val = 0;
@@ -149,7 +148,7 @@ double PolyhedralQuadrature::apply(const std::function<double(Eigen::Vector3d)>&
 }
 
 PolyhedralQuadrature::PolyhedralQuadrature(const Eigen::Vector3d& min, const Eigen::Vector3d& max,
-                                           std::function<bool(Eigen::Vector3d)> inside,
+                                           std::function<bool(Eigen::Vector3d)> &inside,
                                            const int pts, const int ptsg) {
     
     const Eigen::Vector3d step = (max - min) / pts;
@@ -163,16 +162,16 @@ PolyhedralQuadrature::PolyhedralQuadrature(const Eigen::Vector3d& min, const Eig
                 for(int ig = 0; ig < ptsg; ++ig) {
                     for(int jg = 0; jg < ptsg; ++jg) {
                         for(int kg = 0; kg < ptsg; ++kg) {
-                            Eigen::Vector3d p, w;
+                            Eigen::Vector3d pi, wi;
                             
-                            GaussQuadrature::GetEvalPoint(ptsg, ig, w[0], p[0]);
-                            GaussQuadrature::GetEvalPoint(ptsg, jg, w[1], p[1]);
-                            GaussQuadrature::GetEvalPoint(ptsg, kg, w[2], p[2]);
+                            GaussQuadrature::GetEvalPoint(ptsg, ig, wi[0], pi[0]);
+                            GaussQuadrature::GetEvalPoint(ptsg, jg, wi[1], pi[1]);
+                            GaussQuadrature::GetEvalPoint(ptsg, kg, wi[2], pi[2]);
+
+                            pi = (pi + Eigen::Vector3d::Ones()) / 2.;
+                            pi = pi.cwiseProduct(step) + bmin;
                             
-                            p = (p + Eigen::Vector3d::Ones()) / 2.;
-                            p = p.cwiseProduct(step) + bmin;
-                            
-                            if(inside(p)) add(p, w.prod() * boxVol / 8.);
+                            if(inside(pi)) add(pi, wi.prod() * boxVol / 8.);
                         }
                     }
                 }
@@ -187,7 +186,7 @@ PolyhedralQuadrature::PolyhedralQuadrature(const Eigen::Vector3d& min, const Eig
 
 double gridQuadrature(const Eigen::Vector3d& min, const Eigen::Vector3d& max,
                    //   std::function<bool(Eigen::Vector3d)> inside,
-                      std::function<double(Eigen::Vector3d)> fun, const int pts) {
+                      std::function<double(Eigen::Vector3d)> &fun, const int pts) {
     
     const Eigen::Vector3d step = (max - min) / pts;
     double boxVol = step.prod();
@@ -224,10 +223,10 @@ double gridQuadrature(const Eigen::Vector3d& min, const Eigen::Vector3d& max,
 }
 
 
-TetrahedralQuadrature::TetrahedralQuadrature(const std::vector<Eigen::MatrixXd>& tets_, int order)
+TetrahedralQuadrature::TetrahedralQuadrature(const std::vector<Eigen::MatrixXd>& tets_)
 : tets(tets_) {
     
-    for(int i = 0; i < tets.size(); ++i) {
+    for(int i = 0; i < (int)tets.size(); ++i) {
         volumes.push_back(std::abs((tets[i].topRows(3).rowwise() - tets[i].row(3)).determinant() / 6.));
     }
 }
@@ -236,7 +235,7 @@ double TetrahedralQuadrature::apply(const std::function<double (Eigen::Vector3d)
     
     double ret = 0.;
     
-    for(int i = 0; i < tets.size(); ++i) {
+    for(int i = 0; i < (int)tets.size(); ++i) {
         double val = .0;
         
         for(int j = 0; j < N; ++j) {
@@ -251,7 +250,7 @@ double TetrahedralQuadrature::apply(const std::function<double (Eigen::Vector3d)
 }
 
 
-TetrahedralQuadrature::TetrahedralQuadrature() {}
+TetrahedralQuadrature::TetrahedralQuadrature() = default;
 
 int TetrahedralQuadrature::N = 8;
 double TetrahedralQuadrature::quadPoints[8][5]{{0.3281633025163816867896358645815337845,0.3281633025163816867896358645815337845,0.3281633025163816867896358645815337845,0.01551009245085493963109240625539864640,0.13621784253708735706757154019171552070},{0.3281633025163816867896358645815337845,0.3281633025163816867896358645815337845,0.01551009245085493963109240625539864640,0.3281633025163816867896358645815337845,0.13621784253708735706757154019171552070},{0.3281633025163816867896358645815337845,0.01551009245085493963109240625539864640,0.3281633025163816867896358645815337845,0.3281633025163816867896358645815337845,0.13621784253708735706757154019171552070},{0.015510092450854939631092406255398646395,0.32816330251638168678963586458153378454,0.32816330251638168678963586458153378454,0.32816330251638168678963586458153378454,0.13621784253708735706757154019171552070},{0.10804724989842860411756338920581330828,0.10804724989842860411756338920581330828,0.10804724989842860411756338920581330828,0.6758582503047141876473098323825600752,0.11378215746291264293242845980828447930},{0.10804724989842860411756338920581330827,0.10804724989842860411756338920581330828,0.6758582503047141876473098323825600752,0.10804724989842860411756338920581330828,0.11378215746291264293242845980828447930},{0.10804724989842860411756338920581330828,0.6758582503047141876473098323825600752,0.10804724989842860411756338920581330828,0.10804724989842860411756338920581330828,0.11378215746291264293242845980828447930},{0.67585825030471418764730983238256007516,0.10804724989842860411756338920581330828,0.10804724989842860411756338920581330828,0.10804724989842860411756338920581330828,0.11378215746291264293242845980828447930}};

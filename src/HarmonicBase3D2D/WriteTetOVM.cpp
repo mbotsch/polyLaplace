@@ -6,7 +6,7 @@
 
 #include <OpenVolumeMesh/Mesh/TetrahedralMesh.hh>
 
-void writeTetOVM(const std::vector<Eigen::Vector3d>& pts, const std::vector<std::vector<int>>& tets, std::string fname) {
+void writeTetOVM(const std::vector<Eigen::Vector3d>& pts, const std::vector<std::vector<int>>& tets, const std::string& fname) {
 
     using namespace OpenVolumeMesh;
     
@@ -15,7 +15,7 @@ void writeTetOVM(const std::vector<Eigen::Vector3d>& pts, const std::vector<std:
     std::map<int, VertexHandle> vmap;
     
     // add vertices
-    for(int i = 0; i < pts.size(); ++i) {
+    for(int i = 0; i < (int)pts.size(); ++i) {
         auto p = pts[i];
         vmap[i] = mesh.add_vertex(Vec3d(p(0), p(1), p(2)));
     }

@@ -31,7 +31,7 @@ public:
 
 double gridQuadrature(const Eigen::Vector3d& min, const Eigen::Vector3d& max,
                   //    std::function<bool(Eigen::Vector3d)> inside,
-                      std::function<double(Eigen::Vector3d)> fun, const int pts = 10);
+                      std::function<double(Eigen::Vector3d)> &fun, int pts = 10);
 
 
 class PolyhedralQuadrature {
@@ -39,15 +39,15 @@ class PolyhedralQuadrature {
     std::vector<Eigen::Vector3d> p;
     std::vector<double> w;
     
-    void add(const Eigen::Vector3d& pi, const double wi);
+    void add(const Eigen::Vector3d& pi, double wi);
     
 public:
     
     double apply(const std::function<double(Eigen::Vector3d)>& fun);
     
     PolyhedralQuadrature(const Eigen::Vector3d& min, const Eigen::Vector3d& max,
-                         std::function<bool(Eigen::Vector3d)> inside,
-                         const int pts, const int ptsg);
+                         std::function<bool(Eigen::Vector3d)> &inside,
+                         int pts, int ptsg);
 };
 
 
@@ -65,8 +65,8 @@ public:
     
     TetrahedralQuadrature();
     
-    TetrahedralQuadrature(const std::vector<Eigen::MatrixXd>& tets, int order = 10);
+    explicit TetrahedralQuadrature(const std::vector<Eigen::MatrixXd>& tets);
 };
 
 
-double gaussQuadratureTriangle(const Eigen::MatrixXd& tri, const std::function<double(double, double)>& g, const int n);
+double gaussQuadratureTriangle(const Eigen::MatrixXd& tri, const std::function<double(double, double)>& g, int n);

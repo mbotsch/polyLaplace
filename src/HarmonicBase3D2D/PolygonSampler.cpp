@@ -1,5 +1,4 @@
 #include "PolygonSampler.hpp"
-
 #include "samples.inl"
 
 

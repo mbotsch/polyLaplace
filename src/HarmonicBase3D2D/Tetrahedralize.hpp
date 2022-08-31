@@ -7,9 +7,9 @@ void
 tetrahedralize(const std::vector<Eigen::Vector3d>& points,
                const std::vector<std::vector<int>>& faces,
                std::vector<Eigen::Vector3d>& outPts,
-               std::vector<std::vector<int>>& outTets, const double area = .1);
+               std::vector<std::vector<int>>& outTets, double area = .1);
 
 void
 tetrahedralize(const std::vector<Eigen::Vector3d>& points,
                const std::vector<std::vector<int>>& faces,
-               std::vector<Eigen::MatrixXd>& tets, const double area = .1);
+               std::vector<Eigen::MatrixXd>& tets, double area = .1);

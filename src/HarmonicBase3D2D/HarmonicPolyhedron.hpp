@@ -31,7 +31,7 @@ struct Normal {
 };
    
 
-void loadPoly(std::string fname, std::vector<Eigen::Vector3d>& vertices, std::vector<std::vector<int>>& faces);
+void loadPoly(const std::string& fname, std::vector<Eigen::Vector3d>& vertices, std::vector<std::vector<int>>& faces);
 
 class HarmonicPolyhedron {
 public:
@@ -98,7 +98,7 @@ public:
     
     HarmonicPolyhedron();
     
-    HarmonicPolyhedron(std::string fname);
+    HarmonicPolyhedron(const std::string& fname);
     
     HarmonicPolyhedron(const std::vector<Eigen::Vector3d>& vertices_, const std::vector<std::vector<int>>& faces_);
     

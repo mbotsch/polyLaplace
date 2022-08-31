@@ -128,6 +128,7 @@ double poisson_function(pmp::Point &p, int function) {
         return spherical_harmonic_function_scaled(p[0], p[1], p[2]);
     }else{
         std::cerr << "Function not implemented" << std::endl;
+        return -50.0;
     }
 }
 
@@ -140,6 +141,7 @@ double laplace_of_poisson_function(Point &p, int function) {
         return spherical_harmonic_function(p[0], p[1], p[2]);
     }else{
         std::cerr << "Function not implemented" << std::endl;
+        return -50.0;
     }
 }
 

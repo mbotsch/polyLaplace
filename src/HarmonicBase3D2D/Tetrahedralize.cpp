@@ -55,7 +55,7 @@ tetrahedralize(const std::vector<Eigen::Vector3d>& points,
         f->numberofpolygons = 1;
         f->numberofholes = 0;
         f->polygonlist = new tetgenio::polygon;
-        f->holelist = NULL;
+        f->holelist = nullptr;
         auto p = f->polygonlist;
         p->numberofvertices = (int)faces[i].size();
         p->vertexlist = new int[p->numberofvertices];

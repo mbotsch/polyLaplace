@@ -1,17 +1,16 @@
 #include "HarmonicPolygon.hpp"
 #include "PolygonSampler.hpp"
 #include <fstream>
-#include <igl/writeOFF.h>
 #include <igl/triangle/triangulate.h>
 #include "GaussQuadrature.h"
 
-double HarmonicPolygon::getArea2d() {return area2d;}
+double HarmonicPolygon::getArea2d() const {return area2d;}
 
 Eigen::Vector3d HarmonicPolygon::getScaledNormal() const {
     return area * a;
 }
 
-const double HarmonicPolygon::getD() const {
+double HarmonicPolygon::getD() const {
     return dPlane;
 }
 
@@ -29,11 +28,11 @@ Eigen::Vector3d HarmonicPolygon::unproject(const Eigen::Vector2d& p) {
 
 std::vector<Eigen::Vector3d> HarmonicPolygon::unproject(const std::vector<Eigen::Vector2d>& p) {
     std::vector<Eigen::Vector3d> ret(p.size());
-    for(int i = 0; i < p.size(); ++i) ret[i] = unproject(p[i]);
+    for(int i = 0; i < (int)p.size(); ++i) ret[i] = unproject(p[i]);
     return ret;
 }
 
-std::vector<Eigen::Vector2d> HarmonicPolygon::generateRandomSamples(const int nSamples) {
+std::vector<Eigen::Vector2d> HarmonicPolygon::generateRandomSamples(const int nSamples) const {
     return PolygonSampler(poly2d, area2d, nSamples).polySamples;
 }
 
@@ -93,10 +92,10 @@ Eigen::Vector2d HarmonicPolygon::evaluateGrad(const int id, const Eigen::Vector2
 
 void HarmonicPolygon::stiffnessMatrix(Eigen::MatrixXd& K) {
     
-    const int n = (int)poly2d.rows();
-    K.resize(n, n);
+    const int nv = (int)poly2d.rows();
+    K.resize(nv, nv);
     
-    for(int i = 0; i < n; ++i) {
+    for(int i = 0; i < nv; ++i) {
         for(int j = 0; j <= i; ++j) {
             double val =  quadrature([&](const double x, const double y){return evaluateGrad(i, Eigen::Vector2d(x,y)).dot(evaluateGrad(j, Eigen::Vector2d(x,y)));});
             
@@ -107,10 +106,10 @@ void HarmonicPolygon::stiffnessMatrix(Eigen::MatrixXd& K) {
 
 void HarmonicPolygon::massMatrix(Eigen::MatrixXd& M) {
     
-    const int n = (int)poly2d.rows();
-    M.resize(n, n);
+    const int nv = (int)poly2d.rows();
+    M.resize(nv, nv);
     
-    for(int i = 0; i < n; ++i) {
+    for(int i = 0; i < nv; ++i) {
           for(int j = 0; j <= i; ++j) {
               double val = scale * scale * quadrature([&](const double x, const double y){return evaluate(i, Eigen::Vector2d(x,y)) * evaluate(j, Eigen::Vector2d(x,y));});
               
@@ -141,7 +140,7 @@ std::vector<double> HarmonicPolygon::evaluateAtPoints(const int id, const std::v
     return ret;
 }
 
-void HarmonicPolygon::dump2d(std::string fname) {
+void HarmonicPolygon::dump2d(const std::string& fname) {
     std::ofstream file(fname);
     file << n << " " << nKernels << " " << nProbes << std::endl;
     file << poly2d << std::endl;
@@ -209,12 +208,12 @@ HarmonicPolygon::HarmonicPolygon(const Eigen::MatrixXd& pts_) {
     for(int i = 0; i < n ; ++i) {
         int i2 = i + 1 == n ? 0 : i + 1;
         
-        Eigen::Vector2d n(poly2d(i, 1) - poly2d(i2, 1), poly2d(i2, 0) - poly2d(i, 0));
-        n.normalize();
+        Eigen::Vector2d N(poly2d(i, 1) - poly2d(i2, 1), poly2d(i2, 0) - poly2d(i, 0));
+        N.normalize();
         
         for(int j = 0; j < nKernels; ++j) {
             const double w = j / (double)nKernels;
-            kernels.row(i * nKernels + j) = (1. - w) * poly2d.row(i) + w * poly2d.row(i2) + eps * n.transpose();
+            kernels.row(i * nKernels + j) = (1. - w) * poly2d.row(i) + w * poly2d.row(i2) + eps * N.transpose();
         }
         
         for(int j = 0; j < nProbes; ++j) {

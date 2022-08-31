@@ -43,11 +43,11 @@ public:
     
     Eigen::Matrix<double, -1, 2> poly2d;
     
-    double getArea2d();
+    double getArea2d() const;
     
     Eigen::Vector3d getScaledNormal() const;
     
-    const double getD() const;
+    double getD() const;
     
     const Eigen::Vector3d& getNormal() const;
     
@@ -57,17 +57,17 @@ public:
     
     std::vector<Eigen::Vector3d> unproject(const std::vector<Eigen::Vector2d>& p);
     
-    std::vector<Eigen::Vector2d> generateRandomSamples(const int nSamples);
+    std::vector<Eigen::Vector2d> generateRandomSamples(int nSamples) const;
   
-    double evaluate(const int id, const Eigen::Vector2d& p);
+    double evaluate(int id, const Eigen::Vector2d& p);
     
-    Eigen::Vector2d evaluateGrad(const int id, const Eigen::Vector2d& p);
+    Eigen::Vector2d evaluateGrad( int id, const Eigen::Vector2d& p);
       
-    std::vector<double> evaluateAtPoints(const int id, const std::vector<Eigen::Vector2d>& points);
+    std::vector<double> evaluateAtPoints( int id, const std::vector<Eigen::Vector2d>& points);
     
-    void dump2d(std::string fname);
+    void dump2d(const std::string& fname);
     
-    HarmonicPolygon(const Eigen::MatrixXd& pts_);
+    explicit HarmonicPolygon(const Eigen::MatrixXd& pts_);
     
     double quadrature(const std::function<double(double, double)>& g);
     

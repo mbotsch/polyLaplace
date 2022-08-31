@@ -23,25 +23,25 @@ public:
     std::vector<Index> faceIndizes(const HalfIndex& halfFace) const;
     
     // return list of vertex index lists
-    std::vector<std::vector<Index>> cellfaceIndizes(const Index cellIndex) const;
+    std::vector<std::vector<Index>> cellfaceIndizes( Index cellIndex) const;
     
-    bool loadOVM(const std::string filename);
+    bool loadOVM( const std::string& filename);
 
     void identifyBoundary();
     
 public:
     PolyhedralMesh();
     
-    PolyhedralMesh(const std::string filename);
+    explicit PolyhedralMesh(const std::string& filename);
     
     // get surface mesh for a single cell
-    std::vector<Index> getCellGeometry(const Index cellIndex, std::vector<Point>& pts, std::vector<std::vector<Index>>& fcs, bool triangularize = false) const;
+    std::vector<Index> getCellGeometry( Index cellIndex, std::vector<Point>& pts, std::vector<std::vector<Index>>& fcs, bool triangularize = false) const;
     
-    std::vector<Index> getCellGeometry(const Index cellIndex, std::vector<Eigen::Vector3d>& cellPoints, std::vector<std::vector<Index>>& cellFaces, bool triangularize = false) const;
+    std::vector<Index> getCellGeometry( Index cellIndex, std::vector<Eigen::Vector3d>& cellPoints, std::vector<std::vector<Index>>& cellFaces, bool triangularize = false) const;
     
     int numCells() const;
     
     int numVertices() const;
     
-    bool isBoundaryVertex(const int i) const;
+    bool isBoundaryVertex( int i) const;
 };

@@ -9,7 +9,7 @@ using namespace std;
 
 PolyhedralMesh::PolyhedralMesh() {}
 
-PolyhedralMesh::PolyhedralMesh(const std::string filename) {
+PolyhedralMesh::PolyhedralMesh(const std::string& filename) {
     loadOVM(filename);
     identifyBoundary();
 }
@@ -49,7 +49,7 @@ void PolyhedralMesh::identifyBoundary() {
     }
 }
 
-bool PolyhedralMesh::loadOVM(const std::string filename) {
+bool PolyhedralMesh::loadOVM(const std::string& filename) {
     
     ifstream file(filename);
     if(!file.is_open()) return false;
@@ -104,7 +104,7 @@ bool PolyhedralMesh::loadOVM(const std::string filename) {
             face[j] = make_pair(id >> 1, (char)(id & 1));
         }
         
-        faces.push_back(move(face));
+        faces.push_back(std::move(face));
     }
     
     if(!CheckString("Polyhedra")) return false;
@@ -122,7 +122,7 @@ bool PolyhedralMesh::loadOVM(const std::string filename) {
             cell[j] = make_pair(id >> 1, (char)(id & 1));
         }
         
-        cells.push_back(move(cell));
+        cells.push_back(std::move(cell));
     }
     
     file.close();
@@ -135,34 +135,34 @@ std::vector<PolyhedralMesh::Index> PolyhedralMesh::getCellGeometry(const Index c
     std::vector<Point> pts;
     auto ret = getCellGeometry(cellIndex, pts, cellFaces, triangularize);
     
-    for(auto& p : pts) cellPoints.push_back(Eigen::Vector3d(p[0], p[1], p[2]));
+    for(auto& p : pts) cellPoints.emplace_back(p[0], p[1], p[2]);
     
     return ret;
 }
 
 std::vector<PolyhedralMesh::Index> PolyhedralMesh::getCellGeometry(const Index cellIndex, std::vector<Point>& cellPoints, std::vector<std::vector<Index>>& cellFaces, bool triangularize) const {
     
-    auto faces = cellfaceIndizes(cellIndex);
+    auto Faces = cellfaceIndizes(cellIndex);
     
     vector<Index> vertices;
-    for(auto& f : faces) copy(f.begin(), f.end(), back_inserter(vertices));
+    for(auto& f : Faces) copy(f.begin(), f.end(), back_inserter(vertices));
     sort(vertices.begin(), vertices.end());
     vertices.erase(unique(vertices.begin(), vertices.end()), vertices.end());
     
     map<Index, Index> vertexMap;
-    for(int i = 0; i < vertices.size(); ++i) vertexMap[vertices[i]] = i;
+    for(int i = 0; i < (int)vertices.size(); ++i) vertexMap[vertices[i]] = i;
     
     for(auto i : vertices) cellPoints.push_back(points[i]);
     
     
-    for(auto& f : faces) {
+    for(auto& f : Faces) {
         vector<Index> polyVerts;
         
         for(int k : f) polyVerts.push_back(vertexMap[k]);
         reverse(polyVerts.begin(), polyVerts.end());
         
         if(triangularize) {
-            for(int i = 1; i < polyVerts.size() - 1; ++i) {
+            for(int i = 1; i < (int)polyVerts.size() - 1; ++i) {
                 cellFaces.push_back({polyVerts[0],  polyVerts[i],  polyVerts[i+1]});
             }
         } else cellFaces.push_back(polyVerts);

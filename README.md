@@ -10,7 +10,7 @@ Configure and build:
 
 This will automatically build our code and all dependencies. Finally, start the GUI app with a polygon mesh or a polyhedral mesh:
 
-    ./surface_viewer ../data/surface_meshes/grids/quad_2.obj
+    ./surface_viewer ../data/surface_meshes/grid/quad_4.obj 
     ./volume_viewer ../data/volume_meshes/cubes/cube_hexahedron_3.ovm 
 
 Alternatively you can either run the volume and surface convergence tests by executing:

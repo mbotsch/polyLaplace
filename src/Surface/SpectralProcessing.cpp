@@ -12,7 +12,7 @@
 #include <Spectra/Util/SelectionRule.h>
 #include <Spectra/Util/CompInfo.h>
 #include <Spectra/SymGEigsShiftSolver.h>
-#include "HarmonicBasis2D.h"
+#include <fstream>
 
 //=============================================================================
 
@@ -27,7 +27,6 @@ enum LaplaceMethods {
     AlexaWardetzkyLaplace = 1,
     Diamond = 2,
     deGoesLaplace = 3,
-    Harmonic = 4
 };
 
 enum InsertedPoint {
@@ -46,18 +45,14 @@ double solve_eigenvalue_problem(SurfaceMesh &mesh, int laplace, int face_point,
         filename = "eigenvalues_[dGBD20]_" + meshname + ".csv";
     } else if (laplace == PolySimpleLaplace) {
         filename = "eigenvalues_[BHKB20]_" + meshname + ".csv";
-    } else if (laplace == Harmonic) {
-        filename = "eigenvalues_Harmonic2D_" + meshname + ".csv";
     }
+
     std::ofstream ev_file(filename);
 
     ev_file << "computed,analytic,offset" << std::endl;
     Eigen::SparseMatrix<double> M, S;
     double error=0.0;
-    if (laplace == Harmonic) {
-        Eigen::VectorXd evalues;
-        error =  solve_2D_harmonic_eigenvalue_problem(mesh, evalues,  filename);
-    } else {
+
         setup_stiffness_matrices(mesh, S, laplace, face_point);
         setup_mass_matrices(mesh, M, laplace, face_point);
 
@@ -108,7 +103,7 @@ double solve_eigenvalue_problem(SurfaceMesh &mesh, int laplace, int face_point,
         error = sqrt(error / (double) evalues.size());
         std::cout << "Root mean squared error: " << error << std::endl;
         ev_file.close();
-    }
+
     return error;
 }
 

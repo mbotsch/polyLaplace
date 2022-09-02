@@ -1,18 +1,14 @@
 
 #include "Franke_PoissonSystem_3D.h"
 #include "LaplaceConstruction_3D.h"
-#include "HarmonicBasis.h"
 #include <igl/slice.h>
-#include <Eigen/CholmodSupport>
 #include <fstream>
 
 //=============================================================================
 
 enum LaplaceMethods {
     Diamond = 0,
-    Dual_Laplace = 2,
-    Harmonic = 3,
-    Sandwich = 4,
+    PolySimpleLaplace = 2,
 };
 
 double franke3d(VolumeMesh::PointT vec) {
@@ -79,143 +75,65 @@ double laplace_franke3d(VolumeMesh::PointT vec) {
 //-----------------------------------------------------------------------------
 
 double solve_franke_poisson(VolumeMesh &mesh, int Laplace, int face_point,
-                            int cell_point,std::string meshname) {
-
-    if (Laplace == Harmonic) {
-        return solve_3D_Franke_harmonic(meshname);
-    } else {
-        Eigen::SparseMatrix<double> M, S, S_f;
-        Eigen::VectorXd b(mesh.n_vertices());
-
-        auto c_prop = mesh.request_cell_property<VolumeMesh::PointT>("cell points");
-        auto f_prop = mesh.request_face_property<VolumeMesh::PointT>("face points");
-        setup_3D_stiffness_matrix(mesh, S, Laplace, face_point, cell_point);
-        setup_3D_mass_matrix(mesh, M, Laplace, face_point, cell_point);
-
-        for (auto v: mesh.vertices()) {
-            b(v.idx()) = laplace_franke3d(mesh.vertex(v));
-        }
-
-        b = M * b;
-
-        // Set the constraints at the locked vertices to the evluation of the Franke function
-        for (auto v: mesh.vertices()) {
-            if (mesh.is_boundary(v)) {
-                // right-hand side: fix boundary values with franke function of the vertices
-                b(v.idx()) = franke3d(mesh.vertex(v));
-            }
-        }
-
-        // Adjust the right-hand-side to account for the locked nodes
-        for (unsigned int i = 0; i < S.outerSize(); i++)
-            for (Eigen::SparseMatrix<double>::InnerIterator iter(S, i); iter; ++iter) {
-                OpenVolumeMesh::VertexHandle row = OpenVolumeMesh::VertexHandle((int)iter.row());
-                OpenVolumeMesh::VertexHandle col = OpenVolumeMesh::VertexHandle((int)iter.col());
-                if (!mesh.is_boundary(row) && mesh.is_boundary(col)) {
-                    b[iter.row()] -= b[iter.col()] * iter.value();
-                }
-            }
-
-        // Adjust the system matrix to account for the locked nodes
-        for (unsigned int i = 0; i < S.outerSize(); i++)
-            for (Eigen::SparseMatrix<double>::InnerIterator iter(S, i); iter; ++iter) {
-                OpenVolumeMesh::VertexHandle row = OpenVolumeMesh::VertexHandle((int)iter.row());
-                OpenVolumeMesh::VertexHandle col = OpenVolumeMesh::VertexHandle((int)iter.col());
-                if (mesh.is_boundary(row)) iter.valueRef() = iter.row() == iter.col() ? 1. : 0.;
-                else if (mesh.is_boundary(col)) iter.valueRef() = 0;
-            }
-
-
-        Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > solver;
-//        Eigen::CholmodSupernodalLLT<Eigen::SparseMatrix<double> > solver;
-
-        solver.compute(S);
-        Eigen::VectorXd x = solver.solve(b);
-        std::cout << "Size x :" << x.size() << std::endl;
-        double error = 0.0;
-        for (auto v: mesh.vertices()) {
-//            std::cout << "x: " << x[v.idx()] << " Franke : " <<  franke3d( mesh.vertex(v) )<<std::endl;
-            error += pow(x[v.idx()] - franke3d(mesh.vertex(v)), 2.);
-        }
-
-        std::cout << "DoF " << mesh.n_vertices() << std::endl;
-        std::cout << "Franke RMSE error inner vertices: "
-                  << sqrt(error / (double) mesh.n_vertices()) << std::endl;
-        return sqrt(error / (double) mesh.n_vertices());
-    }
-}
-
-//-----------------------------------------------------------------------------
-
-void solve_laplace_equation(VolumeMesh &mesh, int laplace, int face_point,
                             int cell_point) {
+
+
     Eigen::SparseMatrix<double> M, S, S_f;
-    Eigen::MatrixXd B = Eigen::MatrixXd::Zero((int)mesh.n_vertices(), 3);
+    Eigen::VectorXd b(mesh.n_vertices());
 
     auto c_prop = mesh.request_cell_property<VolumeMesh::PointT>("cell points");
     auto f_prop = mesh.request_face_property<VolumeMesh::PointT>("face points");
-
-    setup_3D_stiffness_matrix(mesh, S, laplace, face_point, cell_point);
-    int nb = 0;
+    setup_3D_stiffness_matrix(mesh, S, Laplace, face_point, cell_point);
+    setup_3D_mass_matrix(mesh, M, Laplace, face_point, cell_point);
 
     for (auto v: mesh.vertices()) {
-        //count nr outer vertices
+        b(v.idx()) = laplace_franke3d(mesh.vertex(v));
+    }
+
+    b = M * b;
+
+    // Set the constraints at the locked vertices to the evluation of the Franke function
+    for (auto v: mesh.vertices()) {
         if (mesh.is_boundary(v)) {
-            nb++;
+            // right-hand side: fix boundary values with franke function of the vertices
+            b(v.idx()) = franke3d(mesh.vertex(v));
         }
     }
 
-    Eigen::SparseMatrix<double> G, V, Div, P, Pc, Pf;
-
-    unsigned ins = 0;
-    unsigned out = 0;
-
-    Eigen::VectorXi in(mesh.n_vertices() - nb), bound(nb), x(3);
-    x << 0, 1, 2;
-
-    for (auto v: mesh.vertices()) {
-        // save indices of inner and outer vertices
-
-        if (!mesh.is_boundary(v)) {
-            in(ins) = v.idx();
-            ins++;
-        } else {
-            bound(out) = v.idx();
-            out++;
-            // right-hand side: fix x coordinate of boundary vertices for the righthandsite
-            B(v.idx(), 0) = mesh.vertex(v)[0];
-            B(v.idx(), 1) = mesh.vertex(v)[1];
-            B(v.idx(), 2) = mesh.vertex(v)[2];
-        }
-    }
-
-    Eigen::SparseMatrix<double> L_in_in, L_in_b;
-    Eigen::MatrixXd b_in, b_out;
-
-    // slice S and b and bring boundary values on the righthandsite to solve only for inner vertices
-    igl::slice(S, in, in, L_in_in);
-    igl::slice(S, in, bound, L_in_b);
-    igl::slice(B, in, x, b_in);
-    igl::slice(B, bound, x, b_out);
-    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
-    solver.compute(L_in_in);
-    Eigen::MatrixXd X = solver.solve(b_in - L_in_b * b_out);
-    double error = 0.0;
-
-    int k = 0;
-    if (solver.info() != Eigen::Success) {
-        std::cerr << "harmonic(): Could not solve linear system\n";
-    } else {
-        // copy solution
-        for (auto v: mesh.vertices()) {
-            if (!mesh.is_boundary(v)) {
-                error += pow(X(k, 0) - mesh.vertex(v)[0], 2) +
-                         pow(X(k, 1) - mesh.vertex(v)[1], 2) +
-                         pow(X(k, 2) - mesh.vertex(v)[2], 2);
-                k++;
+    // Adjust the right-hand-side to account for the locked nodes
+    for (unsigned int i = 0; i < S.outerSize(); i++)
+        for (Eigen::SparseMatrix<double>::InnerIterator iter(S, i); iter; ++iter) {
+            OpenVolumeMesh::VertexHandle row = OpenVolumeMesh::VertexHandle((int) iter.row());
+            OpenVolumeMesh::VertexHandle col = OpenVolumeMesh::VertexHandle((int) iter.col());
+            if (!mesh.is_boundary(row) && mesh.is_boundary(col)) {
+                b[iter.row()] -= b[iter.col()] * iter.value();
             }
         }
 
-        std::cout << "RMSE inner verticex positions : " << sqrt(error / (double) k) << std::endl;
+    // Adjust the system matrix to account for the locked nodes
+    for (unsigned int i = 0; i < S.outerSize(); i++)
+        for (Eigen::SparseMatrix<double>::InnerIterator iter(S, i); iter; ++iter) {
+            OpenVolumeMesh::VertexHandle row = OpenVolumeMesh::VertexHandle((int) iter.row());
+            OpenVolumeMesh::VertexHandle col = OpenVolumeMesh::VertexHandle((int) iter.col());
+            if (mesh.is_boundary(row)) iter.valueRef() = iter.row() == iter.col() ? 1. : 0.;
+            else if (mesh.is_boundary(col)) iter.valueRef() = 0;
+        }
+
+    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > solver;
+
+    solver.compute(S);
+    Eigen::VectorXd x = solver.solve(b);
+    std::cout << "Size x :" << x.size() << std::endl;
+    double error = 0.0;
+    for (auto v: mesh.vertices()) {
+//            std::cout << "x: " << x[v.idx()] << " Franke : " <<  franke3d( mesh.vertex(v) )<<std::endl;
+        error += pow(x[v.idx()] - franke3d(mesh.vertex(v)), 2.);
     }
+
+    std::cout << "DoF " << mesh.n_vertices() << std::endl;
+    std::cout << "Franke RMSE error inner vertices: "
+              << sqrt(error / (double) mesh.n_vertices()) << std::endl;
+    return sqrt(error / (double) mesh.n_vertices());
+
 }
+

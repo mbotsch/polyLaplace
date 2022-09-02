@@ -11,7 +11,6 @@
 #include "Volume/Franke_PoissonSystem_3D.h"
 #include "Volume/diffgeo_3D.h"
 #include "VolumeMeshIO.h"
-#include "Volume/LaplaceConstruction_3D.h"
 
 //=============================================================================
 
@@ -76,9 +75,7 @@ void VolumeViewer::process_imgui() {
 
     static int laplace = 0;
     ImGui::RadioButton("Diamond", &laplace, 0);
-    ImGui::RadioButton("Dual Laplace", &laplace, 1);
     ImGui::RadioButton("Polysimple Laplace", &laplace, 2);
-    ImGui::RadioButton("Harmonic Basis", &laplace, 3);
     ImGui::Spacing();
     laplace_matrix = laplace;
     ImGui::Spacing();
@@ -115,49 +112,15 @@ void VolumeViewer::process_imgui() {
         std::cout << " new Radius: " << (max_x - min_x) / 2.0 << std::endl;
         std::cout << "new center: " << 0.5 * (min + max) << std::endl;
     }
-    if (ImGui::Button("Mean edge length")) {
-        double mean = 0.0;
-        for (auto e: mesh_.edges()) {
-            mean += mesh_.length(e);
-        }
-        std::cout << "mean edge length: " << mean / (double) mesh_.n_edges() << std::endl;
-        std::cout << "Quad DOF: " << mesh_.n_edges() + mesh_.n_vertices() << std::endl;
-        std::cout << "Linear DOF: " << mesh_.n_vertices() << std::endl;
-    }
     if (ImGui::Button("RMSE Eigenvalues Sphere")) {
         Eigen::VectorXd evalues;
-        solve_eigenvalue_problem(mesh_, filename_, evalues, laplace_matrix, face_point_,
-                                 cell_point_, "");
+        solve_eigenvalue_problem(mesh_,  evalues, laplace_matrix, face_point_,
+                                 cell_point_);
     }
     if (ImGui::Button("RMSE Franke Poisson System")) {
 
-        solve_franke_poisson(mesh_, laplace_matrix, face_point_, cell_point_, filename_);
+        solve_franke_poisson(mesh_, laplace_matrix, face_point_, cell_point_);
 
-    }
-    if (ImGui::Button("Linear Precision")) {
-
-        solve_laplace_equation(mesh_, laplace_matrix, face_point_, cell_point_);
-
-    }
-    if (ImGui::Button("Read Elasticity Sate")) {
-        std::string filename = "./elastic_state_position.txt";
-        std::vector<double> positions;
-        std::ifstream myfile;
-        myfile.open(filename);
-        double num = 0.0;
-        //keep storing values from the text file so long as data exists:
-        while (myfile >> num) {
-            positions.push_back(num);
-        }
-        int i = 0;
-        for (auto v: mesh_.vertices()) {
-            std::cout << v << std::endl;
-            VolumeMesh::PointT p(positions[i], positions[i + 1], positions[i + 2]);
-            VolumeMesh::PointT r = mesh_.vertex(v);
-            mesh_.set_vertex(v, r + p);
-            i += 3;
-        }
-        update_mesh();
     }
     ImGui::Spacing();
     ImGui::Spacing();

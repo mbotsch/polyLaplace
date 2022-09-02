@@ -7,7 +7,6 @@
 #include "Surface/[dGBD20]Laplace.h"
 #include "Surface/Poisson_System.h"
 #include "Surface/SpectralProcessing.h"
-#include "Surface/HarmonicBasis2D.h"
 
 //=============================================================================
 
@@ -60,14 +59,12 @@ void write_data(SurfaceMesh &mesh, int laplace, std::ofstream &file, int functio
         file << rmse_sh(mesh, laplace, AreaMinimizer, lumped);
         file << ",";
     } else if (function == poisson_SH || function == Franke2d || function == poisson_SH_deGoes) {
-        if (laplace == Harmonic) {
-            file << solve_2D_Franke_harmonic(mesh);
-        } else {
-            double error =
-                    solve_poisson_system(mesh, laplace, AreaMinimizer, function,
-                                         l, m);
-            file << error;
-        }
+
+        double error =
+                solve_poisson_system(mesh, laplace, AreaMinimizer, function,
+                                     l, m);
+        file << error;
+
         file << ",";
     }
 
@@ -116,7 +113,7 @@ double write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
         write_text_headers(file_franke_quad);
 
         for (int i = start_lvl; i < lvl; i++) {
-            std::string meshname = "../data/fernando_meshes/grid/quad_" +
+            std::string meshname = "../data/surface_meshes/grid/quad_" +
                                    std::to_string(i) + ".obj";
             mesh.read(meshname);
             double res = inverse_mean_edgelenth(mesh);
@@ -132,7 +129,7 @@ double write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
         std::ofstream file_franke_concave(filename_);
         write_text_headers(file_franke_concave);
         for (int i = start_lvl; i < lvl; i++) {
-            std::string meshname = "../data/fernando_meshes/grid/concave_" +
+            std::string meshname = "../data/surface_meshes/grid/concave_" +
                                    std::to_string(i) + ".obj";
             mesh.read(meshname);
             double res = inverse_mean_edgelenth(mesh);
@@ -151,7 +148,7 @@ double write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
             voronoi_lvl = 6;
         for (int i = start_lvl; i < voronoi_lvl; i++) {
             std::string meshname =
-                    "../data/fernando_meshes/grid/clean/voronoi_" +
+                    "../data/surface_meshes/grid/clean/voronoi_" +
                     std::to_string(i) + ".obj";
             mesh.read(meshname);
             double res = inverse_mean_edgelenth(mesh);
@@ -168,7 +165,7 @@ double write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
         write_text_headers(file_tri);
 
         for (int i = start_lvl; i < lvl; i++) {
-            std::string meshname = "../data/fernando_meshes/grid/triangle_" +
+            std::string meshname = "../data/surface_meshes/grid/triangle_" +
                                    std::to_string(i) + ".obj";
             mesh.read(meshname);
             double res = inverse_mean_edgelenth(mesh);
@@ -192,7 +189,7 @@ double write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
         std::ofstream file(filename_);
         write_text_headers(file);
         for (int i = start_lvl; i < lvl; i++) {
-            std::string meshname = "../data/fernando_meshes/sphere/quad_" +
+            std::string meshname = "../data/surface_meshes/sphere/quad_" +
                                    std::to_string(i) + ".obj";
             mesh.read(meshname);
             normalize(mesh);
@@ -209,14 +206,14 @@ double write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
             filename_ = "./errors_curvature_concave.csv";
         } else if (function == SH) {
             filename_ = "./errors_SH_band_recreation_concave.csv";
-        } else  if (function == poisson_SH_deGoes) {
+        } else if (function == poisson_SH_deGoes) {
             filename_ = "./errors_poisson_SH_dG" + sh + "_concave.csv";
         }
         std::ofstream file_concave(filename_);
         write_text_headers(file_concave);
 
         for (int i = start_lvl; i < lvl; i++) {
-            std::string meshname = "../data/fernando_meshes/sphere/concave_" +
+            std::string meshname = "../data/surface_meshes/sphere/concave_" +
                                    std::to_string(i) + ".obj";
             mesh.read(meshname);
             normalize(mesh);
@@ -233,14 +230,14 @@ double write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
             filename_ = "./errors_curvature_hex.csv";
         } else if (function == SH) {
             filename_ = "./errors_SH_band_recreation_hex.csv";
-        } else    if (function == poisson_SH_deGoes) {
+        } else if (function == poisson_SH_deGoes) {
             filename_ = "./errors_poisson_SH_dG" + sh + "_hex.csv";
         }
         std::ofstream file_hex(filename_);
         write_text_headers(file_hex);
 
         for (int i = start_lvl; i < lvl; i++) {
-            std::string meshname = "../data/fernando_meshes/sphere/hex_" +
+            std::string meshname = "../data/surface_meshes/sphere/hex_" +
                                    std::to_string(i) + ".obj";
             mesh.read(meshname);
             normalize(mesh);
@@ -264,7 +261,7 @@ double write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
         write_text_headers(file_tri);
 
         for (int i = start_lvl; i < lvl; i++) {
-            std::string meshname = "../data/fernando_meshes/sphere/triangle_" +
+            std::string meshname = "../data/surface_meshes/sphere/triangle_" +
                                    std::to_string(i) + ".obj";
             mesh.read(meshname);
             normalize(mesh);
@@ -278,11 +275,9 @@ double write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
 
 //=============================================================================
 int main() {
-
-//    write_convergence_data_csv(curvature,7);
-//    write_convergence_data_csv(Franke2d, 7);
+    write_convergence_data_csv(curvature, 7);
+    write_convergence_data_csv(Franke2d, 7);
     write_convergence_data_csv(poisson_SH, 7, 4, 2);
-//    write_convergence_data_csv(poisson_SH_deGoes, 7, 4, 2);
-
-//    write_convergence_data_csv(SH,7);
+    write_convergence_data_csv(poisson_SH_deGoes, 7, 4, 2);
+    write_convergence_data_csv(SH, 7);
 }

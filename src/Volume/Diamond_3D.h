@@ -4,12 +4,9 @@
 //=============================================================================
 #pragma once
 //=============================================================================
-#include <Eigen/SparseCore>
-#include <Eigen/QR>
-#include <Eigen/IterativeLinearSolvers>
+
 #include "../VolumeMesh/VolumeMesh.h"
-#include "LaplaceConstruction_3D.h"
-#include "../Surface/diffgeo.h"
+
 
 //=============================================================================
 

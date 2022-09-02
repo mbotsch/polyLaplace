@@ -2,7 +2,6 @@
 #include <igl/slice.h>
 #include "Poisson_System.h"
 #include "SpectralProcessing.h"
-#include "HarmonicBasis2D.h"
 
 using namespace std;
 
@@ -11,7 +10,6 @@ enum LaplaceMethods {
     AlexaWardetzkyLaplace = 1,
     Diamond = 2,
     deGoesLaplace = 3,
-    Harmonic = 4
 };
 
 enum InsertedPoint {
@@ -36,9 +34,6 @@ double solve_poisson_system(pmp::SurfaceMesh &mesh, int laplace, int minpoint,
     int nv = (int) mesh.n_vertices();
     Eigen::VectorXd b(nv), analytic_solution(nv);
 
-    if (laplace == Harmonic) {
-        return solve_2D_Franke_harmonic(mesh);
-    }
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
     Eigen::MatrixXd X;
 

@@ -38,10 +38,10 @@ include_directories(${PROJECT_SOURCE_DIR}/external/spectra/include)
 include_directories(${PROJECT_SOURCE_DIR}/external/OpenVolumeMesh/src)
 
 #Path to cholmod
-include_directories(/home/abunge/work/SuiteSparse-5.8.1/CHOLMOD/Include/)
+#include_directories(/home/abunge/work/SuiteSparse-5.8.1/CHOLMOD/Include/)
 
 #Path to triangle
-include_directories(/home/abunge/programs/libigl/external/triangle/)
+#include_directories(/home/abunge/programs/libigl/external/triangle/)
 
 add_definitions(-DINCLUDE_TEMPLATES)
 

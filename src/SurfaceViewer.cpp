@@ -13,7 +13,6 @@
 #include "Surface/Poisson_System.h"
 #include <pmp/Timer.h>
 #include <random>
-#include <Eigen/CholmodSupport>
 
 using namespace pmp;
 
@@ -30,7 +29,6 @@ enum LaplaceMethods {
     AlexaWardetzkyLaplace = 1,
     Diamond = 2,
     deGoesLaplace = 3,
-    Harmonic = 4
 };
 
 void Viewer::keyboard(int key, int scancode, int action, int mods)
@@ -80,7 +78,6 @@ void Viewer::process_imgui()
         ImGui::RadioButton("AlexaWardetzky Laplace", &laplace, 1);
         ImGui::RadioButton("Diamond", &laplace, 2);
         ImGui::RadioButton("deGoes Laplace", &laplace, 3);
-        ImGui::RadioButton("Harmonic", &laplace, 4);
 
         ImGui::Spacing();
 

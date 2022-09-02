@@ -247,6 +247,6 @@ void write_3D_convergence_data_csv(Function function, int lvl_end = 6,
 
 int main() {
     write_eigenmodes_test_results();
-//    write_3D_convergence_data_csv(Franke3d, 5, 2);
+    write_3D_convergence_data_csv(Franke3d, 5, 2);
 }
 //=============================================================================

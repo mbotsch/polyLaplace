@@ -98,7 +98,7 @@ void write_text_headers(std::ofstream &file_error) {
 
 }
 
-double write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
+void write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
                                   int m = 0, int start_lvl = 1) {
 
     SurfaceMesh mesh;
@@ -116,6 +116,7 @@ double write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
             std::string meshname = "../data/surface_meshes/grid/quad_" +
                                    std::to_string(i) + ".obj";
             mesh.read(meshname);
+            std::cout << meshname << std::endl;
             double res = inverse_mean_edgelenth(mesh);
             write_all_laplace_data(mesh, file_franke_quad, function);
             //--------------------Inverse Mean Edge length--------------
@@ -151,6 +152,8 @@ double write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
                     "../data/surface_meshes/grid/clean/voronoi_" +
                     std::to_string(i) + ".obj";
             mesh.read(meshname);
+            std::cout << meshname << std::endl;
+
             double res = inverse_mean_edgelenth(mesh);
             write_all_laplace_data(mesh, file_franke_voronoi, function);
             file_franke_voronoi << res << "\n";
@@ -168,6 +171,8 @@ double write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
             std::string meshname = "../data/surface_meshes/grid/triangle_" +
                                    std::to_string(i) + ".obj";
             mesh.read(meshname);
+            std::cout << meshname << std::endl;
+
             double res = inverse_mean_edgelenth(mesh);
 
             write_all_laplace_data(mesh, file_tri, function);
@@ -192,6 +197,8 @@ double write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
             std::string meshname = "../data/surface_meshes/sphere/quad_" +
                                    std::to_string(i) + ".obj";
             mesh.read(meshname);
+            std::cout << meshname << std::endl;
+
             normalize(mesh);
             double res = inverse_mean_edgelenth(mesh);
             write_all_laplace_data(mesh, file, function, l, m);
@@ -216,6 +223,8 @@ double write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
             std::string meshname = "../data/surface_meshes/sphere/concave_" +
                                    std::to_string(i) + ".obj";
             mesh.read(meshname);
+            std::cout << meshname << std::endl;
+
             normalize(mesh);
             double res = inverse_mean_edgelenth(mesh);
             write_all_laplace_data(mesh, file_concave, function, l, m);
@@ -264,6 +273,8 @@ double write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
             std::string meshname = "../data/surface_meshes/sphere/triangle_" +
                                    std::to_string(i) + ".obj";
             mesh.read(meshname);
+            std::cout << meshname << std::endl;
+
             normalize(mesh);
             double res = inverse_mean_edgelenth(mesh);
             write_all_laplace_data(mesh, file_tri, function, l, m);
@@ -275,9 +286,9 @@ double write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
 
 //=============================================================================
 int main() {
-    write_convergence_data_csv(curvature, 7);
-    write_convergence_data_csv(Franke2d, 7);
-    write_convergence_data_csv(poisson_SH, 7, 4, 2);
-    write_convergence_data_csv(poisson_SH_deGoes, 7, 4, 2);
-    write_convergence_data_csv(SH, 7);
+    write_convergence_data_csv(curvature, 6);
+    write_convergence_data_csv(Franke2d, 6);
+    write_convergence_data_csv(poisson_SH, 6, 4, 2);
+    write_convergence_data_csv(poisson_SH_deGoes, 6, 4, 2);
+    write_convergence_data_csv(SH, 6);
 }

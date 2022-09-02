@@ -250,10 +250,10 @@ double rmse_sh(SurfaceMesh &mesh, unsigned int laplace, unsigned int min_point_,
         }
     }
     if (laplace == AlexaWardetzkyLaplace) {
-        std::cout << "Error SH band recreation  (Alexa, l="
+        std::cout << "Error SH band recreation  (AlexaWardetzky Laplace, l="
                   << poly_laplace_lambda_ << "): " << sum << std::endl;
     } else if (laplace == deGoesLaplace) {
-        std::cout << "Error SH band recreation  (Disney, l="
+        std::cout << "Error SH band recreation  (deGoes Laplace, l="
                   << deGoes_laplace_lambda_ << "): " << sum << std::endl;
     } else {
         if (laplace == Diamond) {

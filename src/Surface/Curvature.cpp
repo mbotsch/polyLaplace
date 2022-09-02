@@ -64,7 +64,6 @@ void Curvature::visualize_curvature(int laplace, int min_point, bool lumped) {
         curvatures[v] = fabs(0.5 * H(k));
         if (compare_to_sphere) {
             double c = 0.5 * H(k);
-//            std::cout << c << std::endl;
             rms += (c - 1.0) * (c - 1.0);
         }
         k++;
@@ -76,23 +75,24 @@ void Curvature::visualize_curvature(int laplace, int min_point, bool lumped) {
         rms = sqrt(rms);
 
         if (laplace == AlexaWardetzkyLaplace) {
-            std::cout << "Curvature deviation (Alexa, l="
-                      << poly_laplace_lambda_ << "): " << rms << std::endl;
+            std::cout << "Curvature deviation (AlexaWardetzky Laplace, l=" << poly_laplace_lambda_
+                      << "): " << rms << std::endl;
         } else if (laplace == deGoesLaplace) {
-            std::cout << "Curvature deviation (Disney, l="
-                      << deGoes_laplace_lambda_ << "): " << rms << std::endl;
+            std::cout << "Curvature deviation (deGoes Laplace, l=" << deGoes_laplace_lambda_
+                      << "): " << rms << std::endl;
         } else {
             if (laplace == Diamond) {
                 std::cout << "Diamond Laplace ";
             } else {
-                std::cout << "Sandwich Laplace ";
+                std::cout << "PolySimple Laplace ";
             }
+
             if (min_point == AreaMinimizer) {
-                std::cout << "Curvature deviation (our Point): " << rms
+                std::cout << "Curvature deviation (squared area minimizer): " << rms
                           << std::endl;
             } else {
-                std::cout << "Curvature deviation (centroid): " << rms
-                          << std::endl;
+
+                std::cout << "Curvature deviation (centroid): " << rms << std::endl;
             }
         }
     }
@@ -140,22 +140,21 @@ double Curvature::compute_curvature_error(int laplace, int min_point, bool lumpe
     rms /= (double) nv;
 
     rms = sqrt(rms);
-
     if (laplace == AlexaWardetzkyLaplace) {
-        std::cout << "Curvature deviation (Alexa, l=" << poly_laplace_lambda_
+        std::cout << "Curvature deviation (AlexaWardetzky Laplace, l=" << poly_laplace_lambda_
                   << "): " << rms << std::endl;
     } else if (laplace == deGoesLaplace) {
-        std::cout << "Curvature deviation (Disney, l=" << deGoes_laplace_lambda_
+        std::cout << "Curvature deviation (deGoes Laplace, l=" << deGoes_laplace_lambda_
                   << "): " << rms << std::endl;
     } else {
         if (laplace == Diamond) {
             std::cout << "Diamond Laplace ";
         } else {
-            std::cout << "Sandwich Laplace ";
+            std::cout << "PolySimple Laplace ";
         }
 
         if (min_point == AreaMinimizer) {
-            std::cout << "Curvature deviation (our Point): " << rms
+            std::cout << "Curvature deviation (squared area minimizer): " << rms
                       << std::endl;
         } else {
 

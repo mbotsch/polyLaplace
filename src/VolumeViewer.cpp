@@ -92,26 +92,7 @@ void VolumeViewer::process_imgui() {
     ImGui::RadioButton("Volume minimizer", &cell_point, Quadratic_Volume_);
     ImGui::RadioButton("Cell Centroid", &cell_point, Cell_Centroid_);
     cell_point_ = cell_point;
-    if (ImGui::Button("Kugelize")) {
-        kugelize(mesh_);
-        update_mesh();
-        double min_x = MAXFLOAT;
-        double max_x = MINFLOAT;
-        VolumeMesh::PointT min(0, 0, 0), max(0, 0, 0);
-        for (auto v: mesh_.vertices()) {
-            VolumeMesh::PointT P = mesh_.vertex(v);
-            if (P[0] < min_x) {
-                min = P;
-                min_x = P[0];
-            }
-            if (P[0] > max_x) {
-                max_x = P[0];
-                max = P;
-            }
-        }
-        std::cout << " new Radius: " << (max_x - min_x) / 2.0 << std::endl;
-        std::cout << "new center: " << 0.5 * (min + max) << std::endl;
-    }
+
     if (ImGui::Button("RMSE Eigenvalues Sphere")) {
         Eigen::VectorXd evalues;
         solve_eigenvalue_problem(mesh_,  evalues, laplace_matrix, face_point_,

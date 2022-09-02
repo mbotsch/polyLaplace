@@ -235,12 +235,12 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
         rms /= radius;
         if (laplace_ == AlexaWardetzkyLaplace)
         {
-            std::cout << "Distance deviation sphere (Alexa, l="
+            std::cout << "Distance deviation sphere (AlexaWardetzky Laplace, l="
                       << poly_laplace_lambda_ << "): " << rms << std::endl;
         }
         else if (laplace_ == deGoesLaplace)
         {
-            std::cout << "Distance deviation sphere (deGoes, l="
+            std::cout << "Distance deviation sphere (deGoes Laplace, l="
                       << deGoes_laplace_lambda_ << "): " << rms << std::endl;
         }
         else
@@ -256,7 +256,7 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
 
             if (min_point_ == AreaMinimizer)
             {
-                std::cout << "area minimizer): " << rms << std::endl;
+                std::cout << "squared area minimizer): " << rms << std::endl;
             }
             else
             {
@@ -271,12 +271,12 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
         if (laplace_ == AlexaWardetzkyLaplace)
         {
 
-            std::cout << "Distance deviation plane (Alexa, l="
+            std::cout << "Distance deviation plane (AlexaWardetzky Laplace, l="
                       << poly_laplace_lambda_ << "): " << rms << std::endl;
         }
         else if (laplace_ == deGoesLaplace)
         {
-            std::cout << "Distance deviation plane (deGoes, l="
+            std::cout << "Distance deviation plane (deGoes Laplace, l="
                       << deGoes_laplace_lambda_ << "): " << rms << std::endl;
         }
         else
@@ -291,7 +291,7 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
             }
             else if (min_point_ == AreaMinimizer)
             {
-                std::cout << "area minimizer): " << rms << std::endl;
+                std::cout << "squared area minimizer): " << rms << std::endl;
             }
             else
             {

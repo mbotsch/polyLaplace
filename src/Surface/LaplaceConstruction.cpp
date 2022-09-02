@@ -35,7 +35,6 @@ void setup_stiffness_matrices(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &S,
     }else if (Laplace == PolySimpleLaplace) {
         setup_stiffness_matrix(mesh, S, minpoint);
     } else if (Laplace == Diamond) {
-        std::cout << "Properties stiffness" <<std::endl;
         if (!mesh.has_face_property("f:point") || !mesh.has_face_property("f:weights")) {
             mesh.add_face_property<pmp::Point>("f:point");
             mesh.add_face_property<Eigen::VectorXd>("f:weights");
@@ -50,7 +49,7 @@ void setup_stiffness_matrices(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &S,
         S = Div * Gra;
 
     } else if (Laplace == deGoesLaplace) {
-        setup_disney_laplace_operator(mesh, S);
+        setup_deGoes_laplace_operator(mesh, S);
     }
 }
 
@@ -72,7 +71,7 @@ void setup_mass_matrices(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &M,
         setup_diamond_mass_matrix(mesh, M_);
         M = P.transpose() * M_ * P;
     } else if (Laplace == deGoesLaplace) {
-        setup_disney_mass_matrix(mesh, M);
+        setup_deGoes_mass_matrix(mesh, M);
     }
     double area = 0.0;
     for (int k = 0; k < M.outerSize(); ++k) {
@@ -89,7 +88,7 @@ void setup_gradient(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &G, int Lapla
         setup_poly_gradient_operator(mesh, G);
         G *= 0.5;
     } else if (Laplace == deGoesLaplace) {
-        setup_disney_gradient_operator(mesh, G);
+        setup_deGoes_gradient_operator(mesh, G);
     } else if (Laplace == PolySimpleLaplace) {
         G.resize(3 * (int)mesh.n_faces(), (int)mesh.n_vertices());
         setup_gradient_matrix(mesh, G, minpoint);
@@ -101,7 +100,7 @@ void setup_divergence(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &D, int Lap
     if (Laplace == AlexaWardetzkyLaplace) {
         setup_poly_divergence_operator(mesh, D);
     } else if (Laplace == deGoesLaplace) {
-        setup_disney_divergence_operator(mesh, D);
+        setup_deGoes_divergence_operator(mesh, D);
     } else {
         D.resize((int)mesh.n_vertices(), 3 * (int)mesh.n_faces());
         setup_divergence_matrix(mesh, D, minpoint);

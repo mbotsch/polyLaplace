@@ -66,7 +66,7 @@ void Viewer::process_imgui()
                            &poly_laplace_lambda_, 0.01, 3.0);
         ImGui::PushItemWidth(100);
         ImGui::SliderFloat("Hyperparameter Disney Laplace",
-                           &disney_laplace_lambda_, 0.01, 3.0);
+                           &deGoes_laplace_lambda_, 0.01, 3.0);
         ImGui::PopItemWidth();
 
         ImGui::Spacing();
@@ -258,11 +258,17 @@ void Viewer::process_imgui()
         static int function = 2;
         ImGui::RadioButton("Franke 2D (planar)", &function, 2);
         ImGui::RadioButton("Spherical Harmonics", &function, 0);
+        ImGui::RadioButton("Spherical Harmonics De Goes", &function, 1);
+        ImGui::PushItemWidth(100);
+        static int l = 4;
+        static int m = 2;
+        ImGui::SliderInt("SH l (degree):",&l, 0, 5);
+        ImGui::SliderInt("SH m (band):",&m, -l, l);
         ImGui::PopItemWidth();
 
         if (ImGui::Button("Solve!"))
         {
-            solve_poisson_system(mesh_, laplace_matrix, min_point_,function, 2, 0);
+            solve_poisson_system(mesh_, laplace_matrix, min_point_,function, l, m);
         }
     }
     ImGui::Spacing();
@@ -405,7 +411,7 @@ void Viewer::insert_points(unsigned int minpoint)
 
     for (Face f : mesh_.faces())
     {
-        const int n = mesh_.valence(f);
+        const int n = (int)mesh_.valence(f);
         poly.resize(n, 3);
         int i = 0;
         for (Vertex v : mesh_.vertices(f))

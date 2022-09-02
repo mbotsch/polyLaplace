@@ -28,7 +28,4 @@ void normalize_poly_gradients(pmp::SurfaceMesh &mesh, Eigen::VectorXd &g,
 void setup_poly_divergence_operator(pmp::SurfaceMesh &mesh,
                                     Eigen::SparseMatrix<double> &D);
 
-void set_polygon_vector_areas(pmp::SurfaceMesh &mesh);
-
-
 extern float poly_laplace_lambda_;

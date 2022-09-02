@@ -13,7 +13,7 @@ using namespace pmp;
 
 
 double solve_poisson_system(pmp::SurfaceMesh &mesh, int laplace, int minpoint,
-                            int function,int l = 3, int m = -1);
+                            int function,int l = 4, int m = 2);
 
 double poisson_function(pmp::Point &p, int function);
 

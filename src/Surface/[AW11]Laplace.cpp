@@ -1,8 +1,5 @@
 //=============================================================================
-
 #include "[AW11]Laplace.h"
-#include "diffgeo.h"
-
 //=============================================================================
 
 using SurfaceMesh = pmp::SurfaceMesh;
@@ -17,7 +14,7 @@ float poly_laplace_lambda_ = 2.0;
 
 void setup_E_and_B_perFace(pmp::SurfaceMesh &mesh, pmp::Face f,
                            Eigen::MatrixXd &E, Eigen::MatrixXd &B) {
-    const unsigned int n = mesh.valence(f);
+    const int n = (int)mesh.valence(f);
     Eigen::MatrixXd X(n, 3);
 
     int i = 0;
@@ -32,7 +29,7 @@ void setup_E_and_B_perFace(pmp::SurfaceMesh &mesh, pmp::Face f,
     E.resizeLike(X);
     B.resizeLike(X);
 
-    for (unsigned int i = 0; i < n; ++i) {
+    for (i = 0; i < n; ++i) {
         E.row(i) = X.row((i + 1) % n) - X.row(i);
         B.row(i) = 0.5 * (X.row((i + 1) % n) + X.row(i));
     }
@@ -327,19 +324,4 @@ void setup_poly_mass_matrix(pmp::SurfaceMesh &mesh,
     M.setFromTriplets(tripletsM.begin(), tripletsM.end());
 }
 
-void set_polygon_vector_areas(pmp::SurfaceMesh &mesh) {
-    mesh.add_face_property<Eigen::Vector3f>("f:va");
-    auto va = mesh.get_face_property<Eigen::Vector3f>("f:va");
-
-    Eigen::MatrixXd E, B;
-
-    for (auto f: mesh.faces()) {
-        setup_E_and_B_perFace(mesh, f, E, B);
-
-        // compute vector area
-        const Eigen::Matrix3d Af = E.transpose() * B;
-        Eigen::Vector3d af(-Af(1, 2), Af(0, 2), -Af(0, 1));
-        va[f] = af.cast<float>();
-    }
-}
 

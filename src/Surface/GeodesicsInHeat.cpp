@@ -106,8 +106,6 @@ void GeodesicsInHeat::compute_geodesics(bool lumped)
 
     if (laplace_ == Diamond)
     {
-        std::cout << "Properties gradient" <<std::endl;
-
         Eigen::SparseMatrix<double> G, D;
         compute_primal_points(mesh_, min_point_);
         setup_diamond_gradient_divergence_intrinsic(mesh_, G, D);
@@ -243,7 +241,7 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
         else if (laplace_ == deGoesLaplace)
         {
             std::cout << "Distance deviation sphere (deGoes, l="
-                      << disney_laplace_lambda_ << "): " << rms << std::endl;
+                      << deGoes_laplace_lambda_ << "): " << rms << std::endl;
         }
         else
         {
@@ -279,7 +277,7 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
         else if (laplace_ == deGoesLaplace)
         {
             std::cout << "Distance deviation plane (deGoes, l="
-                      << disney_laplace_lambda_ << "): " << rms << std::endl;
+                      << deGoes_laplace_lambda_ << "): " << rms << std::endl;
         }
         else
         {

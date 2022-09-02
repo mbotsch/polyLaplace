@@ -259,7 +259,7 @@ double rmse_sh(SurfaceMesh &mesh, unsigned int laplace, unsigned int min_point_,
                   << poly_laplace_lambda_ << "): " << sum << std::endl;
     } else if (laplace == deGoesLaplace) {
         std::cout << "Error SH band recreation  (Disney, l="
-                  << disney_laplace_lambda_ << "): " << sum << std::endl;
+                  << deGoes_laplace_lambda_ << "): " << sum << std::endl;
     } else {
         if (laplace == Diamond) {
             std::cout << "Diamond Laplace: ";

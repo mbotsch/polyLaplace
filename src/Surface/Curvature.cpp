@@ -80,7 +80,7 @@ void Curvature::visualize_curvature(int laplace, int min_point, bool lumped) {
                       << poly_laplace_lambda_ << "): " << rms << std::endl;
         } else if (laplace == deGoesLaplace) {
             std::cout << "Curvature deviation (Disney, l="
-                      << disney_laplace_lambda_ << "): " << rms << std::endl;
+                      << deGoes_laplace_lambda_ << "): " << rms << std::endl;
         } else {
             if (laplace == Diamond) {
                 std::cout << "Diamond Laplace ";
@@ -145,7 +145,7 @@ double Curvature::compute_curvature_error(int laplace, int min_point, bool lumpe
         std::cout << "Curvature deviation (Alexa, l=" << poly_laplace_lambda_
                   << "): " << rms << std::endl;
     } else if (laplace == deGoesLaplace) {
-        std::cout << "Curvature deviation (Disney, l=" << disney_laplace_lambda_
+        std::cout << "Curvature deviation (Disney, l=" << deGoes_laplace_lambda_
                   << "): " << rms << std::endl;
     } else {
         if (laplace == Diamond) {

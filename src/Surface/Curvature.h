@@ -7,7 +7,7 @@
 #include "[AW11]Laplace.h"
 #include "LaplaceConstruction.h"
 #include "[dGBD20]Laplace.h"
-#include <pmp/algorithms/SurfaceNormals.h>
+#include <pmp/algorithms/Normals.h>
 #define PMP_SCALAR_TYPE_64
 
 //=============================================================================

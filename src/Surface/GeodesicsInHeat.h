@@ -7,7 +7,7 @@
  #include <pmp/SurfaceMesh.h>
 #include "[AW11]Laplace.h"
 #include <Eigen/Sparse>
-#include <pmp/algorithms/SurfaceNormals.h>
+#include <pmp/algorithms/Normals.h>
 //=============================================================================
 
 class GeodesicsInHeat

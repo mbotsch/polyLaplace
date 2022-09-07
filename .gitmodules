@@ -4,6 +4,3 @@
 [submodule "external/eigen"]
 	path = external/eigen
 	url = https://gitlab.com/libeigen/eigen.git
-[submodule "external/--force"]
-	path = external/--force
-	url = https://github.com/pmp-library/pmp-library

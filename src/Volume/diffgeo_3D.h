@@ -9,7 +9,7 @@
 #include <Eigen/Sparse>
 #include <pmp/SurfaceMesh.h>
 #include <pmp/algorithms/DifferentialGeometry.h>
-#include <pmp/algorithms/SurfaceTriangulation.h>
+#include <pmp/algorithms/Triangulation.h>
 #include <unsupported/Eigen/NonLinearOptimization>
 #include "../VolumeMesh/VolumeMesh.h"
 

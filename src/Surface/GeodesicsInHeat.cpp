@@ -6,7 +6,7 @@
 #include "GeodesicsInHeat.h"
 #include <Eigen/Sparse>
 #include <iostream>
-#include <pmp/algorithms/SurfaceNormals.h>
+#include <pmp/algorithms/Normals.h>
 #include <cfloat>
 #include "DiamondLaplace_2D.h"
 #include "[dGBD20]Laplace.h"
@@ -36,7 +36,7 @@ GeodesicsInHeat::GeodesicsInHeat(pmp::SurfaceMesh &mesh, int laplace,
           geodist_sphere_(geodist),
           geodist_cube_(euklid),
           mean_edge_(mean_edge) {
-    SurfaceNormals::compute_face_normals(mesh_);
+    Normals::compute_face_normals(mesh_);
     if (!mesh.has_face_property("f:point") || !mesh.has_face_property("f:weights")) {
         mesh_.add_face_property<pmp::Point>("f:point");
         mesh_.add_face_property<Eigen::VectorXd>("f:weights");
@@ -287,8 +287,8 @@ double GeodesicsInHeat::great_circle_distance(Vertex v, Vertex vv, double r) {
     if (v == vv) {
         return 0.0;
     }
-    Normal n = pmp::SurfaceNormals::compute_vertex_normal(mesh_, v);
-    Normal nn = pmp::SurfaceNormals::compute_vertex_normal(mesh_, vv);
+    Normal n = pmp::Normals::compute_vertex_normal(mesh_, v);
+    Normal nn = pmp::Normals::compute_vertex_normal(mesh_, vv);
     double delta_sigma = acos(dot(n, nn));
     if (std::isnan(delta_sigma)) {
         dis = haversine_distance(v, vv, r);

@@ -4,9 +4,9 @@
 #include "Surface/diffgeo.h"
 #include "Surface/Curvature.h"
 #include "Surface/SpectralProcessing.h"
-#include <pmp/algorithms/SurfaceTriangulation.h>
-#include <pmp/algorithms/SurfaceSubdivision.h>
-#include <pmp/algorithms/SurfaceNormals.h>
+#include <pmp/algorithms/Triangulation.h>
+#include <pmp/algorithms/Subdivision.h>
+#include <pmp/algorithms/Normals.h>
 #include <imgui.h>
 #include "Surface/GeodesicsInHeat.h"
 #include "Surface/[dGBD20]Laplace.h"
@@ -115,7 +115,7 @@ void Viewer::process_imgui()
         // Catmull-Clark subdivision
         if (ImGui::Button("Catmull-Clark"))
         {
-            SurfaceSubdivision(mesh_).catmull_clark();
+            Subdivision(mesh_).catmull_clark();
             update_mesh();
         }
         if (ImGui::Button("insert virtual points"))
@@ -153,15 +153,15 @@ void Viewer::process_imgui()
 
         if (ImGui::Button("Triangulate mesh (min area)"))
         {
-            SurfaceTriangulation tesselator(mesh_);
-            tesselator.triangulate(SurfaceTriangulation::Objective::MIN_AREA);
+            Triangulation tesselator(mesh_);
+            tesselator.triangulate(Triangulation::Objective::MIN_AREA);
             update_mesh();
         }
 
         if (ImGui::Button("Triangulate mesh (max angle)"))
         {
-            SurfaceTriangulation tesselator(mesh_);
-            tesselator.triangulate(SurfaceTriangulation::Objective::MAX_ANGLE);
+            Triangulation tesselator(mesh_);
+            tesselator.triangulate(Triangulation::Objective::MAX_ANGLE);
             update_mesh();
         }
         if (ImGui::Button("Kugelize"))
@@ -174,7 +174,7 @@ void Viewer::process_imgui()
         {
             for (auto v : mesh_.vertices())
             {
-                Point n = SurfaceNormals::compute_vertex_normal(mesh_, v);
+                Point n = Normals::compute_vertex_normal(mesh_, v);
                 Scalar r = 2.0 * static_cast<float>(rand()) /
                                static_cast<float>(RAND_MAX) -
                            1.0;
@@ -208,7 +208,7 @@ void Viewer::process_imgui()
 
             for (auto v : mesh_.vertices())
             {
-                auto n = pmp::SurfaceNormals::compute_vertex_normal(mesh_, v);
+                auto n = pmp::Normals::compute_vertex_normal(mesh_, v);
                 if (normal_)
                 {
                     if (fixed_)

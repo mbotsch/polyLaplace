@@ -222,34 +222,3 @@ VolumeMesh::PointT compute_triangle_normal(VolumeMesh::PointT a, VolumeMesh::Poi
     return n.normalize();
 }
 
-//-----------------------------------------------------------------------------
-
-void kugelize(VolumeMesh &mesh) {
-    double min_x = std::numeric_limits<double>::max();
-    double max_x =  std::numeric_limits<double>::min();
-    VolumeMesh::PointT min, max, center;
-    for (auto v           : mesh.vertices()) {
-        VolumeMesh::PointT P = mesh.vertex(v);
-        if (P[0] < min_x) {
-            min = P;
-            min_x = P[0];
-        }
-        if (P[0] > max_x) {
-            max_x = P[0];
-            max = P;
-        }
-    }
-    double r = (max_x - min_x) / 2.0;
-    center = 0.5 * (min + max);
-    std::cout << "previous Radius: " << (max_x - min_x) / 2.0 <<
-              std::endl;
-    std::cout << "previous center: " << 0.5 * (min + max) <<
-              std::endl;
-    for (auto v  :mesh.vertices()) {
-        VolumeMesh::PointT P = mesh.vertex(v);
-        P -= center;
-        P /= r;
-        mesh.set_vertex(v, P);
-    }
-
-}

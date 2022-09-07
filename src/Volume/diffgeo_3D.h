@@ -38,4 +38,3 @@ VolumeMesh::PointT compute_triangle_normal(VolumeMesh::PointT a,
                                            VolumeMesh::PointT b,
                                            VolumeMesh::PointT c);
 
-void kugelize(VolumeMesh &mesh);

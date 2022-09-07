@@ -12,7 +12,7 @@ void setup_stiffness_matrix(SurfaceMesh &mesh,
                             Eigen::SparseMatrix<double> &S,
                             int minpoint) {
 
-    const int nv = (int)mesh.n_vertices();
+    const int nv = (int) mesh.n_vertices();
 
     Eigen::MatrixXd Si;
     Eigen::VectorXd w;
@@ -22,7 +22,7 @@ void setup_stiffness_matrix(SurfaceMesh &mesh,
     std::vector<Eigen::Triplet<double>> trip;
 
     for (Face f: mesh.faces()) {
-        int n = (int)mesh.valence(f);
+        int n = (int) mesh.valence(f);
         poly.resize(n, 3);
         int i = 0;
         for (Vertex v: mesh.vertices(f)) {
@@ -34,7 +34,7 @@ void setup_stiffness_matrix(SurfaceMesh &mesh,
 
         // compute weights for the polygon
         if (minpoint == Centroid) {
-            int val = (int)poly.rows();
+            int val = (int) poly.rows();
             w = Eigen::MatrixXd::Ones(val, 1);
             w /= (double) val;
         } else {
@@ -66,7 +66,7 @@ void setup_stiffness_matrix(SurfaceMesh &mesh,
 
 void setup_mass_matrix(SurfaceMesh &mesh,
                        Eigen::SparseMatrix<double> &M, int minpoint) {
-    const int nv = (int)mesh.n_vertices();
+    const int nv = (int) mesh.n_vertices();
 
     Eigen::MatrixXd Mi;
     Eigen::VectorXd w;
@@ -75,7 +75,7 @@ void setup_mass_matrix(SurfaceMesh &mesh,
     std::vector<Eigen::Triplet<double>> trip;
 
     for (Face f: mesh.faces()) {
-        const int n = (int)mesh.valence(f);
+        const int n = (int) mesh.valence(f);
         poly.resize(n, 3);
         int i = 0;
         for (Vertex v: mesh.vertices(f)) {
@@ -87,7 +87,7 @@ void setup_mass_matrix(SurfaceMesh &mesh,
 
         // setup polygon weights
         if (minpoint == Centroid) {
-            int val = (int)poly.rows();
+            int val = (int) poly.rows();
             w = Eigen::MatrixXd::Ones(val, 1);
             w /= (double) val;
         } else {
@@ -119,7 +119,7 @@ void setup_gradient_matrix(SurfaceMesh &mesh,
                            Eigen::SparseMatrix<double> &G,
                            int minpoint) {
 
-    const int nv = (int)mesh.n_vertices();
+    const int nv = (int) mesh.n_vertices();
 
     Eigen::MatrixXd Gi;
     Eigen::VectorXd w;
@@ -130,7 +130,7 @@ void setup_gradient_matrix(SurfaceMesh &mesh,
     int nr_triangles = 0;
     int s = 0;
     for (Face f: mesh.faces()) {
-        const int n = (int)mesh.valence(f);
+        const int n = (int) mesh.valence(f);
         nr_triangles += n;
         poly.resize(n, 3);
         int row = 0;
@@ -143,7 +143,7 @@ void setup_gradient_matrix(SurfaceMesh &mesh,
         }
         // compute weights for the polygon
         if (minpoint == Centroid) {
-            int val = (int)poly.rows();
+            int val = (int) poly.rows();
             w = Eigen::MatrixXd::Ones(val, 1);
             w /= (double) val;
         } else {
@@ -162,7 +162,8 @@ void setup_gradient_matrix(SurfaceMesh &mesh,
 
         int j = 0;
         int k;
-        for (auto vv: mesh.vertices(f)) {
+//        for (auto vv: mesh.vertices(f)) {
+        for (int l = 0; l < (int) mesh.valence(f); ++l) {
             k = 0;
             for (auto h: mesh.halfedges(f)) {
                 Vertex v = mesh.from_vertex(h);
@@ -184,7 +185,7 @@ void setup_gradient_matrix(SurfaceMesh &mesh,
 void setup_divergence_matrix(SurfaceMesh &mesh,
                              Eigen::SparseMatrix<double> &D,
                              int minpoint) {
-    const int nv = (int)mesh.n_vertices();
+    const int nv = (int) mesh.n_vertices();
 
     Eigen::MatrixXd Gi, Di;
     Eigen::VectorXd w;
@@ -196,7 +197,7 @@ void setup_divergence_matrix(SurfaceMesh &mesh,
     int s = 0;
     for (Face f: mesh.faces()) {
 
-        const int n = (int)mesh.valence(f);
+        const int n = (int) mesh.valence(f);
         nr_triangles += n;
         poly.resize(n, 3);
         int row = 0;
@@ -211,7 +212,7 @@ void setup_divergence_matrix(SurfaceMesh &mesh,
 
         // compute weights for the polygon
         if (minpoint == Centroid) {
-            int val = (int)poly.rows();
+            int val = (int) poly.rows();
             w = Eigen::MatrixXd::Ones(val, 1);
             w /= (double) val;
         } else {
@@ -250,7 +251,8 @@ void setup_divergence_matrix(SurfaceMesh &mesh,
 
         int j = 0;
         int k;
-        for (auto vv: mesh.vertices(f)) {
+//        for (auto vv: mesh.vertices(f)) {
+        for (int l = 0; l < (int)mesh.valence(f); ++l){
             k = 0;
             for (auto h: mesh.halfedges(f)) {
                 Vertex v = mesh.from_vertex(h);

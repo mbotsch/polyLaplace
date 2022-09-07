@@ -1,6 +1,6 @@
 # PolygonLaplacians
 
-Since we use the [pmp-library](http://www.pmp-library.org/) and [OpenVolumeMesh](https://www.graphics.rwth-aachen.de/software/openvolumemesh/) as submodules, you have to clone the repository recursively:
+Since we use [pmp-library](http://www.pmp-library.org/) as submodule, you have to clone the repository recursively:
 
     git clone --recursive git@github.com:Chonnik/PolygonLaplacians.git
 

@@ -5,7 +5,6 @@
 
 #include <imgui.h>
 #include <VolumeSubdivision.h>
-#include <values.h>
 #include "VolumeViewer.h"
 #include "Volume/Eigenmodes.h"
 #include "Volume/Franke_PoissonSystem_3D.h"

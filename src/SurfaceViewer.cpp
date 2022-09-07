@@ -292,12 +292,21 @@ void Viewer::process_imgui()
                                 ImGuiTreeNodeFlags_DefaultOpen))
     {
 
-        static bool geodesic_sphere_ = false;
-        static bool geodesic_cube_ = false;
-        ImGui::Checkbox("Compare distances to arc lengths", &geodesic_sphere_);
-        ImGui::Checkbox("Compare to euclidean distances", &geodesic_cube_);
-        compare_sphere = geodesic_sphere_;
-        compare_cube = geodesic_cube_;
+        static int geodesics = 2;
+        ImGui::RadioButton("Compare distances to arc lengths", &geodesics,0);
+        ImGui::RadioButton("Compare to euclidean distances", &geodesics,1);
+        ImGui::RadioButton("No comparison", &geodesics,2);
+
+        if(geodesics == 0){
+            compare_sphere = true;
+            compare_cube = false;
+        }else if (geodesics == 1){
+            compare_sphere = false;
+            compare_cube = true;
+        }else if (geodesics == 2){
+            compare_sphere = false;
+            compare_cube = false;
+        }
         if (ImGui::Button("Compute Distances Vertex 0"))
         {
 

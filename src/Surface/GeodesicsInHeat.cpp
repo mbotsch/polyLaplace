@@ -10,23 +10,19 @@
 #include <cfloat>
 #include "DiamondLaplace_2D.h"
 #include "[dGBD20]Laplace.h"
- #include "diffgeo.h"
+#include "diffgeo.h"
 #include "LaplaceConstruction.h"
 
 //=============================================================================
 
-enum LaplaceMethods
-{
+enum LaplaceMethods {
     PolySimpleLaplace = 0,
     AlexaWardetzkyLaplace = 1,
     Diamond = 2,
-    deGoesLaplace = 3,
-    Harmonic = 4
-
+    deGoesLaplace = 3
 };
 
-enum InsertedPoint
-{
+enum InsertedPoint {
     Centroid = 0,
     AreaMinimizer = 2
 };
@@ -34,25 +30,23 @@ enum InsertedPoint
 GeodesicsInHeat::GeodesicsInHeat(pmp::SurfaceMesh &mesh, int laplace,
                                  int min_point, bool geodist, bool euklid,
                                  bool mean_edge)
-    : mesh_(mesh),
-      laplace_(laplace),
-      min_point_(min_point),
-      geodist_sphere_(geodist),
-      geodist_cube_(euklid),
-      mean_edge_(mean_edge)
-{
+        : mesh_(mesh),
+          laplace_(laplace),
+          min_point_(min_point),
+          geodist_sphere_(geodist),
+          geodist_cube_(euklid),
+          mean_edge_(mean_edge) {
     SurfaceNormals::compute_face_normals(mesh_);
     if (!mesh.has_face_property("f:point") || !mesh.has_face_property("f:weights")) {
-         mesh_.add_face_property<pmp::Point>("f:point");
-         mesh_.add_face_property<Eigen::VectorXd>("f:weights");
+        mesh_.add_face_property<pmp::Point>("f:point");
+        mesh_.add_face_property<Eigen::VectorXd>("f:weights");
     }
     setup_face_point_properties(mesh_, min_point);
 }
 
 //-----------------------------------------------------------------------------
 
-GeodesicsInHeat::~GeodesicsInHeat()
-{
+GeodesicsInHeat::~GeodesicsInHeat() {
     auto area_points = mesh_.face_property<Point>("f:point");
     auto area_weights = mesh_.face_property<Eigen::VectorXd>("f:weights");
 
@@ -62,28 +56,23 @@ GeodesicsInHeat::~GeodesicsInHeat()
 
 //-----------------------------------------------------------------------------
 
-double GeodesicsInHeat::averageEdgeLength(const pmp::SurfaceMesh &mesh)
-{
+double GeodesicsInHeat::averageEdgeLength(const pmp::SurfaceMesh &mesh) {
     double avgLen = 0.;
 
-    for (auto e : mesh.edges())
-    {
+    for (auto e: mesh.edges()) {
         avgLen += mesh.edge_length(e);
     }
 
-    return avgLen / (double)mesh.n_edges();
+    return avgLen / (double) mesh.n_edges();
 }
 //-----------------------------------------------------------------------------
 
-double GeodesicsInHeat::maxEdgeLength(const pmp::SurfaceMesh &mesh)
-{
+double GeodesicsInHeat::maxEdgeLength(const pmp::SurfaceMesh &mesh) {
     double maxLen = 0.;
     double currLen;
-    for (auto e : mesh.edges())
-    {
+    for (auto e: mesh.edges()) {
         currLen = mesh.edge_length(e);
-        if (currLen > maxLen)
-        {
+        if (currLen > maxLen) {
             maxLen = currLen;
         }
     }
@@ -92,30 +81,26 @@ double GeodesicsInHeat::maxEdgeLength(const pmp::SurfaceMesh &mesh)
 }
 //-----------------------------------------------------------------------------
 
-void GeodesicsInHeat::compute_geodesics(bool lumped)
-{
+void GeodesicsInHeat::compute_geodesics(bool lumped) {
 
-    pos.resize((int)mesh_.n_vertices(), 3);
+    pos.resize((int) mesh_.n_vertices(), 3);
 
-    for (int i = 0; i < (int)mesh_.n_vertices(); ++i)
+    for (int i = 0; i < (int) mesh_.n_vertices(); ++i)
         for (int j = 0; j < 3; ++j)
             pos(i, j) = mesh_.positions()[i][j];
 
     Eigen::SparseMatrix<double> P;
     setup_prolongation_matrix(mesh_, P);
 
-    if (laplace_ == Diamond)
-    {
+    if (laplace_ == Diamond) {
         Eigen::SparseMatrix<double> G, D;
         compute_primal_points(mesh_, min_point_);
         setup_diamond_gradient_divergence_intrinsic(mesh_, G, D);
         gradOperator = G * P;
         divOperator = P.transpose() * D;
-    }
-    else
-    {
-        setup_gradient(mesh_,gradOperator,laplace_,min_point_);
-        setup_divergence(mesh_,divOperator,laplace_,min_point_);
+    } else {
+        setup_gradient(mesh_, gradOperator, laplace_, min_point_);
+        setup_divergence(mesh_, divOperator, laplace_, min_point_);
     }
 
     Eigen::SparseMatrix<double> S, A, M;
@@ -124,13 +109,13 @@ void GeodesicsInHeat::compute_geodesics(bool lumped)
     setup_mass_matrices(mesh_, M, laplace_, min_point_, lumped);
 
     double h;
-    if (mean_edge_)
-    {
+    if (mean_edge_) {
         h = pow(averageEdgeLength(mesh_), 2);
-    }
-    else
-    {
+        std::cout << "Mean edge length diffusion \n";
+    } else {
         h = pow(maxEdgeLength(mesh_), 2);
+        std::cout << "Max edge length diffusion \n";
+
     }
     A = M - h * S;
 
@@ -143,11 +128,10 @@ void GeodesicsInHeat::compute_geodesics(bool lumped)
 //-----------------------------------------------------------------------------
 
 void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
-                                  Eigen::VectorXd &orthodist)
-{
+                                  Eigen::VectorXd &orthodist) {
 
     // diffuse heat
-    const int N = (int)mesh_.n_vertices();
+    const int N = (int) mesh_.n_vertices();
 
     auto distances = mesh_.add_vertex_property<Scalar>("v:dist");
 
@@ -159,14 +143,10 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
     Eigen::VectorXd grad = gradOperator * heat;
 
     // normalize gradients
-    if (laplace_ == AlexaWardetzkyLaplace)
-    {
+    if (laplace_ == AlexaWardetzkyLaplace) {
         normalize_poly_gradients(mesh_, grad, heat);
-    }
-    else if (laplace_ == deGoesLaplace)
-    {
-        for (int i = 0; i < grad.rows() / 3; i++)
-        {
+    } else if (laplace_ == deGoesLaplace) {
+        for (int i = 0; i < grad.rows() / 3; i++) {
             dvec3 g = dvec3(grad(3 * i), grad(3 * i + 1), grad(3 * i + 2));
             double n = norm(g);
             if (n > DBL_MIN)
@@ -176,21 +156,15 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
             grad(3 * i + 1) = g[1];
             grad(3 * i + 2) = g[2];
         }
-    }
-    else if (laplace_ == Diamond)
-    {
-        for (int i = 0; i < grad.rows(); i += 2)
-        {
+    } else if (laplace_ == Diamond) {
+        for (int i = 0; i < grad.rows(); i += 2) {
             dvec2 &g = *reinterpret_cast<dvec2 *>(&grad[i]);
             double n = norm(g);
             if (n > DBL_MIN)
                 g /= n;
         }
-    }
-    else
-    {
-        for (int i = 0; i < grad.rows(); i += 3)
-        {
+    } else {
+        for (int i = 0; i < grad.rows(); i += 3) {
             dvec3 &g = *reinterpret_cast<dvec3 *>(&grad[i]);
             double n = norm(g);
             if (n > DBL_MIN)
@@ -209,147 +183,116 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
     Vertex v0 = Vertex(vertex);
     double rms = 0.0;
     double radius = norm(mesh_.position(v0));
-    for (auto v : mesh_.vertices())
-    {
+    for (auto v: mesh_.vertices()) {
         distances[v] = dist[k];
 
-        if (geodist_sphere_)
-        {
+        if (geodist_sphere_) {
             orthodist(k) = great_circle_distance(v0, v, radius);
             rms += (dist(k) - orthodist(k)) * (dist(k) - orthodist(k));
         }
 
-        if (geodist_cube_)
-        {
+        if (geodist_cube_) {
             orthodist(k) = norm(mesh_.position(v0) - mesh_.position(v));
             rms += (dist(k) - orthodist(k)) * (dist(k) - orthodist(k));
         }
 
         k++;
     }
-
-    if (geodist_sphere_)
-    {
-        rms /= (double)mesh_.n_vertices();
+    std::string meshtype;
+    if (geodist_sphere_) {
+        rms /= (double) mesh_.n_vertices();
         rms = sqrt(rms);
         rms /= radius;
-        if (laplace_ == AlexaWardetzkyLaplace)
-        {
-            std::cout << "Distance deviation sphere (AlexaWardetzky Laplace, l="
-                      << poly_laplace_lambda_ << "): " << rms << std::endl;
-        }
-        else if (laplace_ == deGoesLaplace)
-        {
-            std::cout << "Distance deviation sphere (deGoes Laplace, l="
-                      << deGoes_laplace_lambda_ << "): " << rms << std::endl;
-        }
-        else
-        {
-            if (laplace_ == PolySimpleLaplace)
-            {
-                std::cout << "Distance deviation sphere (Polysimple ";
-            }
-            else if (laplace_ == Diamond)
-            {
-                std::cout << "Distance deviation sphere (Diamond ";
-            }
-
-            if (min_point_ == AreaMinimizer)
-            {
-                std::cout << "squared area minimizer): " << rms << std::endl;
-            }
-            else
-            {
-                std::cout << "centroid): " << rms << std::endl;
-            }
-        }
-    }
-    if (geodist_cube_)
-    {
-        rms /= (double)mesh_.n_vertices();
+        meshtype = " sphere ";
+    } else if (geodist_cube_) {
+        rms /= (double) mesh_.n_vertices();
         rms = sqrt(rms);
-        if (laplace_ == AlexaWardetzkyLaplace)
-        {
-
-            std::cout << "Distance deviation plane (AlexaWardetzky Laplace, l="
+        meshtype = " plane ";
+    }
+    if (geodist_cube_ || geodist_sphere_) {
+        if (laplace_ == AlexaWardetzkyLaplace) {
+            std::cout << "Distance deviation" + meshtype + "(AlexaWardetzky Laplace, l="
                       << poly_laplace_lambda_ << "): " << rms << std::endl;
-        }
-        else if (laplace_ == deGoesLaplace)
-        {
-            std::cout << "Distance deviation plane (deGoes Laplace, l="
+        } else if (laplace_ == deGoesLaplace) {
+            std::cout << "Distance deviation" + meshtype + "(deGoes Laplace, l="
                       << deGoes_laplace_lambda_ << "): " << rms << std::endl;
-        }
-        else
-        {
-            if (laplace_ == PolySimpleLaplace)
-            {
-                std::cout << "Distance deviation plane (Polysimple ";
+        } else {
+            if (laplace_ == PolySimpleLaplace) {
+                std::cout << "Distance deviation" + meshtype + "(Polysimple ";
+            } else if (laplace_ == Diamond) {
+                std::cout << "Distance deviation" + meshtype + "(Diamond ";
             }
-            else if (laplace_ == Diamond)
-            {
-                std::cout << "Distance deviation plane (Diamond laplace ";
-            }
-            else if (min_point_ == AreaMinimizer)
-            {
+
+            if (min_point_ == AreaMinimizer) {
                 std::cout << "squared area minimizer): " << rms << std::endl;
-            }
-            else
-            {
+            } else {
                 std::cout << "centroid): " << rms << std::endl;
             }
         }
     }
-
     distance_to_texture_coordinates();
     mesh_.remove_vertex_property<Scalar>(distances);
 }
 
 //-----------------------------------------------------------------------------
 
-void GeodesicsInHeat::distance_to_texture_coordinates() const
-{
+void GeodesicsInHeat::distance_to_texture_coordinates() const {
+//     remove per-halfedge texture coordinates
+    auto htex = mesh_.get_halfedge_property<TexCoord>("h:tex");
+    if (htex)
+        mesh_.remove_halfedge_property(htex);
 
     auto distances = mesh_.get_vertex_property<Scalar>("v:dist");
     assert(distances);
-    // scale with boundingbox size for comparable geodesic rings
-    Scalar bb_size;
-    bb_size = mesh_.bounds().size();
-    auto tex = mesh_.vertex_property<TexCoord>("v:tex");
-    for (auto v : mesh_.vertices())
-    {
-        if (distances[v] <= FLT_MAX)
-        {
-            tex[v] = TexCoord(distances[v] / bb_size, 0.0);
+
+//    // scale with boundingbox size for comparable geodesic rings
+//    Scalar bb_size;
+//    bb_size = mesh_.bounds().size();
+//    auto tex = mesh_.vertex_property<TexCoord>("v:tex");
+//    for (auto v : mesh_.vertices())
+//    {
+//        if (distances[v] <= FLT_MAX)
+//        {
+//            tex[v] = TexCoord(distances[v] / bb_size, 0.0);
+//        }
+//        else
+//        {
+//            tex[v] = TexCoord(1.0, 0.0);
+//        }
+//    }
+
+    // find maximum distance
+    Scalar maxdist(0);
+    for (auto v: mesh_.vertices()) {
+        if (distances[v] <= FLT_MAX) {
+            maxdist = std::max(maxdist, distances[v]);
         }
-        else
-        {
+    }
+
+    auto tex = mesh_.vertex_property<TexCoord>("v:tex");
+    for (auto v: mesh_.vertices()) {
+        if (distances[v] <= FLT_MAX) {
+            tex[v] = TexCoord(distances[v] / maxdist, 0.0);
+        } else {
             tex[v] = TexCoord(1.0, 0.0);
         }
     }
 
-    // remove per-halfedge texture coordinates
-    auto htex = mesh_.get_halfedge_property<TexCoord>("h:tex");
-    if (htex)
-        mesh_.remove_halfedge_property(htex);
 }
 
 //-----------------------------------------------------------------------------
 
-double GeodesicsInHeat::great_circle_distance(Vertex v, Vertex vv, double r)
-{
+double GeodesicsInHeat::great_circle_distance(Vertex v, Vertex vv, double r) {
     double dis;
-    if (v == vv)
-    {
+    if (v == vv) {
         return 0.0;
     }
     Normal n = pmp::SurfaceNormals::compute_vertex_normal(mesh_, v);
     Normal nn = pmp::SurfaceNormals::compute_vertex_normal(mesh_, vv);
     double delta_sigma = acos(dot(n, nn));
-    if (std::isnan(delta_sigma))
-    {
+    if (std::isnan(delta_sigma)) {
         dis = haversine_distance(v, vv, r);
-        if (std::isnan(delta_sigma))
-        {
+        if (std::isnan(delta_sigma)) {
             dis = vincenty_distance(v, vv, r);
         }
         return dis;
@@ -360,8 +303,7 @@ double GeodesicsInHeat::great_circle_distance(Vertex v, Vertex vv, double r)
 
 //-----------------------------------------------------------------------------
 
-double GeodesicsInHeat::haversine_distance(Vertex v, Vertex vv, double r)
-{
+double GeodesicsInHeat::haversine_distance(Vertex v, Vertex vv, double r) {
 
     Point p = mesh_.position(v);
     Point pp = mesh_.position(vv);
@@ -385,8 +327,7 @@ double GeodesicsInHeat::haversine_distance(Vertex v, Vertex vv, double r)
 
 //-----------------------------------------------------------------------------
 
-double GeodesicsInHeat::vincenty_distance(Vertex v, Vertex vv, double r)
-{
+double GeodesicsInHeat::vincenty_distance(Vertex v, Vertex vv, double r) {
     //  special case of the Vincenty formula for an ellipsoid with equal major and minor axes
     Point p = mesh_.position(v);
     Point pp = mesh_.position(vv);

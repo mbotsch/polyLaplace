@@ -11,7 +11,6 @@
 //=============================================================================
 using namespace pmp;
 
-
 double solve_poisson_system(pmp::SurfaceMesh &mesh, int laplace, int minpoint,
                             int function,int l = 4, int m = 2);
 
@@ -22,9 +21,3 @@ double laplace_of_poisson_function(pmp::Point &p, int function);
 double franke_function(double x, double y);
 
 double laplace_franke_function(double x, double y);
-
-double spherical_harmonic_function(double x, double y, double z);
-
-double spherical_harmonic_function_scaled(double x, double y, double z);
-
-void solve_laplace_equation(pmp::SurfaceMesh &mesh, int laplace, int face_point);

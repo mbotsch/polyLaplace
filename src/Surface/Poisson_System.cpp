@@ -132,7 +132,7 @@ double solve_poisson_system(pmp::SurfaceMesh &mesh, int laplace, int minpoint,
         //y.normalize();
         y /= sqrt(y.transpose() * M * y);
 
-        double y_mean = y.sum() / y.rows();
+        double y_mean = y.sum() / (double)y.rows();
 //        std::cerr << "y_sum: " << y.sum() << std::endl;
         y -= Eigen::VectorXd::Ones(y.rows()) * y_mean;
 //        std::cerr << "y_sum new: " << y.sum() << std::endl;
@@ -302,99 +302,3 @@ double laplace_franke_function(double x, double y) {
 
 //-----------------------------------------------------------------------------
 
-double spherical_harmonic_function(double x, double y, double z) {
-
-    //    y_4,-3 (evalue 20)
-    //    return -(3*pow(x, 2.0) - pow(y, 2.0))*y*z; //* (3.0/8.0*sqrt(5.0/M_PI));#
-
-    //y_4,2 (evalue 20)
-    //    return -(pow(x, 2.0) - pow(y, 2.0)) * (7.0 * pow(z, 2.0) - 1.0); //* (3.0/8.0*sqrt(5.0/M_PI));#
-
-    // y_3,-1 (evalue 12)
-    //    return -y * (4.0 * pow(z, 2.0) - pow(x, 2.0) - pow(y, 2.0));
-
-    // y_2,0 (evalue 6)
-    //   return -2.0*pow(z, 2.0)+pow(x, 2.0)+pow(y, 2.0);
-
-    // y_3,0 (evalue 12)
-    return -z * (2.0 * pow(z, 2.0) - 3.0 * pow(x, 2.0) - 3.0 * pow(y, 2.0));
-}
-
-//-----------------------------------------------------------------------------
-
-//double spherical_harmonic_function_scaled(double x, double y, double z) {
-//    //    double l = 4.0;
-//    double l = 3.0;
-//    //    double l = 2.0;
-//
-//    double evalue = -l * (l + 1.0);
-//
-//    return spherical_harmonic_function(x, y, z) / evalue;
-//}
-
-//-----------------------------------------------------------------------------
-
-void solve_laplace_equation(SurfaceMesh &mesh, int laplace, int face_point) {
-    Eigen::SparseMatrix<double> M, S, S_f;
-    Eigen::MatrixXd B = Eigen::MatrixXd::Zero((int) mesh.n_vertices(), 3);
-
-    setup_stiffness_matrices(mesh, S, laplace, face_point);
-    int nb = 0;
-    for (auto v: mesh.vertices()) {
-        //count nr outer vertices
-        if (mesh.is_boundary(v)) {
-            nb++;
-        }
-    }
-
-    Eigen::SparseMatrix<double> G, V, Div, P;
-
-    unsigned ins = 0;
-    unsigned out = 0;
-
-    Eigen::VectorXi in(mesh.n_vertices() - nb), bound(nb), x(3);
-    x << 0, 1, 2;
-    for (auto v: mesh.vertices()) {
-        // save indices of inner and outer vertices
-        if (!mesh.is_boundary(v)) {
-            in(ins) = (int) v.idx();
-            ins++;
-        } else {
-            bound(out) = (int) v.idx();
-            out++;
-            // right-hand side: fix x coordinate of boundary vertices for the righthandsite
-            B(v.idx(), 0) = mesh.position(v)[0];
-            B(v.idx(), 1) = mesh.position(v)[1];
-            B(v.idx(), 2) = mesh.position(v)[2];
-        }
-    }
-
-    Eigen::SparseMatrix<double> L_in_in, L_in_b;
-    Eigen::MatrixXd b_in, b_out;
-    // slice S and b and bring boundary values on the righthandsite to solve only for inner vertices
-    igl::slice(S, in, in, L_in_in);
-    igl::slice(S, in, bound, L_in_b);
-    igl::slice(B, in, x, b_in);
-    igl::slice(B, bound, x, b_out);
-    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
-    solver.compute(L_in_in);
-    Eigen::MatrixXd X = solver.solve(b_in - L_in_b * b_out);
-
-    double error = 0.0;
-    int k = 0;
-    if (solver.info() != Eigen::Success) {
-        std::cerr << "harmonic(): Could not solve linear system\n";
-    } else {
-        // copy solution
-        for (auto v: mesh.vertices()) {
-            if (!mesh.is_boundary(v)) {
-                error += pow(X(k, 0) - mesh.position(v)[0], 2) +
-                         pow(X(k, 1) - mesh.position(v)[1], 2) +
-                         pow(X(k, 2) - mesh.position(v)[2], 2);
-                k++;
-            }
-        }
-    }
-    std::cout << "RMSE inner vertex positions : " << sqrt(error / (double) k)
-              << std::endl;
-}

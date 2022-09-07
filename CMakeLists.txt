@@ -32,7 +32,7 @@ add_subdirectory(external/OpenVolumeMesh)
 # add include directories
 include_directories(${PROJECT_SOURCE_DIR}/external/pmp-library/src)
 include_directories(${PROJECT_SOURCE_DIR}/external/pmp-library/external/imgui)
-include_directories(${PROJECT_SOURCE_DIR}/external/pmp-library/external/eigen)
+include_directories(${PROJECT_SOURCE_DIR}/external/eigen)
 include_directories(${PROJECT_SOURCE_DIR}/external/libigl/include)
 include_directories(${PROJECT_SOURCE_DIR}/external/spectra/include)
 include_directories(${PROJECT_SOURCE_DIR}/external/OpenVolumeMesh/src)

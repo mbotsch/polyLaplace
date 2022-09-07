@@ -26,7 +26,7 @@ private:
     bool read_hybrid(VolumeMesh &mesh);
 
     bool write_ovm(const VolumeMesh& mesh);
-    bool write_mesh(const VolumeMesh& mesh);
+//    bool write_mesh(const VolumeMesh& mesh);
     bool write_hybrid(const VolumeMesh& mesh);
 
 private:

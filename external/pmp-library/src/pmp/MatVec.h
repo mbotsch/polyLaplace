@@ -1,4 +1,4 @@
-// Copyright 2011-2020 the Polygon Mesh Processing Library developers.
+// Copyright 2011-2021 the Polygon Mesh Processing Library developers.
 // Copyright 2001-2005 by Computer Graphics Group, RWTH Aachen
 // Distributed under a MIT-style license, see LICENSE.txt for details.
 
@@ -7,12 +7,15 @@
 #include <cmath>
 #include <cassert>
 
+#include <array>
 #include <iostream>
 #include <limits>
 #include <initializer_list>
 
 #include <Eigen/Dense>
-#define PMP_SCALAR_TYPE_64
+
+#include "pmp/Exceptions.h"
+
 namespace pmp {
 
 //! \addtogroup core
@@ -24,7 +27,7 @@ class Matrix
 {
 public:
     //! the scalar type of the vector
-    typedef Scalar value_type;
+    using value_type = Scalar;
 
     //! returns number of rows of the matrix
     static constexpr int rows() { return M; }
@@ -33,8 +36,8 @@ public:
     //! returns the dimension of the vector (or size of the matrix, rows*cols)
     static constexpr int size() { return M * N; }
 
-    //! empty default constructor
-    Matrix() {}
+    //! default constructor
+    Matrix() = default;
 
     //! construct with all entries being a given scalar (matrix and vector)
     explicit Matrix(Scalar s)
@@ -61,10 +64,10 @@ public:
     explicit Matrix(const std::initializer_list<Matrix<Scalar, M, 1>>&& columns)
     {
         assert(columns.size() == N);
-        int j = 0, i;
+        int j{};
         for (const Matrix<Scalar, M, 1>& v : columns)
         {
-            for (i = 0; i < M; ++i)
+            for (int i = 0; i < M; ++i)
                 data_[M * j + i] = v[i];
             ++j;
         }
@@ -188,14 +191,14 @@ public:
         {
             assert(m.size() == size());
             for (int i = 0; i < size(); ++i)
-                (*this)[i] = m(i);
+                (*this)[i] = static_cast<Scalar>(m(i));
         }
         else
         {
             assert(m.rows() == rows() && m.cols() == cols());
             for (int i = 0; i < rows(); ++i)
                 for (int j = 0; j < cols(); ++j)
-                    (*this)(i, j) = m(i, j);
+                    (*this)(i, j) = static_cast<Scalar>(m(i, j));
         }
         return *this;
     }
@@ -243,16 +246,17 @@ public:
     }
 
     //! const-access as scalar array
-    const Scalar* data() const { return data_; }
+    const Scalar* data() const { return data_.data(); }
 
     //! access as scalar array
-    Scalar* data() { return data_; }
+    Scalar* data() { return data_.data(); }
 
     //! normalize matrix/vector by dividing through Frobenius/Euclidean norm
     void normalize()
     {
         Scalar n = norm(*this);
-        n = (n > std::numeric_limits<Scalar>::min()) ? 1.0 / n : 0.0;
+        n = (n > std::numeric_limits<Scalar>::min()) ? Scalar(1.0) / n
+                                                     : Scalar(0.0);
         *this *= n;
     }
 
@@ -306,8 +310,17 @@ public:
         return false;
     }
 
+    //! \return true if all elements are finite, i.e. not NaN or +/- inf
+    bool allFinite() const
+    {
+        for (int i = 0; i < size(); ++i)
+            if (!std::isfinite(data_[i]))
+                return false;
+        return true;
+    }
+
 protected:
-    Scalar data_[N * M];
+    std::array<Scalar, N * M> data_;
 };
 
 //! template specialization for Vector as Nx1 matrix
@@ -327,61 +340,50 @@ template <typename Scalar>
 using Mat2 = Matrix<Scalar, 2, 2>;
 
 //! template specialization for a vector of two float values
-typedef Vector<float, 2> vec2;
+using vec2 = Vector<float, 2>;
 //! template specialization for a vector of two double values
-typedef Vector<double, 2> dvec2;
+using dvec2 = Vector<double, 2>;
 //! template specialization for a vector of two bool values
-typedef Vector<bool, 2> bvec2;
+using bvec2 = Vector<bool, 2>;
 //! template specialization for a vector of two int values
-typedef Vector<int, 2> ivec2;
+using ivec2 = Vector<int, 2>;
 //! template specialization for a vector of two unsigned int values
-typedef Vector<unsigned int, 2> uvec2;
+using uvec2 = Vector<unsigned int, 2>;
 
 //! template specialization for a vector of three float values
-typedef Vector<float, 3> vec3;
+using vec3 = Vector<float, 3>;
 //! template specialization for a vector of three double values
-typedef Vector<double, 3> dvec3;
+using dvec3 = Vector<double, 3>;
 //! template specialization for a vector of three bool values
-typedef Vector<bool, 3> bvec3;
+using bvec3 = Vector<bool, 3>;
 //! template specialization for a vector of three int values
-typedef Vector<int, 3> ivec3;
+using ivec3 = Vector<int, 3>;
 //! template specialization for a vector of three unsigned int values
-typedef Vector<unsigned int, 3> uvec3;
+using uvec3 = Vector<unsigned int, 3>;
 
 //! template specialization for a vector of four float values
-typedef Vector<float, 4> vec4;
+using vec4 = Vector<float, 4>;
 //! template specialization for a vector of four double values
-typedef Vector<double, 4> dvec4;
+using dvec4 = Vector<double, 4>;
 //! template specialization for a vector of four bool values
-typedef Vector<bool, 4> bvec4;
+using bvec4 = Vector<bool, 4>;
 //! template specialization for a vector of four int values
-typedef Vector<int, 4> ivec4;
+using ivec4 = Vector<int, 4>;
 //! template specialization for a vector of four unsigned int values
-typedef Vector<unsigned int, 4> uvec4;
-
-//! template specialization for a vector of four float values
-typedef Vector<float, 8> vec8;
-//! template specialization for a vector of four double values
-typedef Vector<double, 8> dvec8;
-//! template specialization for a vector of four bool values
-typedef Vector<bool, 8> bvec8;
-//! template specialization for a vector of four int values
-typedef Vector<int, 8> ivec8;
-//! template specialization for a vector of four unsigned int values
-typedef Vector<unsigned int, 8> uvec8;
+using uvec4 = Vector<unsigned int, 4>;
 
 //! template specialization for a 2x2 matrix of float values
-typedef Mat2<float> mat2;
+using mat2 = Mat2<float>;
 //! template specialization for a 2x2 matrix of double values
-typedef Mat2<double> dmat2;
+using dmat2 = Mat2<double>;
 //! template specialization for a 3x3 matrix of float values
-typedef Mat3<float> mat3;
+using mat3 = Mat3<float>;
 //! template specialization for a 3x3 matrix of double values
-typedef Mat3<double> dmat3;
+using dmat3 = Mat3<double>;
 //! template specialization for a 4x4 matrix of float values
-typedef Mat4<float> mat4;
+using mat4 = Mat4<float>;
 //! template specialization for a 4x4 matrix of double values
-typedef Mat4<double> dmat4;
+using dmat4 = Mat4<double>;
 
 //! output a matrix by printing its space-separated compontens
 template <typename Scalar, int M, int N>
@@ -402,14 +404,13 @@ Matrix<Scalar, M, N> operator*(const Matrix<Scalar, M, K>& m1,
                                const Matrix<Scalar, K, N>& m2)
 {
     Matrix<Scalar, M, N> m;
-    int i, j, k;
 
-    for (i = 0; i < M; ++i)
+    for (int i = 0; i < M; ++i)
     {
-        for (j = 0; j < N; ++j)
+        for (int j = 0; j < N; ++j)
         {
             m(i, j) = Scalar(0);
-            for (k = 0; k < K; ++k)
+            for (int k = 0; k < K; ++k)
                 m(i, j) += m1(i, k) * m2(k, j);
         }
     }
@@ -423,10 +424,9 @@ Matrix<Scalar, M, N> cmult(const Matrix<Scalar, M, N>& m1,
                            const Matrix<Scalar, M, N>& m2)
 {
     Matrix<Scalar, M, N> m;
-    int i, j;
 
-    for (i = 0; i < M; ++i)
-        for (j = 0; j < N; ++j)
+    for (int i = 0; i < M; ++i)
+        for (int j = 0; j < N; ++j)
             m(i, j) = m1(i, j) * m2(i, j);
 
     return m;
@@ -494,7 +494,7 @@ template <typename Scalar, typename Scalar2, int M, int N>
 inline Matrix<Scalar, M, N> operator*(const Scalar2 s,
                                       const Matrix<Scalar, M, N>& m)
 {
-    return Matrix<Scalar, M, N>(m) *= s;
+    return Matrix<Scalar, M, N>(m) *= static_cast<Scalar>(s);
 }
 
 //! scalar multiplication of matrix: m*s
@@ -502,7 +502,7 @@ template <typename Scalar, typename Scalar2, int M, int N>
 inline Matrix<Scalar, M, N> operator*(const Matrix<Scalar, M, N>& m,
                                       const Scalar2 s)
 {
-    return Matrix<Scalar, M, N>(m) *= s;
+    return Matrix<Scalar, M, N>(m) *= static_cast<Scalar>(s);
 }
 
 //! divide matrix by scalar: m/s
@@ -535,7 +535,8 @@ template <typename Scalar, int M, int N>
 inline Matrix<Scalar, M, N> normalize(const Matrix<Scalar, M, N>& m)
 {
     Scalar n = norm(m);
-    n = (n > std::numeric_limits<Scalar>::min()) ? 1.0 / n : 0.0;
+    n = (n > std::numeric_limits<Scalar>::min()) ? Scalar(1.0) / n
+                                                 : Scalar(0.0);
     return m * n;
 }
 
@@ -641,7 +642,7 @@ template <typename Scalar>
 Mat4<Scalar> perspective_matrix(Scalar fovy, Scalar aspect, Scalar zNear,
                                 Scalar zFar)
 {
-    Scalar t = Scalar(zNear) * tan(fovy * M_PI / 360.0);
+    Scalar t = Scalar(zNear) * tan(fovy * Scalar(M_PI / 360.0));
     Scalar b = -t;
     Scalar l = b * aspect;
     Scalar r = t * aspect;
@@ -655,7 +656,7 @@ template <typename Scalar>
 Mat4<Scalar> inverse_perspective_matrix(Scalar fovy, Scalar aspect,
                                         Scalar zNear, Scalar zFar)
 {
-    Scalar t = zNear * tan(fovy * M_PI / 360.0);
+    Scalar t = zNear * tan(fovy * Scalar(M_PI / 360.0));
     Scalar b = -t;
     Scalar l = b * aspect;
     Scalar r = t * aspect;
@@ -744,8 +745,8 @@ Mat4<Scalar> scaling_matrix(const Vector<Scalar, 3>& s)
 template <typename Scalar>
 Mat4<Scalar> rotation_matrix_x(Scalar angle)
 {
-    Scalar ca = cos(angle * (M_PI / 180.0));
-    Scalar sa = sin(angle * (M_PI / 180.0));
+    Scalar ca = cos(angle * Scalar(M_PI / 180.0));
+    Scalar sa = sin(angle * Scalar(M_PI / 180.0));
 
     Mat4<Scalar> m(0.0);
     m(0, 0) = 1.0;
@@ -762,8 +763,8 @@ Mat4<Scalar> rotation_matrix_x(Scalar angle)
 template <typename Scalar>
 Mat4<Scalar> rotation_matrix_y(Scalar angle)
 {
-    Scalar ca = cos(angle * (M_PI / 180.0));
-    Scalar sa = sin(angle * (M_PI / 180.0));
+    Scalar ca = cos(angle * Scalar(M_PI / 180.0));
+    Scalar sa = sin(angle * Scalar(M_PI / 180.0));
 
     Mat4<Scalar> m(0.0);
     m(0, 0) = ca;
@@ -780,8 +781,8 @@ Mat4<Scalar> rotation_matrix_y(Scalar angle)
 template <typename Scalar>
 Mat4<Scalar> rotation_matrix_z(Scalar angle)
 {
-    Scalar ca = cos(angle * (M_PI / 180.0));
-    Scalar sa = sin(angle * (M_PI / 180.0));
+    Scalar ca = cos(angle * Scalar(M_PI / 180.0));
+    Scalar sa = sin(angle * Scalar(M_PI / 180.0));
 
     Mat4<Scalar> m(0.0);
     m(0, 0) = ca;
@@ -799,7 +800,7 @@ template <typename Scalar>
 Mat4<Scalar> rotation_matrix(const Vector<Scalar, 3>& axis, Scalar angle)
 {
     Mat4<Scalar> m(Scalar(0));
-    Scalar a = angle * (M_PI / 180.0f);
+    Scalar a = angle * Scalar(M_PI / 180.0f);
     Scalar c = cosf(a);
     Scalar s = sinf(a);
     Scalar one_m_c = Scalar(1) - c;
@@ -959,24 +960,35 @@ Mat4<Scalar> inverse(const Mat4<Scalar>& m)
     return Inverse;
 }
 
+//! return determinant of 3x3 matrix
+template <typename Scalar>
+Scalar determinant(const Mat3<Scalar>& m)
+{
+    return m(0, 0) * m(1, 1) * m(2, 2) - m(0, 0) * m(1, 2) * m(2, 1) +
+           m(1, 0) * m(0, 2) * m(2, 1) - m(1, 0) * m(0, 1) * m(2, 2) +
+           m(2, 0) * m(0, 1) * m(1, 2) - m(2, 0) * m(0, 2) * m(1, 1);
+}
+
 //! return the inverse of a 3x3 matrix
 template <typename Scalar>
 Mat3<Scalar> inverse(const Mat3<Scalar>& m)
 {
-    Scalar det = (-m(0, 0) * m(1, 1) * m(2, 2) + m(0, 0) * m(1, 2) * m(2, 1) +
-                  m(1, 0) * m(0, 1) * m(2, 2) - m(1, 0) * m(0, 2) * m(2, 1) -
-                  m(2, 0) * m(0, 1) * m(1, 2) + m(2, 0) * m(0, 2) * m(1, 1));
+    const Scalar det = determinant(m);
+    if (det < 1.0e-10 || std::isnan(det))
+    {
+        throw SolverException("3x3 matrix not invertible");
+    }
 
     Mat3<Scalar> inv;
-    inv(0, 0) = (m(1, 2) * m(2, 1) - m(1, 1) * m(2, 2)) / det;
-    inv(0, 1) = (m(0, 1) * m(2, 2) - m(0, 2) * m(2, 1)) / det;
-    inv(0, 2) = (m(0, 2) * m(1, 1) - m(0, 1) * m(1, 2)) / det;
-    inv(1, 0) = (m(1, 0) * m(2, 2) - m(1, 2) * m(2, 0)) / det;
-    inv(1, 1) = (m(0, 2) * m(2, 0) - m(0, 0) * m(2, 2)) / det;
-    inv(1, 2) = (m(0, 0) * m(1, 2) - m(0, 2) * m(1, 0)) / det;
-    inv(2, 0) = (m(1, 1) * m(2, 0) - m(1, 0) * m(2, 1)) / det;
-    inv(2, 1) = (m(0, 0) * m(2, 1) - m(0, 1) * m(2, 0)) / det;
-    inv(2, 2) = (m(0, 1) * m(1, 0) - m(0, 0) * m(1, 1)) / det;
+    inv(0, 0) = (m(1, 1) * m(2, 2) - m(1, 2) * m(2, 1)) / det;
+    inv(0, 1) = (m(0, 2) * m(2, 1) - m(0, 1) * m(2, 2)) / det;
+    inv(0, 2) = (m(0, 1) * m(1, 2) - m(0, 2) * m(1, 1)) / det;
+    inv(1, 0) = (m(1, 2) * m(2, 0) - m(1, 0) * m(2, 2)) / det;
+    inv(1, 1) = (m(0, 0) * m(2, 2) - m(0, 2) * m(2, 0)) / det;
+    inv(1, 2) = (m(0, 2) * m(1, 0) - m(0, 0) * m(1, 2)) / det;
+    inv(2, 0) = (m(1, 0) * m(2, 1) - m(1, 1) * m(2, 0)) / det;
+    inv(2, 1) = (m(0, 1) * m(2, 0) - m(0, 0) * m(2, 1)) / det;
+    inv(2, 2) = (m(0, 0) * m(1, 1) - m(0, 1) * m(1, 0)) / det;
 
     return inv;
 }
@@ -989,7 +1001,7 @@ bool symmetric_eigendecomposition(const Mat3<Scalar>& m, Scalar& eval1,
                                   Vector<Scalar, 3>& evec2,
                                   Vector<Scalar, 3>& evec3)
 {
-    unsigned int i, j;
+    unsigned int i{}, j{};
     Scalar theta, t, c, s;
     Mat3<Scalar> V = Mat3<Scalar>::identity();
     Mat3<Scalar> R;
@@ -1048,8 +1060,8 @@ bool symmetric_eigendecomposition(const Mat3<Scalar>& m, Scalar& eval1,
     if (iterations > 0)
     {
         // sort and return
-        int sorted[3];
-        Scalar d[3] = {A(0, 0), A(1, 1), A(2, 2)};
+        std::array<int, 3> sorted;
+        std::array<Scalar, 3> d = {A(0, 0), A(1, 1), A(2, 2)};
 
         if (d[0] > d[1])
         {

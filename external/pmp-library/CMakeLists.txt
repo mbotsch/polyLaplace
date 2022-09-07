@@ -1,21 +1,12 @@
-project(pmp-library)
-
-cmake_minimum_required(VERSION 3.16.3)
-
 cmake_policy(SET CMP0048 NEW)
+project(
+  pmp-library
+  VERSION 2.0.1
+  DESCRIPTION "The Polygon Mesh Processing Library"
+  HOMEPAGE_URL "https://www.pmp-library.org")
+cmake_minimum_required(VERSION 3.16.3)
 cmake_policy(SET CMP0072 NEW)
 
-set(PMP_MAJOR_VERSION 1)
-set(PMP_MINOR_VERSION 2)
-set(PMP_PATCH_VERSION 1)
-set(PMP_VERSION ${PMP_MAJOR_VERSION}.${PMP_MINOR_VERSION}.${PMP_PATCH_VERSION})
-
-set(CMAKE_PROJECT_VERSION ${PMP_VERSION})
-set(CMAKE_PROJECT_VERSION_MAJOR ${PMP_MAJOR_VERSION})
-set(CMAKE_PROJECT_VERSION_MINOR ${PMP_MINOR_VERSION})
-set(CMAKE_PROJECT_VERSION_PATCH ${PMP_PATCH_VERSION})
-
-option(PMP_BUILD_APPS "Build the PMP applications" ON)
 option(PMP_BUILD_EXAMPLES "Build the PMP examples" ON)
 option(PMP_BUILD_TESTS "Build the PMP test programs" ON)
 option(PMP_BUILD_DOCS "Build the PMP documentation" ON)
@@ -67,10 +58,8 @@ if(PMP_BUILD_VIS)
     add_definitions(-DGLEW_STATIC)
     add_library(glew STATIC ${GLEW_SOURCE_DIR}/src/glew.c
                             ${GLEW_SOURCE_DIR}/include)
+    set_property(TARGET glew PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(glew ${GLFW_LIBRARIES})
-  else()
-    # GLEW and GLFW are built-in
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_GLFW=3")
   endif()
 
   # setup IMGUI
@@ -92,56 +81,66 @@ include_directories(${PROJECT_SOURCE_DIR}/src/)
 
 # setup for code coverage testing
 if(CMAKE_BUILD_TYPE STREQUAL "Debug"
-   AND CMAKE_COMPILER_IS_GNUCXX
-   AND ENABLE_COVERAGE)
+   AND ENABLE_COVERAGE
+   AND NOT WIN32)
   enable_testing()
 
   # set compiler flags
   set(CMAKE_CXX_FLAGS "-g -O0 --coverage")
 
   # find required tools
-  find_program(LCOV lcov)
-  find_program(GENHTML genhtml)
+  find_program(LCOV lcov REQUIRED)
+  find_program(GENHTML genhtml REQUIRED)
 
   # add coverage target
   add_custom_target(
     coverage
     # gather data
-    COMMAND ${LCOV} --directory . --capture --exclude '*/external/*' --exclude '*/tests/*' --exclude '/usr/*' --output-file coverage.info
+    COMMAND
+      ${LCOV} --directory . --capture --exclude '*/external/*' --exclude
+      '*/tests/*' --exclude '/usr/*' --exclude '/Applications/*' --exclude
+      'v1/*' --output-file coverage.info
     # generate report
     COMMAND ${GENHTML} --demangle-cpp -o coverage coverage.info
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 endif()
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# set default compiler flags
+# set default compiler flags for both gcc and clang
+set(COMMON_CXX_FLAGS "-pedantic -Wall -Wextra -Wshadow -Werror")
+
 if((UNIX OR APPLE) AND CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -pedantic -Wall -Wextra -Wno-deprecated-copy")
+      "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS} -Wno-deprecated-copy")
   if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "7.0.0")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-int-in-bool-context")
   endif()
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT EMSCRIPTEN)
-  set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -pedantic -Wall -Wextra -Wno-unused-parameter")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
 endif()
 
 if(WIN32)
   set(CMAKE_CXX_FLAGS
       "${CMAKE_CXX_FLAGS} -D_USE_MATH_DEFINES -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS"
   )
+endif()
+
+if(MSVC)
   add_compile_options(/wd4267) # conversion from size_t
   add_compile_options(/wd4244) # conversion from double to float
   add_compile_options(/wd4305) # truncation from double to float
 endif()
 
 if(EMSCRIPTEN)
-  set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -std=c++11 -s WASM=1 --no-heap-copy -s USE_WEBGL2=1 -s ALLOW_MEMORY_GROWTH=1 -s MINIFY_HTML=0 -s DISABLE_EXCEPTION_CATCHING=0"
+  add_compile_options(--no-heap-copy)
+  add_link_options(
+    "SHELL:-s WASM=1 -s USE_WEBGL2=1 -s USE_GLFW=3 -s ALLOW_MEMORY_GROWTH=1 -s MINIFY_HTML=0 -s DISABLE_EXCEPTION_CATCHING=0"
   )
   set(CMAKE_EXECUTABLE_SUFFIX ".html")
 endif()
@@ -174,19 +173,17 @@ if(PMP_INDEX_TYPE EQUAL 64)
 endif()
 
 # setup clang-tidy if program found
+option(WITH_CLANG_TIDY "Run clang-tidy checks" OFF)
 include(clang-tidy)
 
 # which directories to process
 if(EMSCRIPTEN)
   add_subdirectory(src/pmp)
-  if(PMP_BUILD_APPS)
-    add_subdirectory(src/apps)
+  if(PMP_BUILD_EXAMPLES)
+    add_subdirectory(examples)
   endif()
 else()
   add_subdirectory(src/pmp)
-  if(PMP_BUILD_APPS)
-    add_subdirectory(src/apps)
-  endif()
   if(PMP_BUILD_DOCS)
     add_subdirectory(docs)
   endif()
@@ -198,13 +195,6 @@ else()
     add_subdirectory(tests)
   endif()
 endif()
-
-set(CPACK_PACKAGE_VERSION ${PMP_VERSION})
-set(CPACK_SOURCE_PACKAGE_FILE_NAME
-    "${CMAKE_PROJECT_NAME}-${CPACK_PACKAGE_VERSION}")
-set(CPACK_SOURCE_IGNORE_FILES "/build/;/.git/;~$;${CPACK_SOURCE_IGNORE_FILES}")
-set(CPACK_SOURCE_GENERATOR "ZIP")
-include(CPack)
 
 if(NOT EMSCRIPTEN AND PMP_INSTALL)
 

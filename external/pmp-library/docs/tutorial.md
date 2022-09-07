@@ -36,14 +36,11 @@ number of vertices, edges, and faces is printed to standard output.
 // instantiate a SurfaceMesh object
 SurfaceMesh mesh;
 
-// instantiate 4 vertex handles
-Vertex v0,v1,v2,v3;
-
 // add 4 vertices
-v0 = mesh.add_vertex(Point(0,0,0));
-v1 = mesh.add_vertex(Point(1,0,0));
-v2 = mesh.add_vertex(Point(0,1,0));
-v3 = mesh.add_vertex(Point(0,0,1));
+const auto v0 = mesh.add_vertex(Point(0,0,0));
+const auto v1 = mesh.add_vertex(Point(1,0,0));
+const auto v2 = mesh.add_vertex(Point(0,1,0));
+const auto v3 = mesh.add_vertex(Point(0,0,1));
 
 // add 4 triangular faces
 mesh.add_triangle(v0,v1,v3);
@@ -247,26 +244,26 @@ pmp::Vector classes to Eigen.
 Example for construction:
 
 ```cpp
-    // construction from Eigen
-    Eigen::Vector3d eigenVec(1.0, 2.0, 3.0);
-    pmp::dvec3 pmpVec = eigenVec;
+// construction from Eigen
+Eigen::Vector3d eigenVec(1.0, 2.0, 3.0);
+pmp::dvec3 pmpVec = eigenVec;
 ```
 
 Example for assignment:
 
 ```cpp
-    // assignment from Eigen
-    Eigen::Vector3d eigenVec(1.0, 2.0, 3.0);
-    pmp::dvec3 pmpVec;
-    pmpVec = eigenVec;
+// assignment from Eigen
+Eigen::Vector3d eigenVec(1.0, 2.0, 3.0);
+pmp::dvec3 pmpVec;
+pmpVec = eigenVec;
 ```
 
 Example for cast:
 
 ```cpp
-    // cast to Eigen
-    pmp::vec3 pmpVec(1.0, 2.0, 3.0);
-    Eigen::Vector3f eigenVec = static_cast<Eigen::Vector3f>(pmpVec);
+// cast to Eigen
+pmp::vec3 pmpVec(1.0, 2.0, 3.0);
+Eigen::Vector3f eigenVec = static_cast<Eigen::Vector3f>(pmpVec);
 ```
 
 See the reference documentation for pmp::Matrix and pmp::Vector for more details.

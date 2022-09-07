@@ -6,9 +6,8 @@ library. It also contains guidelines for contributions and development. See the
 [API Reference](usergroup0.html) for detailed information on the classes and
 functions provided by the library.
 
-## Contents
+Sections:
 
-- @subpage quickstart -- how to quickly start using pmp-library
 - @subpage installation -- detailed installation instructions
 - @subpage overview -- an overview of the library and its capabilities
 - @subpage tutorial -- how to perform basic tasks

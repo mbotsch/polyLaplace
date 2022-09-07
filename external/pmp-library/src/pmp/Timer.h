@@ -14,7 +14,7 @@ class Timer
 {
 public:
     //! Constructor
-    Timer() : elapsed_(0.0), is_running_(false) {}
+    Timer() = default;
 
     //! Start time measurement
     void start()
@@ -41,24 +41,24 @@ public:
         return *this;
     }
 
-    //! Return elapsed time in  s (watch has to be stopped).
+    //! Return elapsed time in ms (watch has to be stopped).
     double elapsed() const
     {
         if (is_running_)
         {
             std::cerr << "Timer: stop timer before calling elapsed()\n";
         }
-        return  elapsed_;
+        return 1000.0 * elapsed_;
     }
 
 private:
-    typedef std::chrono::high_resolution_clock hclock;
-    typedef std::chrono::time_point<hclock> time_point;
-    typedef std::chrono::duration<double> duration;
+    using hclock = std::chrono::high_resolution_clock;
+    using time_point = std::chrono::time_point<hclock>;
+    using duration = std::chrono::duration<double>;
 
     time_point start_time_, end_time_;
-    double elapsed_;
-    bool is_running_;
+    double elapsed_{0.0};
+    bool is_running_{false};
 };
 
 //! output a timer to a stream

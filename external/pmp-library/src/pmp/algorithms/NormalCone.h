@@ -1,4 +1,4 @@
-// Copyright 2011-2020 the Polygon Mesh Processing Library developers.
+// Copyright 2011-2021 the Polygon Mesh Processing Library developers.
 // Distributed under a MIT-style license, see LICENSE.txt for details.
 
 #pragma once
@@ -15,7 +15,7 @@ class NormalCone
 {
 public:
     //! default constructor (not initialized)
-    NormalCone() {}
+    NormalCone() = default;
 
     //! Initialize cone with center (unit vector) and angle (radius in radians)
     NormalCone(const Normal& normal, Scalar angle = 0.0)
@@ -46,22 +46,23 @@ public:
         // axes point in opposite directions
         else if (dp < -0.99999)
         {
-            angle_ = 2 * M_PI;
+            angle_ = Scalar(2 * M_PI);
         }
 
         else
         {
             // new angle
-            Scalar center_angle = acos(dp);
+            Scalar center_angle = std::acos(dp);
             Scalar min_angle = std::min(-angle_, center_angle - nc.angle_);
             Scalar max_angle = std::max(angle_, center_angle + nc.angle_);
-            angle_ = 0.5 * (max_angle - min_angle);
+            angle_ = Scalar(0.5) * (max_angle - min_angle);
 
             // axis by SLERP
-            Scalar axis_angle = 0.5 * (min_angle + max_angle);
-            center_normal_ = ((center_normal_ * sin(center_angle - axis_angle) +
-                               nc.center_normal_ * sin(axis_angle)) /
-                              sin(center_angle));
+            Scalar axis_angle = Scalar(0.5) * (min_angle + max_angle);
+            center_normal_ =
+                ((center_normal_ * std::sin(center_angle - axis_angle) +
+                  nc.center_normal_ * std::sin(axis_angle)) /
+                 std::sin(center_angle));
         }
 
         return *this;

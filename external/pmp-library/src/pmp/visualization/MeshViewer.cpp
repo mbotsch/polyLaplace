@@ -20,10 +20,8 @@ MeshViewer::MeshViewer(const char* title, int width, int height, bool showgui)
     add_draw_mode("Hidden Line");
     add_draw_mode("Smooth Shading");
     add_draw_mode("Texture");
-    add_draw_mode("Basis Shading");
-    add_draw_mode("Basis Shading Grid");
-    add_draw_mode("Solution Error");
     set_draw_mode("Smooth Shading");
+
     crease_angle_ = 180.0;
 
     // add help items
@@ -42,7 +40,7 @@ void MeshViewer::load_mesh(const char* filename)
     {
         mesh_.read(filename);
     }
-    catch (const IOException& e)
+    catch (const std::exception& e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
         throw;
@@ -160,7 +158,6 @@ void MeshViewer::keyboard(int key, int scancode, int action, int mods)
         case GLFW_KEY_W: // write mesh
         {
             mesh_.write("output.off");
-            mesh_.write("output.ply");
             break;
         }
 

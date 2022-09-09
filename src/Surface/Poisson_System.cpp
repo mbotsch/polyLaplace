@@ -98,7 +98,9 @@ double solve_poisson_system(pmp::SurfaceMesh &mesh, int laplace, int minpoint,
         }
         solver.analyzePattern(M);
         solver.factorize(M);
+// Astrid
 //        analytic_solution.normalize();
+// Fernando
         analytic_solution /= sqrt(analytic_solution.transpose() * M * analytic_solution);
 
         X = solver.solve(S * analytic_solution);
@@ -161,8 +163,7 @@ double solve_poisson_system(pmp::SurfaceMesh &mesh, int laplace, int minpoint,
 #else
         error = (y - X * (eval + eps)).transpose() * M * (y - X * (eval + eps)); // (2)
 #endif
-        assert(M.coeffwise() >= 0);
-
+//        assert(M.coeffwise() >= 0);
 //        std::cerr << "M.sum - 4pi = " << M.sum() - 4 * M_PI
 //                  << std::endl; // DEBUG: check if the mass matrix looks correct
 

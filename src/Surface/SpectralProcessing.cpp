@@ -212,43 +212,24 @@ double rmse_sh(SurfaceMesh &mesh, unsigned int laplace, unsigned int min_point_,
     solver.analyzePattern(M);
     solver.factorize(M);
 
-    int n = 0;
     for (int l = 1; l <= band; l++) {
         double eval = -l * (l + 1);
         for (int m = -l; m <= l; m++) {
-            n++;
             for (auto v: mesh.vertices()) {
                 y(v.idx()) = sphericalHarmonic(points[v], l, m);
-                if (l == 4 && m == 2) {
-                    double x, y_, z;
-                    x = points[v][0];
-                    y_ = points[v][1];
-                    z = points[v][2];
-
-                    y2(v.idx()) = (3.0 / 8.0 * sqrt(5.0 / M_PI)) *
-                                  (pow(x, 2.0) - pow(y_, 2.0)) *
-                                  (7.0 * pow(z, 2.0) - 1.0);
-                }
             }
-            y.normalize();
+//            y.normalize();
+            y /= sqrt(y.transpose() * M * y);
+
             Eigen::MatrixXd X = solver.solve(S * y);
             Eigen::MatrixXd X2;
-            if (l == 4 && m == 2) {
-                y2.normalize();
-                X2 = solver.solve(S * y2);
-            }
             error = (y - 1.0 / eval * X).transpose() * M * (y - 1.0 / eval * X);
-            if (l == 4 && m == 2) {
-                std::cout << "error band: " << l << "," << m << ": " << error
-                          << std::endl;
-                std::cout << "error band explicit: " << l << "," << m << ": "
-                          << (y2 - 1.0 / eval * X2).transpose() * M *
-                             (y2 - 1.0 / eval * X2)
-                          << std::endl;
-            }
             sum += error;
         }
     }
+//    sum = sqrt(sum / double(mesh.n_vertices()));
+//    sum /= M.sum();
+
     if (laplace == AlexaWardetzkyLaplace) {
         std::cout << "Error SH band recreation  (AlexaWardetzky Laplace, l="
                   << poly_laplace_lambda_ << "): " << sum << std::endl;
@@ -269,7 +250,6 @@ double rmse_sh(SurfaceMesh &mesh, unsigned int laplace, unsigned int min_point_,
                       << std::endl;
         }
     }
-
     return sum;
 }
 //=============================================================================

@@ -28,14 +28,13 @@ enum InsertedPoint {
 };
 
 GeodesicsInHeat::GeodesicsInHeat(pmp::SurfaceMesh &mesh, int laplace,
-                                 int min_point, bool geodist, bool euklid,
-                                 bool mean_edge)
+                                 int min_point, bool geodist, bool euklid, DiffusionStep diffusion )
         : mesh_(mesh),
           laplace_(laplace),
           min_point_(min_point),
           geodist_sphere_(geodist),
           geodist_cube_(euklid),
-          mean_edge_(mean_edge) {
+          diffusionStep_(diffusion) {
     Normals::compute_face_normals(mesh_);
     if (!mesh.has_face_property("f:point") || !mesh.has_face_property("f:weights")) {
         mesh_.add_face_property<pmp::Point>("f:point");
@@ -81,6 +80,24 @@ double GeodesicsInHeat::maxEdgeLength(const pmp::SurfaceMesh &mesh) {
 }
 //-----------------------------------------------------------------------------
 
+double GeodesicsInHeat::maxDiagonalLength(const pmp::SurfaceMesh &mesh) {
+    double maxDiag = 0.;
+    double currLen;
+    for (auto f: mesh.faces()) {
+        for(auto v : mesh.vertices(f)){
+            for(auto vv : mesh.vertices(f)){
+                currLen = distance(mesh.position(v), mesh.position(vv));
+                if (currLen > maxDiag)
+                {
+                    maxDiag = currLen;
+                }
+            }
+        }
+    }
+    return maxDiag;
+}
+//-----------------------------------------------------------------------------
+
 void GeodesicsInHeat::compute_geodesics(bool lumped) {
 
     pos.resize((int) mesh_.n_vertices(), 3);
@@ -109,14 +126,17 @@ void GeodesicsInHeat::compute_geodesics(bool lumped) {
     setup_mass_matrices(mesh_, M, laplace_, min_point_, lumped);
 
     double h;
-    if (mean_edge_) {
+    if (diffusionStep_ == MeanEdge) {
         h = pow(averageEdgeLength(mesh_), 2);
         std::cout << "Mean edge length diffusion \n";
-    } else {
+    } else if(diffusionStep_ == MaxEdge){
         h = pow(maxEdgeLength(mesh_), 2);
         std::cout << "Max edge length diffusion \n";
-
+    } else{
+        h = pow(maxDiagonalLength(mesh_), 2);
+        std::cout << "Max diagonal length diffusion \n";
     }
+
     A = M - h * S;
 
     cholL.analyzePattern(S);
@@ -127,7 +147,7 @@ void GeodesicsInHeat::compute_geodesics(bool lumped) {
 }
 //-----------------------------------------------------------------------------
 
-void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
+double GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
                                   Eigen::VectorXd &orthodist) {
 
     // diffuse heat
@@ -232,6 +252,7 @@ void GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd &dist,
     }
     distance_to_texture_coordinates();
     mesh_.remove_vertex_property<Scalar>(distances);
+    return rms;
 }
 
 //-----------------------------------------------------------------------------

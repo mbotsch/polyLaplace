@@ -7,6 +7,7 @@
 
 #include <pmp/visualization/MeshViewer.h>
 #include "Surface/SpectralProcessing.h"
+#include "Surface/GeodesicsInHeat.h"
 
 //=============================================================================
 
@@ -39,7 +40,7 @@ private: // private methods
     int laplace_matrix, min_point_;
     bool compare_sphere;
     bool compare_cube;
-    bool time_step_;
+    DiffusionStep time_step_;
     SurfaceMeshGL original = mesh_;
 };
 

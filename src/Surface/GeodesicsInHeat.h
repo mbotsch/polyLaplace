@@ -9,15 +9,19 @@
 #include <Eigen/Sparse>
 #include <pmp/algorithms/Normals.h>
 //=============================================================================
-
+enum DiffusionStep {
+    MeanEdge = 0,
+    MaxEdge = 1,
+    MaxDiagonal =2
+};
 class GeodesicsInHeat
 {
 public:
     GeodesicsInHeat(pmp::SurfaceMesh& mesh, int laplace, int min_point,
-                    bool geodist, bool euklid, bool mean_edge_ = false);
+                    bool geodist, bool euklid, DiffusionStep diffusion =MeanEdge);
     ~GeodesicsInHeat();
 
-    void getDistance(int vertex, Eigen::VectorXd& dist,
+    double getDistance(int vertex, Eigen::VectorXd& dist,
                      Eigen::VectorXd& orthodist);
 
     void distance_to_texture_coordinates() const;
@@ -39,6 +43,8 @@ private:
 
     static double maxEdgeLength(const pmp::SurfaceMesh& mesh);
 
+    static double maxDiagonalLength(const pmp::SurfaceMesh &mesh);
+
     double great_circle_distance(pmp::Vertex v, pmp::Vertex vv, double r = 1.0);
 
     double haversine_distance(pmp::Vertex v, pmp::Vertex vv, double r = 1.0);
@@ -47,6 +53,6 @@ private:
 
     bool geodist_sphere_, geodist_cube_;
 
-    bool mean_edge_ ;
+    DiffusionStep diffusionStep_ ;
 
 };

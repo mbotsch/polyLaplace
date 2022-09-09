@@ -19,11 +19,9 @@ enum InsertedPoint {
 
 enum Function {
     poisson_SH = 0,
-    poisson_SH_DeGoes = 1,
     Franke2d = 2,
 };
-#define DEGOES
-constexpr double eps = 1e-4;
+
 //-----------------------------------------------------------------------------
 
 double solve_poisson_system(pmp::SurfaceMesh &mesh, int laplace, int minpoint,
@@ -114,111 +112,6 @@ double solve_poisson_system(pmp::SurfaceMesh &mesh, int laplace, int minpoint,
         error = sqrt(error / double(nv));
         std::cout << "error spherical harmonics "<<"Y_"<<l<<"^"<<m << ": " << error << std::endl;
         return error;
-    } else if (function == poisson_SH_DeGoes) {
-        Eigen::VectorXd y(mesh.n_vertices());
-
-        // setup mass and stiffness matrix
-        setup_stiffness_matrices(mesh, S, laplace, minpoint);
-        setup_mass_matrices(mesh, M, laplace, minpoint, true);
-
-        Eigen::SparseMatrix<double> S_ = S + eps * M;
-        Eigen::SparseMatrix<double> M_ = M + eps * M;
-
-//        int l = 4, m = 2;
-        double eval = -l * (l + 1);
-        std::cout << "eval = " << eval << std::endl;
-
-        for (auto v: mesh.vertices()) {
-            y(v.idx()) = sphericalHarmonic(mesh.position(v), l, m);
-        }
-        //y.normalize();
-        y /= sqrt(y.transpose() * M * y);
-
-        double y_mean = y.sum() / (double)y.rows();
-//        std::cerr << "y_sum: " << y.sum() << std::endl;
-        y -= Eigen::VectorXd::Ones(y.rows()) * y_mean;
-//        std::cerr << "y_sum new: " << y.sum() << std::endl;
-
-        // pre-factorize mass matrix (might not be diagonal)
-//        Eigen::SparseLU<Eigen::SparseMatrix<double>> solver;
-#ifndef DEGOES
-        solver.analyzePattern(M); // (1) inverting M
-        solver.factorize(M);
-#else
-        solver.analyzePattern(S_); // (S+eM) = M * L + eM = M * M^{-1} * S + eM (2) epsilon
-        solver.factorize(S_); // S + eM
-#endif
-
-#ifndef DEGOES
-        X = solver.solve(S * y); // Mx = S 1/(eval+e) y (1)
-#else
-        //Eigen::MatrixXd X = solver.solve((eval + eps) * M * y); // (lambda + e) M y
-        X = solver.solve(M * y); // M * S * x =  M y ---- x = 1/(lambda+eps) * y (2)
-#endif
-
-        // Bunge Error Calculation
-
-#ifndef DEGOES
-        error = (y - X * 1.0 / eval).transpose() * M * (y - X * 1.0 / eval); // (1)
-#else
-        error = (y - X * (eval + eps)).transpose() * M * (y - X * (eval + eps)); // (2)
-#endif
-//        assert(M.coeffwise() >= 0);
-//        std::cerr << "M.sum - 4pi = " << M.sum() - 4 * M_PI
-//                  << std::endl; // DEBUG: check if the mass matrix looks correct
-
-        // deGoes normalization
-        error /= M.sum();
-
-        // de Goes error calculation
-
-        double sumL = 0;
-        double sumR = 0;
-
-        for (int i = 0; i < y.rows(); i++) {
-            double a = M.coeff(i, i);
-            double rhs = y[i];
-            double val = X(i, 0);
-            sumL += a * val * val;
-            sumR += a * val * rhs;
-        }
-
-#ifndef DEGOES
-        double expectedLambda = 1.0 / eval; // (1)
-        double lambda = sumR / sumL; // (1)
-#else
-        double expectedLambda = eval; // (2)
-        double lambda = (sumR / sumL); // (2)
-#endif
-//        double lambdaError = lambda / expectedLambda - 1;
-//        eval = lambda; // use the lambda calculated using the weighted sums of x and rhs for Bunge error as well
-        std::cout << "computed ev: " <<  lambda << " true eval: "<<expectedLambda << std::endl;
-//        double area = 0.0;
-//        double errorL2 = 0.0;
-//        double errorLi = 0.0;
-//        for (int i = 0; i < y.rows(); i++) {
-//            double a = M.coeff(i, i);
-//            double rhs = y[i];
-//            double val = X(i, 0);
-//
-//            double diff = abs(val * expectedLambda - rhs); // (2) L x = 1/eval y
-//            errorLi += std::max(errorLi, diff);
-//            errorL2 += a * diff * diff;
-//            area += a;
-//        }
-//        errorL2 /= area;
-//
-//        std::cout << "lambda = " << lambda << std::endl;
-//        std::cout << "lambda error = " << lambdaError << std::endl;
-//
-//        std::cout << std::endl;
-
-        std::cout << "sh error Y_"<<l<<"^"<<m << ": " << error << std::endl;
-//        std::cout << "sh error2 = " << std::endl << errorL2 << std::endl;
-//        std::cout << std::endl;
-//        std::cout << "---------------" << std::endl;
-//        std::cout << std::endl;
-        return error;
     } else {
         std::cerr << "Function not implemented!" << std::endl;
         return -50.0;
@@ -231,8 +124,6 @@ double poisson_function(pmp::Point &p, int function) {
 
     if (function == Franke2d) {
         return franke_function(p[0], p[1]);
-//    } else if (function == poisson_SH) {
-//        return spherical_harmonic_function_scaled(p[0], p[1], p[2]);
     } else {
         std::cerr << "Function not implemented" << std::endl;
         return -50.0;
@@ -244,8 +135,6 @@ double poisson_function(pmp::Point &p, int function) {
 double laplace_of_poisson_function(Point &p, int function) {
     if (function == Franke2d) {
         return laplace_franke_function(p[0], p[1]);
-//    } else if (function == poisson_SH) {
-//        return spherical_harmonic_function(p[0], p[1], p[2]);
     } else {
         std::cerr << "Function not implemented" << std::endl;
         return -50.0;

@@ -90,21 +90,15 @@ void Viewer::process_imgui()
         ImGui::RadioButton("Area Minimizer", &min_point, 2);
 
         static int ts = 0;
-        ImGui::Text("Choose your diffusion timestep ");
+        ImGui::Text("Choose your diffusion time step ");
 
         ImGui::RadioButton("Mean edge length", &ts, 0);
         ImGui::RadioButton("Max edge length", &ts, 1);
+        ImGui::RadioButton("Max diagonal length", &ts, 2);
 
         laplace_matrix = laplace;
         min_point_ = min_point;
-        if (ts == 0)
-        {
-            time_step_ = true;
-        }
-        else
-        {
-            time_step_ = false;
-        }
+        time_step_ = DiffusionStep(ts);
     }
     ImGui::Spacing();
     ImGui::Spacing();
@@ -255,14 +249,12 @@ void Viewer::process_imgui()
         static int function = 2;
         ImGui::RadioButton("Franke 2D (planar)", &function, 2);
         ImGui::RadioButton("Spherical Harmonics", &function, 0);
-        ImGui::RadioButton("Spherical Harmonics De Goes", &function, 1);
         ImGui::PushItemWidth(100);
         static int l = 4;
         static int m = 2;
         ImGui::SliderInt("SH l (degree):",&l, 0, 5);
         ImGui::SliderInt("SH m (band):",&m, -l, l);
         ImGui::PopItemWidth();
-
         if (ImGui::Button("Solve!"))
         {
             solve_poisson_system(mesh_, laplace_matrix, min_point_,function, l, m);

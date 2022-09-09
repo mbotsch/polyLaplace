@@ -7,6 +7,7 @@
 #include "Surface/[dGBD20]Laplace.h"
 #include "Surface/Poisson_System.h"
 #include "Surface/SpectralProcessing.h"
+#include "Surface/GeodesicsInHeat.h"
 
 //=============================================================================
 
@@ -29,7 +30,7 @@ enum InsertedPoint {
 
 enum Function {
     poisson_SH = 0,
-    poisson_SH_deGoes = 1,
+    Geodesics = 1,
     Franke2d = 2,
     SH = 3,
     curvature = 4
@@ -58,7 +59,7 @@ void write_data(SurfaceMesh &mesh, int laplace, std::ofstream &file, int functio
 //        }
         file << rmse_sh(mesh, laplace, AreaMinimizer, lumped);
         file << ",";
-    } else if (function == poisson_SH || function == Franke2d || function == poisson_SH_deGoes) {
+    } else if (function == poisson_SH || function == Franke2d) {
 
         double error =
                 solve_poisson_system(mesh, laplace, AreaMinimizer, function,
@@ -66,8 +67,16 @@ void write_data(SurfaceMesh &mesh, int laplace, std::ofstream &file, int functio
         file << error;
 
         file << ",";
-    }
+    } else if (function == Geodesics) {
+        GeodesicsInHeat heat(mesh, laplace, AreaMinimizer,
+                             true, false, MaxDiagonal);
+        Eigen::VectorXd dist, geodist;
 
+        heat.compute_geodesics();
+        double error = heat.getDistance(0, dist, geodist);
+        file << error;
+        file << ",";
+    }
 }
 
 double inverse_mean_edgelenth(SurfaceMesh &mesh) {
@@ -84,7 +93,19 @@ void write_all_laplace_data(SurfaceMesh &mesh, std::ofstream &file,
                             int function, int l = 2, int m = 2) {
     poly_laplace_lambda_ = 2.0;
     write_data(mesh, AlexaWardetzkyLaplace, file, function, l, m);
+    poly_laplace_lambda_ = 1.0;
+    write_data(mesh, AlexaWardetzkyLaplace, file, function, l, m);
+    poly_laplace_lambda_ = 0.5;
+    write_data(mesh, AlexaWardetzkyLaplace, file, function, l, m);
+    poly_laplace_lambda_ = 0.1;
+    write_data(mesh, AlexaWardetzkyLaplace, file, function, l, m);
+    deGoes_laplace_lambda_ = 2.0;
+    write_data(mesh, deGoesLaplace, file, function, l, m);
     deGoes_laplace_lambda_ = 1.0;
+    write_data(mesh, deGoesLaplace, file, function, l, m);
+    deGoes_laplace_lambda_ = 0.5;
+    write_data(mesh, deGoesLaplace, file, function, l, m);
+    deGoes_laplace_lambda_ = 0.1;
     write_data(mesh, deGoesLaplace, file, function, l, m);
     write_data(mesh, PolySimpleLaplace, file, function, l, m);
     write_data(mesh, Diamond, file, function, l, m);
@@ -93,13 +114,13 @@ void write_all_laplace_data(SurfaceMesh &mesh, std::ofstream &file,
 void write_text_headers(std::ofstream &file_error) {
 
     file_error
-            << "[AW11],[dGBD20],[BHKB20],[BBA21],MEL"
+            << "[AW11] l=2,[AW11] l=1,[AW11] l=0.5,[AW11] l=0.1,[dGBD20] l=2,[dGBD20] l=1,[dGBD20] l=0.5,[dGBD20] l=0.1,[BHKB20],[BBA21],MEL"
             << std::endl;
 
 }
 
 void write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
-                                  int m = 0, int start_lvl = 1) {
+                                int m = 0, int start_lvl = 1) {
 
     SurfaceMesh mesh;
     std::string filename_;
@@ -188,8 +209,8 @@ void write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
             filename_ = "./errors_curvature_quad.csv";
         } else if (function == SH) {
             filename_ = "./errors_SH_band_recreation_quad.csv";
-        } else if (function == poisson_SH_deGoes) {
-            filename_ = "./errors_poisson_SH_dG" + sh + "_quad.csv";
+        } else if (function == Geodesics) {
+            filename_ = "./errors_Geodesics_quad.csv";
         }
         std::ofstream file(filename_);
         write_text_headers(file);
@@ -213,8 +234,8 @@ void write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
             filename_ = "./errors_curvature_concave.csv";
         } else if (function == SH) {
             filename_ = "./errors_SH_band_recreation_concave.csv";
-        } else if (function == poisson_SH_deGoes) {
-            filename_ = "./errors_poisson_SH_dG" + sh + "_concave.csv";
+        } else if (function == Geodesics) {
+            filename_ = "./errors_Geodesics_concave.csv";
         }
         std::ofstream file_concave(filename_);
         write_text_headers(file_concave);
@@ -239,8 +260,8 @@ void write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
             filename_ = "./errors_curvature_hex.csv";
         } else if (function == SH) {
             filename_ = "./errors_SH_band_recreation_hex.csv";
-        } else if (function == poisson_SH_deGoes) {
-            filename_ = "./errors_poisson_SH_dG" + sh + "_hex.csv";
+        } else if (function == Geodesics) {
+            filename_ = "./errors_Geodesics_hex.csv";
         }
         std::ofstream file_hex(filename_);
         write_text_headers(file_hex);
@@ -263,8 +284,8 @@ void write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
             filename_ = "./errors_curvature_triangle.csv";
         } else if (function == SH) {
             filename_ = "./errors_SH_band_recreation_triangle.csv";
-        } else if (function == poisson_SH_deGoes) {
-            filename_ = "./errors_poisson_SH_dG" + sh + "_triangle.csv";
+        } else if (function == Geodesics) {
+            filename_ = "./errors_Geodesics_triangle.csv";
         }
         std::ofstream file_tri(filename_);
         write_text_headers(file_tri);
@@ -286,9 +307,9 @@ void write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
 
 //=============================================================================
 int main() {
+    write_convergence_data_csv(Geodesics, 6);
     write_convergence_data_csv(curvature, 6);
     write_convergence_data_csv(Franke2d, 6);
     write_convergence_data_csv(poisson_SH, 6, 4, 2);
-    write_convergence_data_csv(poisson_SH_deGoes, 6, 4, 2);
     write_convergence_data_csv(SH, 6);
 }

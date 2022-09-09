@@ -80,12 +80,6 @@ bool VolumeMeshViewer::load_mesh(const char* filename)
     return false;
 }
 
-//-----------------------------------------------------------------------------
-bool VolumeMeshViewer::write_histogram(const char* filename)
-{
-    return VolumeMeshGL::write_cell_histogram(filename);
-}
-//-----------------------------------------------------------------------------
 
 void VolumeMeshViewer::update_mesh()
 {
@@ -93,7 +87,6 @@ void VolumeMeshViewer::update_mesh()
     mesh_.update_opengl_buffers();
 }
 
-//-----------------------------------------------------------------------------
 
 void VolumeMeshViewer::process_imgui()
 {

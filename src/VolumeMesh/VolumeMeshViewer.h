@@ -24,8 +24,6 @@ public:
     //! load a mesh from file \c filename
     virtual bool load_mesh(const char* filename);
 
-    virtual bool write_histogram(const char* filename);
-
     //! update mesh normals and all buffers for OpenGL rendering.  call this
     //! function whenever you change either the vertex positions or the
     //! triangulation of the mesh

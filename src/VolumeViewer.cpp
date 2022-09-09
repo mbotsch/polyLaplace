@@ -31,14 +31,6 @@ bool VolumeViewer::load_mesh(const char *filename) {
     return false;
 }
 
-bool VolumeViewer::write_histogram(const char *filename) {
-    if (VolumeMeshViewer::write_histogram(filename)) {
-        filename_ = filename;
-        return true;
-    }
-    return false;
-}
-
 void VolumeViewer::keyboard(int key, int code, int action, int mod) {
     if (action != GLFW_PRESS) // only react on key press events
         return;

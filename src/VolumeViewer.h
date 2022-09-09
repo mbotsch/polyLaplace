@@ -19,7 +19,6 @@ public: // public methods
     }
     virtual bool load_mesh(const char* filename) override;
 
-    bool write_histogram(const char* filename);
 
 protected:
     // overload GUI callbacks

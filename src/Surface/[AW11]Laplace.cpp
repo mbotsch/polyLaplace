@@ -236,7 +236,7 @@ void setup_poly_Laplace_matrix(SurfaceMesh &mesh,
         Eigen::MatrixXd Lf;
 
         if (lambda) {
-#if 1 // Philipp's verion to flatten matrix E
+#if 0 // Philipp's verion to flatten matrix E
             E -= E * af * af.transpose();
 #else // Marc's version
             Eigen::MatrixXd X(3, n);
@@ -258,7 +258,7 @@ void setup_poly_Laplace_matrix(SurfaceMesh &mesh,
             E = flatE.transpose();
 #endif
 
-#if 1 // Philipp's version to compute the kernel of E^T
+#if 0 // Philipp's version to compute the kernel of E^T
             Eigen::JacobiSVD<Eigen::MatrixXd> svd(E.transpose(),
                                                   Eigen::ComputeFullV);
             const Eigen::MatrixXd C = svd.matrixV().rightCols(n - 2);

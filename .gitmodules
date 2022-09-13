@@ -1,3 +1,7 @@
 [submodule "external/eigen"]
 	path = external/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "external/pmp-library"]
+	path = external/pmp-library
+	url = https://github.com/pmp-library/pmp-library.git
+	branch = main

@@ -8,7 +8,6 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <pmp/SurfaceMesh.h>
-#define PMP_SCALAR_TYPE_64
 
 //=============================================================================
 
@@ -24,9 +23,5 @@ void compute_primal_points(SurfaceMesh &mesh, int minpoint);
 void setup_diamond_gradient_divergence_intrinsic(
     SurfaceMesh &mesh, Eigen::SparseMatrix<double> &G,
     Eigen::SparseMatrix<double> &D);
-
-
-
-
 
 //----------------------------------------------------------------------------------

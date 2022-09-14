@@ -8,7 +8,6 @@
 #include "LaplaceConstruction.h"
 #include "[dGBD20]Laplace.h"
 #include <pmp/algorithms/Normals.h>
-#define PMP_SCALAR_TYPE_64
 
 //=============================================================================
 

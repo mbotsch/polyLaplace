@@ -23,7 +23,8 @@ set(PMP_BUILD_APPS     OFF CACHE BOOL "")
 set(PMP_BUILD_EXAMPLES OFF CACHE BOOL "")
 set(PMP_BUILD_TESTS    OFF CACHE BOOL "")
 set(PMP_BUILD_DOCS     OFF CACHE BOOL "")
-#set(PMP_SCALAR_TYPE 64)
+
+add_definitions(-DPMP_SCALAR_TYPE_64)
 
 add_subdirectory(external/pmp-library)
 
@@ -36,12 +37,6 @@ include_directories(${PROJECT_SOURCE_DIR}/external/eigen)
 include_directories(${PROJECT_SOURCE_DIR}/external/libigl/include)
 include_directories(${PROJECT_SOURCE_DIR}/external/spectra/include)
 include_directories(${PROJECT_SOURCE_DIR}/external/OpenVolumeMesh/src)
-
-#Path to cholmod
-#include_directories(/home/abunge/work/SuiteSparse-5.8.1/CHOLMOD/Include/)
-
-#Path to triangle
-#include_directories(/home/abunge/programs/libigl/external/triangle/)
 
 add_definitions(-DINCLUDE_TEMPLATES)
 
@@ -79,7 +74,6 @@ endif()
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
 endif()
-
 
 # which directories to process
 add_subdirectory(src/)

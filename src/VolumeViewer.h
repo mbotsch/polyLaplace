@@ -6,7 +6,6 @@
 //=============================================================================
 
 #include <VolumeMeshViewer.h>
-
 //=============================================================================
 
 class VolumeViewer : public VolumeMeshViewer
@@ -17,14 +16,14 @@ public: // public methods
     {
         set_draw_mode("Smooth Shading");
     }
-    virtual bool load_mesh(const char* filename) override;
+    bool load_mesh(const char* filename) override;
 
 
 protected:
     // overload GUI callbacks
-    virtual void keyboard(int key, int code, int action, int mod) override;
-    virtual void process_imgui() override;
-    virtual void mouse(int button, int action, int mods) override;
+    void keyboard(int key, int code, int action, int mod) override;
+    void process_imgui() override;
+    void mouse(int button, int action, int mods) override;
 
     int face_point_;
     int cell_point_;

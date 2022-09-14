@@ -115,16 +115,24 @@ void setup_diamond_mass_matrix(SurfaceMesh &mesh,
 
         double d_area;
         if (!mesh.is_boundary(e)) {
-            d_area =
-                    (triangle_area(T1, F2, F1) + triangle_area(F1, F2, T2)) / 4.0;
+
+            double area1 = Scalar(0.5) * norm(cross(F2 - T1, F1 - T1));
+            double area2 = Scalar(0.5) * norm(cross(F2 - F1, T2 - F1));
+
+            d_area = (area1+area2)/4.0;
+//                    (triangle_area(T1, F2, F1) + triangle_area(F1, F2, T2)) / 4.0;
 
             triplets_area.emplace_back(f1_idx, f1_idx, d_area);
             triplets_area.emplace_back(f2_idx, f2_idx, d_area);
             triplets_area.emplace_back(t2_idx, t2_idx, d_area);
             triplets_area.emplace_back(t1_idx, t1_idx, d_area);
         } else {
-            d_area =
-                    (triangle_area(T1, F2, F1) + triangle_area(F1, F2, T2)) / 3.0;
+            double area1 = Scalar(0.5) * norm(cross(F2 - T1, F1 - T1));
+            double area2 = Scalar(0.5) * norm(cross(F2 - F1, T2 - F1));
+
+            d_area = (area1+area2)/3.0;
+//            d_area =
+//                    (triangle_area(T1, F2, F1) + triangle_area(F1, F2, T2)) / 3.0;
             triplets_area.emplace_back(f1_idx, f1_idx, d_area);
             triplets_area.emplace_back(f2_idx, f2_idx, d_area);
             triplets_area.emplace_back(t2_idx, t2_idx, d_area);

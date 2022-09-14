@@ -2,9 +2,7 @@
 //=============================================================================
 #pragma once
 //=============================================================================
-#define PMP_SCALAR_TYPE_64
-
- #include <pmp/SurfaceMesh.h>
+#include <pmp/SurfaceMesh.h>
 #include "[AW11]Laplace.h"
 #include <Eigen/Sparse>
 #include <pmp/algorithms/Normals.h>

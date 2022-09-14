@@ -26,12 +26,10 @@ enum Function {
 
 double solve_poisson_system(pmp::SurfaceMesh &mesh, int laplace, int minpoint,
                             int function, int l, int m) {
-#define PMP_SCALAR_TYPE_64
 
     Eigen::SparseMatrix<double> S, M;
     int nv = (int) mesh.n_vertices();
     Eigen::VectorXd b(nv), analytic_solution(nv);
-
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
     Eigen::MatrixXd X;
 

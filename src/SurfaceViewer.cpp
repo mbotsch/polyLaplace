@@ -445,10 +445,10 @@ void Viewer::insert_points(unsigned int minpoint)
 
 void Viewer::Centroid()
 {
-
     for (Face f : mesh_.faces())
     {
-        Vertex hidx = mesh_.add_vertex(centroid(mesh_, f));
+        Point c = centroid(mesh_, f);
+        Vertex hidx = mesh_.add_vertex(c);
         mesh_.split(f, hidx);
     }
     mesh_.garbage_collection();

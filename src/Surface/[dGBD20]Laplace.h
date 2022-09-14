@@ -6,8 +6,6 @@
 #include <Eigen/Sparse>
 #include <pmp/SurfaceMesh.h>
 
-#define PMP_SCALAR_TYPE_64
-
 //=============================================================================
 
 //!compute the Laplacian matrix for a polygonal mesh as described in "DDiscrete Differential Operators on Polygonal Meshes"

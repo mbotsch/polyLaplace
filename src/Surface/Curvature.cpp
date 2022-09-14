@@ -15,8 +15,7 @@ enum LaplaceMethods {
     PolySimpleLaplace = 0,
     AlexaWardetzkyLaplace = 1,
     Diamond = 2,
-    deGoesLaplace = 3,
-    Harmonic = 4
+    deGoesLaplace = 3
 };
 
 enum InsertedPoint {

@@ -1,12 +1,8 @@
-file(GLOB SOURCES ./Surface/*.cpp ./HarmonicBase3D2D/*.cpp ./Volume/*.cpp )
-file(GLOB HEADERS ./Surface/*.h ./HarmonicBase3D2D/*.hpp ./Volume/*.h )
+file(GLOB SOURCES ./Surface/*.cpp  ./Volume/*.cpp )
+file(GLOB HEADERS ./Surface/*.h  ./Volume/*.h )
 
 add_subdirectory(VolumeMesh)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/VolumeMesh)
-
-#SET(OBJS
-#        /home/abunge/programs/libigl/external/triangle/triangle.o
-#        )
 
 if (EMSCRIPTEN)
 
@@ -22,10 +18,8 @@ if (EMSCRIPTEN)
     add_executable(surface_viewer surface_viewer_main.cpp  SurfaceViewer.cpp)
     target_link_libraries(surface_viewer ${OBJS} poly triangle)
 
-    add_executable(volume_viewer volume_viewer_main.cpp VolumeViewer.cpp y)
+    add_executable(volume_viewer volume_viewer_main.cpp VolumeViewer.cpp)
     target_link_libraries(volume_viewer ${OBJS} poly VolumeMesh)
-
-    set_target_properties(diamond_laplacian PROPERTIES LINK_FLAGS "--shell-file ${PROJECT_SOURCE_DIR}/external/pmp-library/src/apps/data/shell.html")
 
 else ()
 

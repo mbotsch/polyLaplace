@@ -21,13 +21,13 @@ public: // public methods
     {
         set_draw_mode("Hidden Line");
     }
-    virtual void load_mesh(const char* filename) override;
+    void load_mesh(const char* filename) override;
 protected:
     // overload GUI callbacks
-    virtual void keyboard(int key, int code, int action, int mod) override;
-    virtual void process_imgui() override;
-    virtual void update_mesh() override;
-    virtual void draw(const std::string& _draw_mode) override;
+    void keyboard(int key, int code, int action, int mod) override;
+    void process_imgui() override;
+    void update_mesh() override;
+    void draw(const std::string& _draw_mode) override;
 
     void mouse(int button, int action, int mods) override;
 

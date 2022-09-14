@@ -18,7 +18,6 @@ double solve_eigenvalue_problem(SurfaceMesh &mesh_, int laplace, int face_point,
 
 void analytic_eigenvalues_unitsphere(Eigen::VectorXd &eval, int n);
 
-
 // spherical harmonic function at a point p for a band l and its range m
 // see: http://silviojemma.com/public/papers/lighting/spherical-harmonic-lighting.pdf
 double sphericalHarmonic(pmp::Point p, int l, int m);

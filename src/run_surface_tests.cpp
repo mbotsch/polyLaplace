@@ -306,6 +306,8 @@ void write_convergence_data_csv(Function function, int lvl = 7, int l = 2,
 
 //=============================================================================
 int main() {
+    // choose between AlexaWardetzky laplace implementations
+    philipps_version_ = true;
     write_convergence_data_csv(Geodesics, 6);
     write_convergence_data_csv(curvature, 6);
     write_convergence_data_csv(Franke2d, 6);

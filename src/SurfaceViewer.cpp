@@ -60,10 +60,10 @@ void Viewer::process_imgui()
         //        ImGui::Checkbox("Clamp cotan", &clamp_cotan_);
 
         ImGui::PushItemWidth(100);
-        ImGui::SliderFloat("Hyperparameter Alexa Laplace",
+        ImGui::SliderFloat("Hyperparameter Alexa & Wardetzky Laplace",
                            &poly_laplace_lambda_, 0.01, 3.0);
         ImGui::PushItemWidth(100);
-        ImGui::SliderFloat("Hyperparameter Disney Laplace",
+        ImGui::SliderFloat("Hyperparameter deGoes Laplace",
                            &deGoes_laplace_lambda_, 0.01, 3.0);
         ImGui::PopItemWidth();
 
@@ -75,10 +75,25 @@ void Viewer::process_imgui()
 
         static int laplace = 0;
         ImGui::RadioButton("Polysimple Laplace", &laplace, 0);
-        ImGui::RadioButton("AlexaWardetzky Laplace", &laplace, 1);
+        ImGui::RadioButton("Alexa & Wardetzky Laplace", &laplace, 1);
         ImGui::RadioButton("Diamond", &laplace, 2);
         ImGui::RadioButton("deGoes Laplace", &laplace, 3);
 
+        ImGui::Spacing();
+        ImGui::Text("Choose implementation for Alexa & Wardetzky Laplacian:");
+        static int version = 0;
+        ImGui::RadioButton("Marc", &version,0);
+        ImGui::RadioButton("Philipp", &version,1);
+
+        if(version ==0){
+            philipps_version_ = false;
+        }else{
+            philipps_version_ = true;
+        }
+//        int version = 1;
+//        ImGui::RadioButton("Philipp's Version", &version, 1);
+//        ImGui::RadioButton("Marc's Version", &version, 0);
+//        philipps_version_ = (bool)version;
         ImGui::Spacing();
 
         ImGui::Text("Choose your minimizing Point ");

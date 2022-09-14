@@ -29,3 +29,5 @@ void setup_poly_divergence_operator(pmp::SurfaceMesh &mesh,
                                     Eigen::SparseMatrix<double> &D);
 
 extern float poly_laplace_lambda_;
+
+extern bool philipps_version_;

@@ -110,7 +110,7 @@ void setup_poly_divergence_operator(pmp::SurfaceMesh &mesh,
 
             assert((E.transpose() * C).norm() < 1e-10);
 
-            // assemble face laplacian
+            // assemble face divergence
             Lf = d.transpose() *
                  ((B * B.transpose()) / area + lambda * C * C.transpose());
         } else

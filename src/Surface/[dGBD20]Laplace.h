@@ -30,7 +30,4 @@ void setup_deGoes_mass_matrix(pmp::SurfaceMesh &mesh,
 void setup_deGoes_face_area_matrix(pmp::SurfaceMesh &mesh,
                                    Eigen::SparseMatrix<double> &A);
 
-void normalize_deGoes_gradients(pmp::SurfaceMesh &mesh, Eigen::VectorXd &g,
-                                const Eigen::VectorXd &h);
-
 extern float deGoes_laplace_lambda_;

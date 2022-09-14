@@ -12,9 +12,9 @@
 class VolumeSubdivision
 {
 public:
-    VolumeSubdivision(VolumeMesh& mesh);
+    explicit VolumeSubdivision(VolumeMesh& mesh);
 
-    void tetrahedra(unsigned int face_point, unsigned int cell_point);
+    void tetrahedra( int face_point,  int cell_point);
 
     void irregular_mesh(int n);
 

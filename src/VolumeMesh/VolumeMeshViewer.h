@@ -30,19 +30,19 @@ public:
     virtual void update_mesh();
 
     //! draw the scene in different draw modes
-    virtual void draw(const std::string& draw_mode) override;
+    void draw(const std::string& draw_mode) override;
 
     //! handle ImGUI interface
-    virtual void process_imgui() override;
+    void process_imgui() override;
 
     //! this function handles keyboard events
-    virtual void keyboard(int key, int code, int action, int mod) override;
+    void keyboard(int key, int code, int action, int mod) override;
 
     //! this function hadle mouse events
-    virtual void mouse(int button, int action, int mods) override;
+    void mouse(int button, int action, int mods) override;
 
     //! draw the scene
-    virtual void display() override;
+    void display() override;
 
     //! pick vertex next to the the mouse click
     VHandle pick_vertex(double x, double y);

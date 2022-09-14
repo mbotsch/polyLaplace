@@ -8,7 +8,6 @@
 #include "VolumeViewer.h"
 #include "Volume/Eigenmodes.h"
 #include "Volume/Franke_PoissonSystem_3D.h"
-#include "Volume/diffgeo_3D.h"
 #include "VolumeMeshIO.h"
 
 //=============================================================================

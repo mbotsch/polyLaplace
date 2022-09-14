@@ -82,14 +82,14 @@ void setup_diamond_mass_matrix(SurfaceMesh &mesh,
             F1 = mesh.position(v);
             F2 = mesh.position(vv);
 
-            f1_idx = (int)v.idx();
-            f2_idx = (int)vv.idx();
+            f1_idx = (int) v.idx();
+            f2_idx = (int) vv.idx();
 
             T2 = primal_points[f];
             T1 = primal_points[ff];
 
-            t2_idx = nv + (int)f.idx();
-            t1_idx = nv + (int)ff.idx();
+            t2_idx = nv + (int) f.idx();
+            t1_idx = nv + (int) ff.idx();
         } else {
             Halfedge he = mesh.halfedge(e, 0);
             v = mesh.from_vertex(he);
@@ -97,42 +97,34 @@ void setup_diamond_mass_matrix(SurfaceMesh &mesh,
             F1 = mesh.position(v);
             F2 = mesh.position(vv);
 
-            f1_idx = (int)v.idx();
-            f2_idx = (int)vv.idx();
+            f1_idx = (int) v.idx();
+            f2_idx = (int) vv.idx();
 
             if (!mesh.is_boundary(he)) {
                 f = mesh.face(he);
                 T2 = primal_points[f];
                 T1 = 0.5 * (F1 + F2);
-                t2_idx = nv + (int)f.idx();
+                t2_idx = nv + (int) f.idx();
             } else {
                 ff = mesh.face(mesh.opposite_halfedge(he));
                 T2 = primal_points[ff];
                 T1 = 0.5 * (F1 + F2);
-                t2_idx = nv + (int)ff.idx();
+                t2_idx = nv + (int) ff.idx();
             }
         }
 
         double d_area;
         if (!mesh.is_boundary(e)) {
 
-            double area1 = Scalar(0.5) * norm(cross(F2 - T1, F1 - T1));
-            double area2 = Scalar(0.5) * norm(cross(F2 - F1, T2 - F1));
-
-            d_area = (area1+area2)/4.0;
-//                    (triangle_area(T1, F2, F1) + triangle_area(F1, F2, T2)) / 4.0;
+            d_area = (triangle_area(T1, F2, F1) + triangle_area(F1, F2, T2)) / 4.0;
 
             triplets_area.emplace_back(f1_idx, f1_idx, d_area);
             triplets_area.emplace_back(f2_idx, f2_idx, d_area);
             triplets_area.emplace_back(t2_idx, t2_idx, d_area);
             triplets_area.emplace_back(t1_idx, t1_idx, d_area);
         } else {
-            double area1 = Scalar(0.5) * norm(cross(F2 - T1, F1 - T1));
-            double area2 = Scalar(0.5) * norm(cross(F2 - F1, T2 - F1));
 
-            d_area = (area1+area2)/3.0;
-//            d_area =
-//                    (triangle_area(T1, F2, F1) + triangle_area(F1, F2, T2)) / 3.0;
+            d_area = (triangle_area(T1, F2, F1) + triangle_area(F1, F2, T2)) / 3.0;
             triplets_area.emplace_back(f1_idx, f1_idx, d_area);
             triplets_area.emplace_back(f2_idx, f2_idx, d_area);
             triplets_area.emplace_back(t2_idx, t2_idx, d_area);
@@ -149,9 +141,9 @@ void setup_diamond_gradient_divergence_intrinsic(SurfaceMesh &mesh,
     auto primal_points = mesh.get_face_property<Point>("f:point");
     Eigen::SparseMatrix<double> M;
     std::vector<Triplet> triplets, triplets_area;
-    const int nv = (int)mesh.n_vertices();
-    const int ne = (int)mesh.n_edges();
-    const int nf = (int)mesh.n_faces();
+    const int nv = (int) mesh.n_vertices();
+    const int ne = (int) mesh.n_edges();
+    const int nf = (int) mesh.n_faces();
     Point F1, F2, T1, T2;
 
     G.resize(2 * ne, nv + nf);
@@ -251,7 +243,7 @@ void setup_diamond_gradient_divergence_intrinsic(SurfaceMesh &mesh,
 
         double diamond_area = area1 + area2;
         for (int i = 0; i < 2; i++) {
-            int row = 2 * (int)e.idx() + i;
+            int row = 2 * (int) e.idx() + i;
             triplets_area.emplace_back(row, row, diamond_area);
 
             if (!mesh.is_boundary(e)) {

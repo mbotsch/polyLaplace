@@ -139,9 +139,9 @@ void VolumeMeshViewer::process_imgui()
             {
                 for (auto c_v : mesh_.cell_vertices(c))
                 {
-                    pmp::vec4 m_vertex(mesh_.vertex(c_v)[0],
-                                       mesh_.vertex(c_v)[1],
-                                       mesh_.vertex(c_v)[2], 1.0);
+                    pmp::vec4 m_vertex((float)mesh_.vertex(c_v)[0],
+                                       (float)mesh_.vertex(c_v)[1],
+                                       (float)mesh_.vertex(c_v)[2], 1.0);
                     pmp::vec4 e_vertex = modelview_matrix_ * m_vertex;
                     if (-e_vertex[2] < near)
                     {

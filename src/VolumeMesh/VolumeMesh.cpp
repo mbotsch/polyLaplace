@@ -21,13 +21,7 @@ bool VolumeMesh::read(const std::string &filename)
     VolumeMeshIO reader(filename);
     return reader.read(*this);
 }
-//-----------------------------------------------------------------------------
 
-bool VolumeMesh::write_cell_histogram(const std::string &filename)
-{
-    VolumeMeshIO reader(filename);
-    return reader.write_histrogram();
-}
 //-----------------------------------------------------------------------------
 
 void VolumeMesh::update_bounding_sphere()

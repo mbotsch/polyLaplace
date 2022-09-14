@@ -97,7 +97,7 @@ double solve_poisson_system(pmp::SurfaceMesh &mesh, int laplace, int minpoint,
 // Astrid
 //        analytic_solution.normalize();
 // Fernando
-        analytic_solution /= sqrt(analytic_solution.transpose() * M * analytic_solution);
+//        analytic_solution /= sqrt(analytic_solution.transpose() * M * analytic_solution);
 
         X = solver.solve(S * analytic_solution);
         if (solver.info() != Eigen::Success) {

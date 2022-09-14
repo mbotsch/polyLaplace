@@ -273,7 +273,7 @@ void setup_poly_Laplace_matrix(SurfaceMesh &mesh,
 #endif
 
             if ((E.transpose() * C).norm() > 1e-10)
-                std::cerr << "FUCK\n";
+                std::cerr << "Should not happen\n";
 
             // assemble face laplacian
             Lf = d.transpose() *

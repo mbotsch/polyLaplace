@@ -218,17 +218,13 @@ double rmse_sh(SurfaceMesh &mesh, unsigned int laplace, unsigned int min_point_,
             for (auto v: mesh.vertices()) {
                 y(v.idx()) = sphericalHarmonic(points[v], l, m);
             }
-//            y.normalize();
-            y /= sqrt(y.transpose() * M * y);
-
             Eigen::MatrixXd X = solver.solve(S * y);
             Eigen::MatrixXd X2;
             error = (y - 1.0 / eval * X).transpose() * M * (y - 1.0 / eval * X);
             sum += error;
         }
     }
-//    sum = sqrt(sum / double(mesh.n_vertices()));
-//    sum /= M.sum();
+
 
     if (laplace == AlexaWardetzkyLaplace) {
         std::cout << "Error SH band recreation  (AlexaWardetzky Laplace, l="

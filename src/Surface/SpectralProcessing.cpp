@@ -4,6 +4,7 @@
 #include "SpectralProcessing.h"
 #include "LaplaceConstruction.h"
 #include "[dGBD20]Laplace.h"
+#include "HarmonicBasis2D.h"
 #include <Spectra/MatOp/SparseGenMatProd.h>
 #include <Spectra/MatOp/SparseSymMatProd.h>
 #include <Spectra/MatOp/SparseCholesky.h>
@@ -12,7 +13,7 @@
 #include <Spectra/Util/SelectionRule.h>
 #include <Spectra/Util/CompInfo.h>
 #include <Spectra/SymGEigsShiftSolver.h>
-#include <fstream>
+#include <iomanip>
 
 //=============================================================================
 
@@ -27,6 +28,7 @@ enum LaplaceMethods {
     AlexaWardetzkyLaplace = 1,
     Diamond = 2,
     deGoesLaplace = 3,
+    Harmonic = 4,
 };
 
 enum InsertedPoint {
@@ -35,27 +37,39 @@ enum InsertedPoint {
 };
 
 double solve_eigenvalue_problem(SurfaceMesh &mesh, int laplace, int face_point,
-                                std::string meshname) {
+                                const std::string& meshname) {
     std::string filename;
     if (laplace == Diamond) {
         filename = "eigenvalues_[BBA21]_" + meshname + ".csv";
     } else if (laplace == AlexaWardetzkyLaplace) {
-        filename = "eigenvalues_[AW11]_" + meshname + ".csv";
+        std::stringstream stream;
+        stream << std::fixed << std::setprecision(2) << poly_laplace_lambda_;
+        std::string s = stream.str();
+        filename = "eigenvalues_[AW11]_l="+s+"_"+ meshname + ".csv";
     } else if (laplace == deGoesLaplace) {
-        filename = "eigenvalues_[dGBD20]_" + meshname + ".csv";
+        std::stringstream stream;
+        stream << std::fixed << std::setprecision(2) << deGoes_laplace_lambda_;
+        std::string s = stream.str();
+        filename = "eigenvalues_[dGBD20]_l="+s+"_"+ meshname + ".csv";
     } else if (laplace == PolySimpleLaplace) {
         filename = "eigenvalues_[BHKB20]_" + meshname + ".csv";
+    }else if (laplace == Harmonic) {
+        filename = "eigenvalues_[MKB08]_" + meshname + ".csv";
     }
-
     std::ofstream ev_file(filename);
 
     ev_file << "computed,analytic,offset" << std::endl;
     Eigen::SparseMatrix<double> M, S;
     double error=0.0;
-
-        setup_stiffness_matrices(mesh, S, laplace, face_point);
-        setup_mass_matrices(mesh, M, laplace, face_point);
-
+        if(laplace == Harmonic)
+        {
+            buildStiffnessAndMass2d(mesh, S, M);
+            lump_matrix(M);
+            S*=-1.0;
+        }else {
+            setup_stiffness_matrices(mesh, S, laplace, face_point);
+            setup_mass_matrices(mesh, M, laplace, face_point);
+        }
         // Construct matrix operation object using the wrapper class SparseGenMatProd
 
         int num_eval = 49;
@@ -93,8 +107,8 @@ double solve_eigenvalue_problem(SurfaceMesh &mesh, int laplace, int face_point,
         analytic_eigenvalues_unitsphere(analytic, num_eval);
 
         for (int i = 1; i < evalues.size(); i++) {
-            std::cout << evalues(i) << "," << analytic(i) << ","
-                      << evalues(i) - analytic(i) << std::endl;
+//            std::cout << evalues(i) << "," << analytic(i) << ","
+//                      << evalues(i) - analytic(i) << std::endl;
             ev_file << evalues(i) << "," << analytic(i) << ","
                     << evalues(i) - analytic(i) << std::endl;
             error += pow(evalues(i) - analytic(i), 2);
@@ -193,17 +207,16 @@ double sphericalHarmonic(pmp::Point p, int l, int m) {
 }
 //----------------------------------------------------------------------------
 
-double rmse_sh(SurfaceMesh &mesh, unsigned int laplace, unsigned int min_point_,
+double rmse_sh(SurfaceMesh &mesh, int laplace, int min_point_,
                bool lumped) {
     auto points = mesh.vertex_property<Point>("v:point");
 
     // comparing eigenvectors up to the 8th Band of legendre polynomials
-    int band = 4;
+    int band = 3;
 
     double error;
     double sum = 0.0;
-    Eigen::VectorXd y(mesh.n_vertices()), y2(mesh.n_vertices());
-
+    Eigen::VectorXd y(mesh.n_vertices());
 
     Eigen::SparseMatrix<double> S, M;
     setup_stiffness_matrices(mesh, S, laplace, min_point_);
@@ -211,20 +224,18 @@ double rmse_sh(SurfaceMesh &mesh, unsigned int laplace, unsigned int min_point_,
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
     solver.analyzePattern(M);
     solver.factorize(M);
-
     for (int l = 1; l <= band; l++) {
         double eval = -l * (l + 1);
         for (int m = -l; m <= l; m++) {
-            for (auto v: mesh.vertices()) {
+             for (auto v: mesh.vertices()) {
                 y(v.idx()) = sphericalHarmonic(points[v], l, m);
             }
             Eigen::MatrixXd X = solver.solve(S * y);
-            Eigen::MatrixXd X2;
             error = (y - 1.0 / eval * X).transpose() * M * (y - 1.0 / eval * X);
+            error = sqrt(error / double(mesh.n_vertices()));
             sum += error;
         }
     }
-
 
     if (laplace == AlexaWardetzkyLaplace) {
         std::cout << "Error SH band recreation  (AlexaWardetzky Laplace, l="
@@ -232,6 +243,8 @@ double rmse_sh(SurfaceMesh &mesh, unsigned int laplace, unsigned int min_point_,
     } else if (laplace == deGoesLaplace) {
         std::cout << "Error SH band recreation  (deGoes Laplace, l="
                   << deGoes_laplace_lambda_ << "): " << sum << std::endl;
+    }else if (laplace == Harmonic){
+        std::cout << "Error SH band recreation  (Harmonic Laplace: " << sum << std::endl;
     } else {
         if (laplace == Diamond) {
             std::cout << "Diamond Laplace: ";

@@ -1,13 +1,14 @@
 
 #include "Franke_PoissonSystem_3D.h"
 #include "LaplaceConstruction_3D.h"
-#include <igl/slice.h>
+#include "HarmonicBasis.h"
 #include <fstream>
 
 //=============================================================================
 
 enum LaplaceMethods {
     Diamond = 0,
+    Harmonic = 1,
     PolySimpleLaplace = 2,
 };
 
@@ -77,7 +78,6 @@ double laplace_franke3d(VolumeMesh::PointT vec) {
 double solve_franke_poisson(VolumeMesh &mesh, int Laplace, int face_point,
                             int cell_point) {
 
-
     Eigen::SparseMatrix<double> M, S, S_f;
     Eigen::VectorXd b(mesh.n_vertices());
 
@@ -85,7 +85,6 @@ double solve_franke_poisson(VolumeMesh &mesh, int Laplace, int face_point,
     auto f_prop = mesh.request_face_property<VolumeMesh::PointT>("face points");
     setup_3D_stiffness_matrix(mesh, S, Laplace, face_point, cell_point);
     setup_3D_mass_matrix(mesh, M, Laplace, face_point, cell_point);
-
     for (auto v: mesh.vertices()) {
         b(v.idx()) = laplace_franke3d(mesh.vertex(v));
     }
@@ -126,7 +125,6 @@ double solve_franke_poisson(VolumeMesh &mesh, int Laplace, int face_point,
     std::cout << "Size x :" << x.size() << std::endl;
     double error = 0.0;
     for (auto v: mesh.vertices()) {
-//            std::cout << "x: " << x[v.idx()] << " Franke : " <<  franke3d( mesh.vertex(v) )<<std::endl;
         error += pow(x[v.idx()] - franke3d(mesh.vertex(v)), 2.);
     }
 
@@ -134,6 +132,5 @@ double solve_franke_poisson(VolumeMesh &mesh, int Laplace, int face_point,
     std::cout << "Franke RMSE error inner vertices: "
               << sqrt(error / (double) mesh.n_vertices()) << std::endl;
     return sqrt(error / (double) mesh.n_vertices());
-
 }
 

@@ -29,6 +29,7 @@ enum LaplaceMethods {
     AlexaWardetzkyLaplace = 1,
     Diamond = 2,
     deGoesLaplace = 3,
+    Harmonic = 4,
 };
 
 void Viewer::keyboard(int key, int scancode, int action, int mods)
@@ -78,6 +79,7 @@ void Viewer::process_imgui()
         ImGui::RadioButton("Alexa & Wardetzky Laplace", &laplace, 1);
         ImGui::RadioButton("Diamond", &laplace, 2);
         ImGui::RadioButton("deGoes Laplace", &laplace, 3);
+        ImGui::RadioButton("Harmonic", &laplace, 4);
 
         ImGui::Spacing();
         ImGui::Text("Choose implementation for Alexa & Wardetzky Laplacian:");

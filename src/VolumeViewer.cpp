@@ -9,6 +9,7 @@
 #include "Volume/Eigenmodes.h"
 #include "Volume/Franke_PoissonSystem_3D.h"
 #include "VolumeMeshIO.h"
+#include "Volume/HarmonicBasis.h"
 
 //=============================================================================
 
@@ -20,6 +21,12 @@ enum VolumePoints {
 enum AreaPoints {
     Quadratic_Areas_ = 0,
     Face_Centroid = 1
+};
+
+enum LaplaceMethods {
+    Diamond = 0,
+    Harmonic = 1,
+    PolySimpleLaplace = 2,
 };
 
 bool VolumeViewer::load_mesh(const char *filename) {
@@ -65,6 +72,7 @@ void VolumeViewer::process_imgui() {
 
     static int laplace = 0;
     ImGui::RadioButton("Diamond", &laplace, 0);
+    ImGui::RadioButton("Harmonic", &laplace, 1);
     ImGui::RadioButton("Polysimple Laplace", &laplace, 2);
     ImGui::Spacing();
     laplace_matrix = laplace;
@@ -90,8 +98,11 @@ void VolumeViewer::process_imgui() {
     }
     if (ImGui::Button("RMSE Franke Poisson System")) {
 
-        solve_franke_poisson(mesh_, laplace_matrix, face_point_, cell_point_);
-
+        if(laplace == Harmonic){
+            solve_3D_Franke_harmonic(filename_);
+        }else {
+            solve_franke_poisson(mesh_, laplace_matrix, face_point_, cell_point_);
+        }
     }
     ImGui::Spacing();
     ImGui::Spacing();

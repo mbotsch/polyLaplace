@@ -1,5 +1,4 @@
 #include <iomanip>
-#include <igl/slice.h>
 #include "Poisson_System.h"
 #include "SpectralProcessing.h"
 
@@ -36,6 +35,7 @@ double solve_poisson_system(pmp::SurfaceMesh &mesh, int laplace, int minpoint,
     setup_stiffness_matrices(mesh, S, laplace, minpoint);
     setup_mass_matrices(mesh, M, laplace, minpoint, true);
     double error = 0.0;
+
     if (function == Franke2d) {
 
         for (auto v: mesh.vertices()) {

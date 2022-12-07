@@ -15,6 +15,7 @@ public: // public methods
         : VolumeMeshViewer(title, width, height)
     {
         set_draw_mode("Smooth Shading");
+        filename_ = title;
     }
     bool load_mesh(const char* filename) override;
 

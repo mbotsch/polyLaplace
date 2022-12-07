@@ -1,6 +1,7 @@
 #include "LaplaceConstruction_3D.h"
 #include "diffgeo_3D.h"
 #include "../Surface/diffgeo.h"
+#include "../HarmonicBase3D2D/PolyhedralMesh.hpp"
 #include <Eigen/Sparse>
 
 //=============================================================================
@@ -11,6 +12,7 @@ using Triplet = Eigen::Triplet<double>;
 //=============================================================================
 enum LaplaceMethods {
     Diamond = 0,
+    Harmonic = 1,
     PolySimpleLaplace = 2,
 };
 

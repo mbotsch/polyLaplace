@@ -6,6 +6,7 @@
 #include "unsupported/Eigen/SparseExtra"
 #include "PolySimpleLaplace.h"
 #include "diffgeo.h"
+#include "HarmonicBasis2D.h"
 
 //=============================================================================
 
@@ -22,6 +23,7 @@ enum LaplaceMethods
     AlexaWardetzkyLaplace = 1,
     Diamond = 2,
     deGoesLaplace = 3,
+    Harmonic = 4
 };
 
 
@@ -49,6 +51,10 @@ void setup_stiffness_matrices(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &S,
 
     } else if (Laplace == deGoesLaplace) {
         setup_deGoes_laplace_operator(mesh, S);
+    } else if (Laplace == Harmonic){
+        Eigen::SparseMatrix<double> M;
+        buildStiffness2d(mesh, S);
+        S*=-1.0;
     }
 }
 
@@ -71,7 +77,14 @@ void setup_mass_matrices(SurfaceMesh &mesh, Eigen::SparseMatrix<double> &M,
         M = P.transpose() * M_ * P;
     } else if (Laplace == deGoesLaplace) {
         setup_deGoes_mass_matrix(mesh, M);
+    }else if (Laplace == Harmonic){
+        Eigen::SparseMatrix<double> S;
+        buildStiffnessAndMass2d(mesh, S, M);
+        if (lumped) {
+            lump_matrix(M);
+        }
     }
+
     double area = 0.0;
     for (int k = 0; k < M.outerSize(); ++k) {
         for (SparseMatrix::InnerIterator it(M, k); it; ++it) {

@@ -3,7 +3,6 @@
 #include <cmath>
 #include "LaplaceConstruction_3D.h"
 #include "unsupported/Eigen/SparseExtra"
-#include <igl/slice.h>
 #include <Spectra/MatOp/SparseGenMatProd.h>
 #include <Spectra/MatOp/SparseSymMatProd.h>
 #include <Spectra/Util/GEigsMode.h>
@@ -11,6 +10,8 @@
 #include <Spectra/Util/SelectionRule.h>
 #include <Spectra/MatOp/SymShiftInvert.h>
 #include <Spectra/SymGEigsShiftSolver.h>
+
+typedef OpenVolumeMesh::VertexHandle VHandle;
 
 enum LaplaceMethods {
     Diamond = 0,
@@ -58,10 +59,26 @@ double solve_eigenvalue_problem(VolumeMesh &mesh, Eigen::VectorXd &evalues,
 
     Eigen::SparseMatrix<double> S_in_in, M_in_in;
 
-    //slice matrices so that only rows and cols for inner vertices remain
+//    //slice matrices so that only rows and cols for inner vertices remain
 
-    igl::slice(S, in, in, S_in_in);
-    igl::slice(M, in, in, M_in_in);
+    Eigen::SparseMatrix<double> column_subset_S(S.rows(),(int)indices.size());
+    Eigen::SparseMatrix<double> column_subset_M(M.rows(),(int)indices.size());
+
+    Eigen::SparseMatrix<double,Eigen::RowMajor> row_subset_S((int)indices.size(),(int)indices.size());
+    Eigen::SparseMatrix<double,Eigen::RowMajor> row_subset_M((int)indices.size(),(int)indices.size());
+
+    for(int j =0;j!=column_subset_S.cols();++j){
+        column_subset_S.col(j)=S.col(indices[j]);
+        column_subset_M.col(j)=M.col(indices[j]);
+    }
+    for(int j=0; j!= row_subset_S.rows();++j){
+        row_subset_S.row(j)=column_subset_S.row(indices[j]);
+        row_subset_M.row(j)=column_subset_M.row(indices[j]);
+    }
+    S_in_in = row_subset_S;
+    M_in_in = row_subset_M;
+
+//-----------------------
 
     int num_eval = 34;
     int converge_speed = 5 * num_eval;

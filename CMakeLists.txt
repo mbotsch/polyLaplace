@@ -38,6 +38,9 @@ include_directories(${PROJECT_SOURCE_DIR}/external/libigl/include)
 include_directories(${PROJECT_SOURCE_DIR}/external/spectra/include)
 include_directories(${PROJECT_SOURCE_DIR}/external/OpenVolumeMesh/src)
 
+#Path to triangle
+include_directories(/home/abunge/programs/libigl/external/triangle/)
+
 add_definitions(-DINCLUDE_TEMPLATES)
 
 if (NOT EMSCRIPTEN)

@@ -30,4 +30,4 @@ void setup_poly_divergence_operator(pmp::SurfaceMesh &mesh,
 
 extern float poly_laplace_lambda_;
 
-extern bool philipps_version_;
+extern bool Herholz_version_;

@@ -292,3 +292,110 @@ HarmonicPolygon::HarmonicPolygon(const Eigen::MatrixXd &pts_) {
     initQuadrature();
 }
 
+
+HarmonicPolygon::HarmonicPolygon(const Eigen::MatrixXd &pts_, int nKernel_, int nProbes_) {
+
+    nKernels = nKernel_;
+    nProbes = nProbes_;
+    n = (int) pts_.rows();
+    nnProbes = nProbes * n;
+    nnKernels = nKernels * n;
+
+    ///////////////////////////////////////////////
+    // shift and rescale points
+
+    mean = pts_.colwise().mean();
+    Eigen::MatrixXd pts = pts_.rowwise() - mean.transpose();
+    scale = pts.rowwise().norm().maxCoeff();
+    pts /= scale;
+
+    ///////////////////////////////////////////////
+    // rotate to plane, normal vector given by vector area
+
+    a.setZero();
+
+    for (int i = 0; i < n; ++i) {
+        a += Eigen::Vector3d(pts.row(i)).cross(Eigen::Vector3d(pts.row((i + 1) % n)));
+    }
+
+    area = a.norm();
+
+    a /= area;
+    dPlane = a.dot(Eigen::Vector3d(pts_.row(0)));
+
+    area *= 0.5;
+    area2d = area;
+
+    area *= scale * scale; // we want the original vector area: account for scaling
+
+    ///////////////////////////////////////////////
+    // span space orthogonal to 'a'
+    P.resize(2, 3);
+    P.setRandom();
+
+    P.row(0) -= a * a.dot(P.row(0));
+    P.row(0).normalize();
+
+    P.row(1) -= a * a.dot(P.row(1));
+    P.row(1) -= P.row(0) * P.row(0).dot(P.row(1));
+    P.row(1).normalize();
+
+
+    ///////////////////////////////////////////////
+    // project pts to 2d
+    poly2d = (P * pts.transpose()).transpose();
+
+    ///////////////////////////////////////////////
+    // setup kernels and probe matrix
+    std::vector<Eigen::Triplet<double>> tripP;
+    kernels.resize(n * nKernels, 2);
+
+    for (int i = 0; i < n; ++i) {
+        int i2 = i + 1 == n ? 0 : i + 1;
+
+        Eigen::Vector2d normal(poly2d(i, 1) - poly2d(i2, 1), poly2d(i2, 0) - poly2d(i, 0));
+        normal.normalize();
+
+        for (int j = 0; j < nKernels; ++j) {
+            const double w = j / (double) nKernels;
+            kernels.row(i * nKernels + j) = (1. - w) * poly2d.row(i) + w * poly2d.row(i2) + (eps) * normal.transpose();
+        }
+
+        for (int j = 0; j < nProbes; ++j) {
+            const double w = j / (double) nProbes;
+            tripP.emplace_back(i * nProbes + j, i, 1. - w);
+            tripP.emplace_back(i * nProbes + j, i2, w);
+        }
+    }
+
+    Pr.resize(n * nProbes, n);
+    Pr.setFromTriplets(tripP.begin(), tripP.end());
+
+    probes = Pr * poly2d;
+
+    ///////////////////////////////////////////////
+    // compute basis coefficients
+
+    Eigen::MatrixXd A(nnProbes, nnKernels + 3);
+
+    for (int i = 0; i < nnProbes; ++i) {
+        for (int j = 0; j < nnKernels; ++j) {
+            A(i, j) = log((kernels.row(j) - probes.row(i)).norm());
+        }
+
+        A(i, nnKernels + 0) = probes(i, 0);
+        A(i, nnKernels + 1) = probes(i, 1);
+        A(i, nnKernels + 2) = 1.;
+    }
+
+    // least squares solve: one for each node
+    Eigen::MatrixXd ATA = A.transpose() * A;
+    Eigen::LDLT<Eigen::MatrixXd> chol(ATA);
+
+    coefficients = chol.solve(A.transpose() * (Pr * Eigen::MatrixXd::Identity(n, n))).transpose();
+
+    ///////////////////////////////////////////////
+    // triangulate polygon for quadrature
+
+    initQuadrature();
+}

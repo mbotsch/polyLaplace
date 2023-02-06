@@ -1,14 +1,8 @@
 #include "HarmonicBasis2D.h"
-#include "unsupported/Eigen/SparseExtra"
-#include "Spectra/MatOp/SymShiftInvert.h"
 #include "Spectra/MatOp/SparseSymMatProd.h"
-#include "Spectra/SymGEigsShiftSolver.h"
-#include "Poisson_System.h"
-#include "SpectralProcessing.h"
 #include "../HarmonicBase3D2D/HarmonicPolygon.hpp"
-#include <fstream>
 
-void buildStiffnessAndMass2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>& K, Eigen::SparseMatrix<double>& M)
+void buildStiffnessAndMass2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>& K, Eigen::SparseMatrix<double>& M,int nKernel, int nProbes)
 {
     Eigen::MatrixXd V(mesh.n_vertices(),3);
     std::vector<std::vector<int>> poly;
@@ -36,7 +30,7 @@ void buildStiffnessAndMass2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>
             pts(i, 2) = V(p[i], 2);
         }
 
-        HarmonicPolygon hp(pts);
+        HarmonicPolygon hp(pts, nKernel,nProbes);
 
         Eigen::MatrixXd Ki, Mi;
 
@@ -58,7 +52,7 @@ void buildStiffnessAndMass2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>
     M.setFromTriplets(tripM.begin(), tripM.end());
 }
 
-void buildStiffness2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>& K){
+void buildStiffness2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>& K,int nKernel, int nProbes){
     Eigen::MatrixXd V(mesh.n_vertices(),3);
     std::vector<std::vector<int>> poly;
 
@@ -84,7 +78,8 @@ void buildStiffness2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>& K){
             pts(i, 1) = V(p[i], 1);
             pts(i, 2) = V(p[i], 2);
         }
-        HarmonicPolygon hp(pts);
+        HarmonicPolygon hp(pts, nKernel,nProbes);
+
         Eigen::MatrixXd Ki, Mi;
         hp.stiffnessMatrix(Ki);
 
@@ -96,6 +91,4 @@ void buildStiffness2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>& K){
     }
     K.resize(nv, nv);
     K.setFromTriplets(tripK.begin(), tripK.end());
-
 }
-

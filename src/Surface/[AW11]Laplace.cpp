@@ -9,7 +9,7 @@ using Triplet = Eigen::Triplet<double>;
 //=============================================================================
 
 float poly_laplace_lambda_ = 2.0;
-bool philipps_version_ =true;
+bool Herholz_version_ = true;
 //=============================================================================
 
 void setup_E_and_B_perFace(pmp::SurfaceMesh &mesh, pmp::Face f,
@@ -102,7 +102,7 @@ void setup_poly_divergence_operator(pmp::SurfaceMesh &mesh,
 
         if (lambda > 0.0) {
             // fill kernel
-            if (philipps_version_) {
+            if (Herholz_version_) {
                 E -= E * af * af.transpose();
             } else {
                 // Marc's version
@@ -125,7 +125,7 @@ void setup_poly_divergence_operator(pmp::SurfaceMesh &mesh,
             }
             Eigen::MatrixXd C;
             // Philipp's version to compute the kernel of E^T
-            if (philipps_version_) {
+            if (Herholz_version_) {
                 Eigen::JacobiSVD<Eigen::MatrixXd> svd(E.transpose(),Eigen::ComputeFullV);
                 C = svd.matrixV().rightCols(n - 2);
             } else {
@@ -137,14 +137,6 @@ void setup_poly_divergence_operator(pmp::SurfaceMesh &mesh,
             }
             if ((E.transpose() * C).norm() > 1e-10)
                 std::cerr << "Should not happen\n";
-
-//            E -= E * af * af.transpose();
-//
-//            Eigen::JacobiSVD<Eigen::MatrixXd> svd(E.transpose(),
-//                                                  Eigen::ComputeFullV);
-//            const Eigen::MatrixXd C = svd.matrixV().rightCols(n - 2);
-//
-//            assert((E.transpose() * C).norm() < 1e-10);
 
             // assemble face divergence
             Lf = d.transpose() *
@@ -205,7 +197,7 @@ void normalize_poly_gradients(pmp::SurfaceMesh &mesh, Eigen::VectorXd &g,
 
         if (lambda > 0.0) {
             // fill kernel
-            if (philipps_version_) {
+            if (Herholz_version_) {
                 E -= E * af * af.transpose();
             } else {
                 // Marc's version
@@ -228,7 +220,7 @@ void normalize_poly_gradients(pmp::SurfaceMesh &mesh, Eigen::VectorXd &g,
             }
             Eigen::MatrixXd C;
             // Philipp's version to compute the kernel of E^T
-            if (philipps_version_) {
+            if (Herholz_version_) {
                 Eigen::JacobiSVD<Eigen::MatrixXd> svd(E.transpose(),Eigen::ComputeFullV);
                 C = svd.matrixV().rightCols(n - 2);
             } else {
@@ -298,7 +290,7 @@ void setup_poly_Laplace_matrix(SurfaceMesh &mesh,
 
         if (lambda > 0) {
             // Philipp's verion to flatten matrix E
-            if (philipps_version_) {
+            if (Herholz_version_) {
                 E -= E * af * af.transpose();
             } else {
                 // Marc's version
@@ -321,7 +313,7 @@ void setup_poly_Laplace_matrix(SurfaceMesh &mesh,
             }
             Eigen::MatrixXd C;
             // Philipp's version to compute the kernel of E^T
-            if (philipps_version_) {
+            if (Herholz_version_) {
                 Eigen::JacobiSVD<Eigen::MatrixXd> svd(E.transpose(),
                                                       Eigen::ComputeFullV);
                 C = svd.matrixV().rightCols(n - 2);

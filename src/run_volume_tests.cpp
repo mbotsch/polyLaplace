@@ -1,6 +1,5 @@
 //=============================================================================
 #include <iostream>
-#include <fstream>
 #include "Volume/Eigenmodes.h"
 #include "Volume/Franke_PoissonSystem_3D.h"
 #include "VolumeMesh/VolumeSubdivision.h"
@@ -54,49 +53,44 @@ void write_eigenmodes_test_results() {
             "Tetrahedral [BBA21],Tetrahedral [BHBK20],Tetrahedral [MKB08],"
          << std::endl;
 
-//    {
-//        std::string meshname =
-//                "../data/volume_meshes/unit_balls/Hexahedral_sphere.ovm";
-//        mesh.read(meshname);
-//        filename = "Hexahedra";
-//        double rmse;
-//        rmse = solve_eigenvalue_problem(mesh,  evalues, Diamond,
-//                                        Quadratic_Areas_, Quadratic_Volume_,
-//                                        filename);
-//        file << rmse << ",";
-//        rmse = solve_eigenvalue_problem(mesh,  evalues, PolySimpleLaplace,
-//                                        Quadratic_Areas_, Quadratic_Volume_,
-//                                        filename);
-//        file << rmse << ",";
-//        rmse = 0;
-//        file << rmse << ",";
-//        rmse = 0;
-//        file << rmse << ",";
-//        rmse =solve_harmonic_eigenvalue_problem(meshname,evalues,filename);
-//        file << rmse << ",";
-//
-//    }
-//    {
-//        std::string meshname = "../data/volume_meshes/unit_balls/Pyramid_sphere.ovm";
-//        mesh.read(meshname);
-//        filename = "Pyramids";
-//        double rmse = solve_eigenvalue_problem(mesh, evalues, Diamond,
-//                                               Quadratic_Areas_,
-//                                               Quadratic_Volume_, filename);
-//        file << rmse << ",";
-//        rmse = solve_eigenvalue_problem(mesh,  evalues, PolySimpleLaplace,
-//                                        Quadratic_Areas_, Quadratic_Volume_,
-//                                        filename);
-//        file << rmse << ",";
-//        rmse =solve_harmonic_eigenvalue_problem(meshname,evalues,filename);
-//        file << rmse << ",";
-//    }
+    {
+        std::string meshname =
+                "../data/volume_meshes/unit_balls/Hexahedral_sphere.ovm";
+        mesh.read(meshname);
+        filename = "Hexahedra";
+        double rmse;
+        rmse = solve_eigenvalue_problem(mesh,  evalues, Diamond,
+                                        Quadratic_Areas_, Quadratic_Volume_,
+                                        filename);
+        file << rmse << ",";
+        rmse = solve_eigenvalue_problem(mesh,  evalues, PolySimpleLaplace,
+                                        Quadratic_Areas_, Quadratic_Volume_,
+                                        filename);
+        file << rmse << ",";
+        rmse =solve_harmonic_eigenvalue_problem(meshname,evalues,filename);
+        file << rmse << ",";
+    }
+    {
+        std::string meshname = "../data/volume_meshes/unit_balls/Pyramid_sphere.ovm";
+        mesh.read(meshname);
+        filename = "Pyramids";
+        double rmse = solve_eigenvalue_problem(mesh, evalues, Diamond,
+                                               Quadratic_Areas_,
+                                               Quadratic_Volume_, filename);
+        file << rmse << ",";
+        rmse = solve_eigenvalue_problem(mesh,  evalues, PolySimpleLaplace,
+                                        Quadratic_Areas_, Quadratic_Volume_,
+                                        filename);
+        file << rmse << ",";
+        rmse =solve_harmonic_eigenvalue_problem(meshname,evalues,filename);
+        file << rmse << ",";
+    }
     {
         std::string meshname = "../data/volume_meshes/unit_balls/Truncated_sphere.ovm";
         mesh.read(meshname);
-//        double rmse;
+        double rmse;
         filename = "Truncated";
-        double rmse = solve_eigenvalue_problem(mesh, evalues, Diamond,
+        rmse = solve_eigenvalue_problem(mesh, evalues, Diamond,
                                                Quadratic_Areas_,
                                                Quadratic_Volume_, filename);
         file << rmse << ",";
@@ -164,11 +158,9 @@ void write_data(VolumeMesh &mesh,const std::string& meshname, int laplace,
 
 void write_all_laplace_data(VolumeMesh &mesh, const std::string& meshname,
                             std::ofstream &file) {
-//    write_data(mesh, meshname, Diamond, file, Franke3d);
-    file << "0,";
+    write_data(mesh, meshname, Diamond, file, Franke3d);
     write_data(mesh, meshname, PolySimpleLaplace, file, Franke3d);
     write_data(mesh, meshname, Harmonic, file, Franke3d);
-
 }
 
 void write_text_headers(Function function, std::ofstream &file_error) {
@@ -184,26 +176,26 @@ void write_3D_convergence_data_csv(Function function, int lvl_end = 6,
     std::string filename_, timings_filename_;
 
     // --------------hex cubes----------------------------------
-//
-//    if (function == Franke3d) {
-//        filename_ = "./errors_poisson_Franke3D_hex.csv";
-//    }
-//
-//    std::ofstream file_franke_hex(filename_);
-//    write_text_headers(function, file_franke_hex);
-//
-//    for (int i = lvl_start; i < lvl_end; i++) {
-//        std::string meshname = "../data/volume_meshes/cubes/cube_hexahedron_" +
-//                               std::to_string(i) + ".ovm";
-//        mesh.read(meshname);
-//        std::cout << meshname << std::endl;
-//        double res = inverse_mean_edgelenth(mesh);
-//        if (function == Franke3d) {
-//            write_all_laplace_data(mesh,meshname, file_franke_hex);
-//        }
-//        file_franke_hex << res << std::endl;
-//    }
-//    file_franke_hex.close();
+
+    if (function == Franke3d) {
+        filename_ = "./errors_poisson_Franke3D_hex.csv";
+    }
+
+    std::ofstream file_franke_hex(filename_);
+    write_text_headers(function, file_franke_hex);
+
+    for (int i = lvl_start; i < lvl_end; i++) {
+        std::string meshname = "../data/volume_meshes/cubes/cube_hexahedron_" +
+                               std::to_string(i) + ".ovm";
+        mesh.read(meshname);
+        std::cout << meshname << std::endl;
+        double res = inverse_mean_edgelenth(mesh);
+        if (function == Franke3d) {
+            write_all_laplace_data(mesh,meshname, file_franke_hex);
+        }
+        file_franke_hex << res << std::endl;
+    }
+    file_franke_hex.close();
 
     //--------------pyramid cubes----------------------------------
     if (function == Franke3d) {
@@ -270,7 +262,7 @@ void write_3D_convergence_data_csv(Function function, int lvl_end = 6,
 
 int main() {
 
-//    write_3D_convergence_data_csv(Franke3d, 6, 5);
+    write_3D_convergence_data_csv(Franke3d, 6);
     write_eigenmodes_test_results();
 }
 //=============================================================================

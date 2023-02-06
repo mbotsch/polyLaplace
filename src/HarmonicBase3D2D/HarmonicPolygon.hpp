@@ -7,6 +7,7 @@
 
 
 class HarmonicPolygon {
+
     int n = 0;
     int nnKernels;
     int nnProbes;
@@ -19,9 +20,10 @@ class HarmonicPolygon {
 //    const double eps = 1e-1;
 //    const int nKernels = 2 * 10;// 5; // kernels per edge;
 //    const int nProbes = 6 * 30;//15; // probes per edge;
-
-    const int nKernels = 4 * 10;// 5; // kernels per edge;
-    const int nProbes = 8 * 30;//15; // probes per edge;
+    int nKernels = 20; // kernels per edge;
+    int nProbes =80; // probes per edge;
+//    int nKernels = 4 * 10;// 5; // kernels per edge;
+//    int nProbes = 8 * 30;//15; // probes per edge;
     const double eps = 1e-3;
 
 
@@ -73,10 +75,13 @@ public:
     void dump2d(const std::string& fname);
     
     explicit HarmonicPolygon(const Eigen::MatrixXd& pts_);
-    
+
+    explicit HarmonicPolygon(const Eigen::MatrixXd& pts_,int nKernel, int nProbes);
+
     double quadrature(const std::function<double(double, double)>& g);
     
     void stiffnessMatrix(Eigen::MatrixXd& K);
     
     void massMatrix(Eigen::MatrixXd& M);
+
 };

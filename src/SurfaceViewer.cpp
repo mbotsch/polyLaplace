@@ -58,8 +58,6 @@ void Viewer::process_imgui()
 
     if (ImGui::CollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        //        ImGui::Checkbox("Clamp cotan", &clamp_cotan_);
-
         ImGui::PushItemWidth(100);
         ImGui::SliderFloat("Hyperparameter Alexa & Wardetzky Laplace",
                            &poly_laplace_lambda_, 0.01, 3.0);
@@ -81,21 +79,6 @@ void Viewer::process_imgui()
         ImGui::RadioButton("deGoes Laplace", &laplace, 3);
         ImGui::RadioButton("Harmonic", &laplace, 4);
 
-        ImGui::Spacing();
-        ImGui::Text("Choose implementation for Alexa & Wardetzky Laplacian:");
-        static int version = 0;
-        ImGui::RadioButton("Marc", &version,0);
-        ImGui::RadioButton("Philipp", &version,1);
-
-        if(version ==0){
-            philipps_version_ = false;
-        }else{
-            philipps_version_ = true;
-        }
-//        int version = 1;
-//        ImGui::RadioButton("Philipp's Version", &version, 1);
-//        ImGui::RadioButton("Marc's Version", &version, 0);
-//        philipps_version_ = (bool)version;
         ImGui::Spacing();
 
         ImGui::Text("Choose your minimizing Point ");
@@ -239,6 +222,70 @@ void Viewer::process_imgui()
             }
 
             update_mesh();
+        }
+        if (ImGui::Button("collapse Edge"))
+        {
+            Edge origin_edge;
+            auto min = DBL_MAX;
+            for(auto e: mesh_.edges()){
+                Vertex v1 = mesh_.vertex(e,1);
+                Vertex v0 = mesh_.vertex(e,0);
+                Point p = 0.5*(mesh_.position(v0)+mesh_.position(v1));
+                Point origin(0.0,0.0,0.0);
+                if(norm(origin-p)<min){
+                    origin_edge = e;
+                    min = norm(origin-p);
+                }
+            }
+            Vertex v1 = mesh_.vertex(origin_edge,1);
+            Vertex v0 = mesh_.vertex(origin_edge,0);
+            Point dir = (mesh_.position(v1)-mesh_.position(v0));
+            std::cout << mesh_.position(v0) << std::endl;
+            mesh_.position(v0) -= 0.1*dir;
+            std::cout << mesh_.position(v0) << std::endl;
+            update_mesh();
+        }
+        if (ImGui::Button("Add tangential noise")) {
+            // create random generator
+            // upper and lower bounds are proportional to bounding box and inverse of smoothness
+            auto l = mesh_.bounds().size();
+            double upper_bound = l / 1000.0;
+            double lower_bound = -upper_bound;
+            std::uniform_real_distribution<double> unif(lower_bound,
+                                                        upper_bound);
+            std::default_random_engine re;
+
+            re.seed(42); // fixed seed
+
+            for (auto e: mesh_.edges()) {
+                auto n = mesh_.position(mesh_.vertex(e, 0)) - mesh_.position(mesh_.vertex(e, 1));
+                n.normalize();
+                mesh_.position(mesh_.vertex(e, 0)) += n * unif(re) ;
+
+            }
+            update_mesh();
+        }
+        if (ImGui::Button("Check for non-planarity")) {
+            auto vpoint = mesh_.get_vertex_property<Point>("v:point");
+            int ctr = 0;
+            for (auto f: mesh_.faces()) {
+                Point p0, p1, p2;
+                for(auto h :mesh_.halfedges(f)) {
+                    p0 = vpoint[mesh_.from_vertex(h)];
+                    p1 = vpoint[mesh_.to_vertex(h)];
+                    p2 = vpoint[mesh_.to_vertex(mesh_.next_halfedge(h))];
+                    break;
+                }
+                Point n = normalize(cross(p0-p1,p2-p1));
+                for (auto v: mesh_.vertices(f)) {
+                    Point p = vpoint[v];
+                    if (abs(dot(n, p - p1)) > 0.01) {
+                        ctr += 1;
+                        break;
+                    }
+                }
+            }
+            std::cout << "Nr. non planar faces: " << ctr << std::endl;
         }
     }
 
@@ -474,7 +521,6 @@ void Viewer::Centroid()
 
 void Viewer::mouse(int button, int action, int mods)
 {
-
     if (action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_MIDDLE &&
         mods == GLFW_MOD_SHIFT)
     {
@@ -494,8 +540,7 @@ void Viewer::mouse(int button, int action, int mods)
             mesh_.use_checkerboard_texture();
             set_draw_mode("Texture");
         }
-    }
-    else
+    }else
     {
         MeshViewer::mouse(button, action, mods);
     }

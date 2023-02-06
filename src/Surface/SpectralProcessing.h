@@ -29,4 +29,7 @@ double scale(int l, int m);
 double legendre_Polynomial(int l, int m, double x);
 
 double rmse_sh(SurfaceMesh &mesh, int laplace, int min_point_, bool lumped=true);
+
+double condition_number(pmp::SurfaceMesh &mesh, int laplace, int minpoint, Eigen::Vector3d &values);
+
 //=============================================================================

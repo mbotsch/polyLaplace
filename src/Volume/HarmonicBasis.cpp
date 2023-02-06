@@ -326,7 +326,7 @@ double solve_harmonic_eigenvalue_problem(std::string& meshname,Eigen::VectorXd &
     setup_3D_harmonic_matrices(mesh, S, M);
     lump_matrix(M);
     S*=-1.0;
-    std::string filename = "eigenmodes_Harmonic-" + meshname_file + ".csv";
+    std::string filename = "eigenmodes_[MKB08]" + meshname_file + ".csv";
     std::ofstream ev_file(filename);
     ev_file << "computed,analytic,offset" << std::endl;
 
@@ -349,32 +349,26 @@ double solve_harmonic_eigenvalue_problem(std::string& meshname,Eigen::VectorXd &
         in(i) = indices[i];
     }
 
-//    Eigen::SparseMatrix<double> S_in_in, M_in_in;
+    Eigen::SparseMatrix<double> S_in_in, M_in_in;
 
-    //slice matrices so that only rows and cols for inner vertices remain
+  //slice matrices so that only rows and cols for inner vertices remain
 
-//    igl::slice(S, in, in, S_in_in);
-//    igl::slice(M, in, in, M_in_in);
+    Eigen::SparseMatrix<double> column_subset_S(S.rows(),(int)indices.size());
+    Eigen::SparseMatrix<double> column_subset_M(M.rows(),(int)indices.size());
 
-//--------------
+    Eigen::SparseMatrix<double,Eigen::RowMajor> row_subset_S((int)indices.size(),(int)indices.size());
+    Eigen::SparseMatrix<double,Eigen::RowMajor> row_subset_M((int)indices.size(),(int)indices.size());
 
-    for (unsigned int i = 0; i < S.outerSize(); i++)
-        for (Eigen::SparseMatrix<double>::InnerIterator iter(S, i);
-             iter; ++iter) {
-            if (mesh.isBoundaryVertex((int)iter.row()))
-                iter.valueRef() = iter.row() == iter.col() ? 1. : 0.;
-            else if (mesh.isBoundaryVertex((int)iter.col()))
-                iter.valueRef() = 0;
-        }
-
-    for (unsigned int i = 0; i < M.outerSize(); i++)
-        for (Eigen::SparseMatrix<double>::InnerIterator iter(M, i);
-             iter; ++iter) {
-            if (mesh.isBoundaryVertex((int)iter.row()))
-                iter.valueRef() = iter.row() == iter.col() ? 1. : 0.;
-            else if (mesh.isBoundaryVertex((int)iter.col()))
-                iter.valueRef() = 0;
-        }
+    for(int j =0;j!=column_subset_S.cols();++j){
+        column_subset_S.col(j)=S.col(indices[j]);
+        column_subset_M.col(j)=M.col(indices[j]);
+    }
+    for(int j=0; j!= row_subset_S.rows();++j){
+        row_subset_S.row(j)=column_subset_S.row(indices[j]);
+        row_subset_M.row(j)=column_subset_M.row(indices[j]);
+    }
+    S_in_in = row_subset_S;
+    M_in_in = row_subset_M;
 
 
 //--------------
@@ -384,10 +378,8 @@ double solve_harmonic_eigenvalue_problem(std::string& meshname,Eigen::VectorXd &
     // S and M are sparse
     using OpType =  Spectra::SymShiftInvert<double, Eigen::Sparse, Eigen::Sparse>;
     using BOpType = Spectra::SparseSymMatProd<double>;
-//    OpType op(S_in_in, M_in_in);
-//    BOpType Bop(M_in_in);
-    OpType op(S, M);
-    BOpType Bop(M);
+    OpType op(S_in_in, M_in_in);
+    BOpType Bop(M_in_in);
 
     // Construct generalized eigen solver object, seeking three generalized
     // eigenvalues that are closest to zero. This is equivalent to specifying

@@ -14,16 +14,9 @@ class HarmonicPolygon {
 
     Eigen::MatrixXd kernels;
     Eigen::MatrixXd probes;
-//
-//    const int nKernels =  20;// 5; // kernels per edge;
-//    const int nProbes = 60;//15; // probes per edge;
-//    const double eps = 1e-1;
-//    const int nKernels = 2 * 10;// 5; // kernels per edge;
-//    const int nProbes = 6 * 30;//15; // probes per edge;
+
     int nKernels = 20; // kernels per edge;
     int nProbes =80; // probes per edge;
-//    int nKernels = 4 * 10;// 5; // kernels per edge;
-//    int nProbes = 8 * 30;//15; // probes per edge;
     const double eps = 1e-3;
 
 

@@ -35,33 +35,13 @@ void loadPoly(const std::string& fname, std::vector<Eigen::Vector3d>& vertices, 
 
 class HarmonicPolyhedron {
 public:
-    
-//    double eps = 1e-1;//5e-2;
-//
-////    int probesPerEdge = 15;
-////    int probesPerFace = 30;
-////    int kernelsPerFace = 10;
-////    int kernelsPerEdge = 5;
-//
-//
-//    int probesPerEdge = 20;//5;
-//    int probesPerFace = 400;// 25;
-//    int kernelsPerFace = 25;//10;
-//    int kernelsPerEdge = 5;//3;
 
-    double eps = 1e-2;//5e-2;
+    double eps = 1e-2;
 
-    int probesPerEdge = 5;
-    int probesPerFace = 25;
+    int probesPerEdge = 9;
+    int probesPerFace = 30;
     int kernelsPerFace = 10;
     int kernelsPerEdge = 3;
-
-
-    /*int probesPerEdge = 20;//5;
-    int probesPerFace = 400;// 25;
-    int kernelsPerFace = 25;//10;
-    int kernelsPerEdge = 5;//3;
-    */
 
     double scale{};
     Eigen::Vector3d mean;

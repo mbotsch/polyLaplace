@@ -507,22 +507,41 @@ void write_convergence_data_csv(Function function, int lvl = 7, int start_lvl = 
         }
         file_noise.close();
 
-        //--------------noisy quad spheres----------------------------------
+        //--------------noisy hex spheres 2 ----------------------------------
         if (function == poisson_SH) {
-            filename_ = "./errors_poisson_SH" + sh + "_noisyQuad.csv";
+            filename_ = "./errors_poisson_SH" + sh + "_noisyhex2.csv";
         }
         std::ofstream file_noise_quad(filename_);
-        write_text_headers(file_noise_quad);
-
-        for (int i = start_lvl; i < 5; i++) {
-            std::string meshname = "../data/surface_meshes/sphere/noiseQuad_" +
+        file_noise_quad
+                << "[AW11] l=2,[AW11] l=1,[AW11] l=0.5,[AW11] l=0.1,[dGBD20] l=2,[dGBD20] l=1,[dGBD20] l=0.5,[dGBD20] l=0.1,[BHKB20],[BBA21],[MKB08],Mean Max plane distance"
+                << std::endl;
+        for (int i = start_lvl; i < 9; i++) {
+            std::string meshname = "../data/surface_meshes/sphere/hex2_noise_" +
                                    std::to_string(i) + ".off";
             mesh.read(meshname);
             std::cout << meshname << std::endl;
+            auto vpoint = mesh.get_vertex_property<Point>("v:point");
+            double max_sum = 0.0;
+            for (auto f: mesh.faces()) {
+                Point p0, p1, p2,n;
+                double max = -1000000;
+                for(auto h :mesh.halfedges(f)) {
+                    p0 = vpoint[mesh.from_vertex(h)];
+                    p1 = vpoint[mesh.to_vertex(h)];
+                    p2 = vpoint[mesh.to_vertex(mesh.next_halfedge(h))];
 
-            double res = inverse_mean_edgelenth(mesh);
+                    n = normalize(cross(p0-p1,p2-p1));
+                    for (auto v: mesh.vertices(f)) {
+                        Point p = vpoint[v];
+                        if (abs(dot(n, p - p1)) > max) {
+                            max = abs(dot(n, p - p1));
+                        }
+                    }
+                }
+                max_sum += max;
+            }
             write_all_laplace_data(mesh, file_noise_quad, function, sphere_dist, l, m);
-            file_noise_quad << res << std::endl;
+            file_noise_quad << max_sum/(double)mesh.n_faces() << std::endl;
         }
         file_noise_quad.close();
     }

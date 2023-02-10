@@ -73,8 +73,9 @@ void write_eigenmodes_test_results() {
     {
         std::string meshname = "../data/volume_meshes/unit_balls/Pyramid_sphere.ovm";
         mesh.read(meshname);
+        double rmse;
         filename = "Pyramids";
-        double rmse = solve_eigenvalue_problem(mesh, evalues, Diamond,
+        rmse = solve_eigenvalue_problem(mesh, evalues, Diamond,
                                                Quadratic_Areas_,
                                                Quadratic_Volume_, filename);
         file << rmse << ",";
@@ -105,8 +106,9 @@ void write_eigenmodes_test_results() {
         std::string meshname =
                 "../data/volume_meshes/unit_balls/tetrahedra_sphere_irreg.ovm";
         mesh.read(meshname);
+        double rmse;
         filename = "Tetrahedra Coarse";
-        double rmse = solve_eigenvalue_problem(mesh,evalues, Diamond,
+        rmse = solve_eigenvalue_problem(mesh,evalues, Diamond,
                                                Quadratic_Areas_,
                                                Quadratic_Volume_, filename);
         file << rmse << ",";

@@ -268,6 +268,7 @@ void Viewer::process_imgui()
         if (ImGui::Button("Check for non-planarity")) {
             auto vpoint = mesh_.get_vertex_property<Point>("v:point");
             int ctr = 0;
+            double max_sum = 0.0;
             for (auto f: mesh_.faces()) {
                 Point p0, p1, p2;
                 for(auto h :mesh_.halfedges(f)) {
@@ -279,13 +280,30 @@ void Viewer::process_imgui()
                 Point n = normalize(cross(p0-p1,p2-p1));
                 for (auto v: mesh_.vertices(f)) {
                     Point p = vpoint[v];
-                    if (abs(dot(n, p - p1)) > 0.01) {
+                    if (abs(dot(n, p - p1)) > 0.0001) {
                         ctr += 1;
                         break;
                     }
                 }
+
+                double max = -1000000;
+                for(auto h :mesh_.halfedges(f)) {
+                    p0 = vpoint[mesh_.from_vertex(h)];
+                    p1 = vpoint[mesh_.to_vertex(h)];
+                    p2 = vpoint[mesh_.to_vertex(mesh_.next_halfedge(h))];
+
+                    n = normalize(cross(p0-p1,p2-p1));
+                    for (auto v: mesh_.vertices(f)) {
+                        Point p = vpoint[v];
+                        if (abs(dot(n, p - p1)) > max) {
+                            max = abs(dot(n, p - p1));
+                        }
+                    }
+                }
+                max_sum += max;
             }
             std::cout << "Nr. non planar faces: " << ctr << std::endl;
+            std::cout << "Mean maximum plane distance " << max_sum/mesh_.n_faces() << std::endl;
         }
     }
 

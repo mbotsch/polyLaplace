@@ -69,7 +69,6 @@ void takeLaplaceTiming2D( SurfaceMesh &mesh, int laplace, std::ofstream &file_ti
 
     pmp::Timer t_stiffness, t_solve;
 
-
     t_stiffness.start();
     setup_stiffness_matrices(mesh,L,laplace,Quadratic_Areas_);
     t_stiffness.stop();
@@ -188,7 +187,6 @@ void taketimings2D(std::string meshname, std::string path){
 
     file << "deGoes,";
     takeLaplaceTiming2D(mesh, deGoesLaplace, file);
-    std::cout << " i was here \n";
     file << "Diamond,";
     takeLaplaceTiming2D(mesh, Diamond, file);
 
@@ -220,11 +218,12 @@ void taketimings3D(std::string meshname, std::string path){
 int main() {
 
     std::string path;
-    //Surface timings
-//    path = "../data/surface_meshes/grid/clean/voronoi_5.obj";
-//    taketimings2D("2DVoronoi",path);
-//    path = "../data/surface_meshes/grid/quad_5.obj";
-//    taketimings2D("2DQuad",path);
+//    Surface timings
+    path = "../data/surface_meshes/grid/quad_5.obj";
+    taketimings2D("2DQuad",path);
+    path = "../data/surface_meshes/grid/clean/voronoi_5.obj";
+    taketimings2D("2DVoronoi",path);
+
 
     //Volume timings
     path = "../data/volume_meshes/cubes/cube_hexahedron_4.ovm";

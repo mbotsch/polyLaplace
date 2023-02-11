@@ -30,15 +30,15 @@ void setup_prolongation_matrix(pmp::SurfaceMesh &mesh, SparseMatrix &P) {
     Eigen::VectorXd w;
 
     std::vector<Triplet> tripletsA;
-    for (auto v : mesh.vertices()) {
+    for (auto v: mesh.vertices()) {
         tripletsA.emplace_back(v.idx(), v.idx(), 1.0);
     }
 
     unsigned int j = 0;
-    for (auto f : mesh.faces()) {
+    for (auto f: mesh.faces()) {
         w = area_weights[f];
         unsigned int i = 0;
-        for (auto v : mesh.vertices(f)) {
+        for (auto v: mesh.vertices(f)) {
             tripletsA.emplace_back(nv + j, v.idx(), w(i));
             i++;
         }
@@ -80,17 +80,17 @@ void setup_face_point_properties(pmp::SurfaceMesh &mesh, unsigned int min_point)
     std::vector<Eigen::Triplet<double>> trip;
 
     for (pmp::Face f: mesh.faces()) {
-        const int n = (int)mesh.valence(f);
+        const int n = (int) mesh.valence(f);
         poly.resize(n, 3);
         int i = 0;
-        for (pmp::Vertex v : mesh.vertices(f)) {
+        for (pmp::Vertex v: mesh.vertices(f)) {
             for (int h = 0; h < 3; h++) {
                 poly.row(i)(h) = mesh.position(v)[h];
             }
             i++;
         }
         if (min_point == Centroid) {
-            int val = (int)poly.rows();
+            int val = (int) poly.rows();
             w = Eigen::MatrixXd::Ones(val, 1);
             w /= (double) val;
         } else {
@@ -108,9 +108,9 @@ void setup_face_point_properties(pmp::SurfaceMesh &mesh, unsigned int min_point)
 //--------------------------------------------------------------------------------
 
 void find_area_minimizer_weights(const Eigen::MatrixXd &poly,
-                       Eigen::VectorXd &weights) {
+                                 Eigen::VectorXd &weights) {
 
-    int val = (int)poly.rows();
+    int val = (int) poly.rows();
     Eigen::MatrixXd J(val, val);
     Eigen::VectorXd b(val);
     weights.resize(val);
@@ -180,5 +180,27 @@ void find_area_minimizer_weights(const Eigen::MatrixXd &poly,
     weights = M.completeOrthogonalDecomposition().solve(b_).topRows(val);
 }
 
+
+//--------------------------------------------------------------------------------
+
+void fit_plane_to_polygon(const Eigen::MatrixXd &poly, Eigen::Vector3d &normal, Eigen::Vector3d &origin) {
+    // Plane equation Ax+By+Cz+d =0;
+    int n = (int) poly.rows();
+    Eigen::MatrixXd A(n, 3);
+    Eigen::VectorXd b(n);
+
+    for (int i = 0; i < n; i++) {
+        A(i, 0) = poly(i, 0);
+        A(i, 1) = poly(i, 1);
+        A(i, 2) = 1.0;
+        b(i) = -poly(i, 2);
+    }
+    Eigen::MatrixXd AtA = A.transpose() * A;
+    Eigen::VectorXd Atb = A.transpose() * b;
+    Eigen::Vector3d x = AtA.llt().solve(Atb);
+    normal = Eigen::Vector3d(x(0),x(1),1.0);
+    normal.normalize();
+    origin = Eigen::Vector3d(1.0,0.0,-x(0)-x(2));
+}
 
 

@@ -513,7 +513,7 @@ void write_convergence_data_csv(Function function, int lvl = 7, int start_lvl = 
         }
         std::ofstream file_noise_quad(filename_);
         file_noise_quad
-                << "[AW11] l=2,[AW11] l=1,[AW11] l=0.5,[AW11] l=0.1,[dGBD20] l=2,[dGBD20] l=1,[dGBD20] l=0.5,[dGBD20] l=0.1,[BHKB20],[BBA21],[MKB08],Mean Max plane distance"
+                << "[AW11] l=2,[AW11] l=1,[AW11] l=0.5,[AW11] l=0.1,[dGBD20] l=2,[dGBD20] l=1,[dGBD20] l=0.5,[dGBD20] l=0.1,[BHKB20],[BBA21],[MKB08],Mean plane distance"
                 << std::endl;
         for (int i = start_lvl; i < 9; i++) {
             std::string meshname = "../data/surface_meshes/sphere/hex2_noise_" +
@@ -521,27 +521,31 @@ void write_convergence_data_csv(Function function, int lvl = 7, int start_lvl = 
             mesh.read(meshname);
             std::cout << meshname << std::endl;
             auto vpoint = mesh.get_vertex_property<Point>("v:point");
-            double max_sum = 0.0;
+            double dist_sum = 0.0;
             for (auto f: mesh.faces()) {
-                Point p0, p1, p2,n;
-                double max = -1000000;
-                for(auto h :mesh.halfedges(f)) {
-                    p0 = vpoint[mesh.from_vertex(h)];
-                    p1 = vpoint[mesh.to_vertex(h)];
-                    p2 = vpoint[mesh.to_vertex(mesh.next_halfedge(h))];
-
-                    n = normalize(cross(p0-p1,p2-p1));
-                    for (auto v: mesh.vertices(f)) {
-                        Point p = vpoint[v];
-                        if (abs(dot(n, p - p1)) > max) {
-                            max = abs(dot(n, p - p1));
-                        }
-                    }
+                // fit plane to face
+                Eigen::MatrixXd poly(mesh.valence(f),3);
+                int j =0;
+                for(auto v : mesh.vertices(f)){
+                    Point p = vpoint[v];
+                    poly(j,0) = p[0];
+                    poly(j,1) = p[1];
+                    poly(j,2) = p[2];
+                    j++;
                 }
-                max_sum += max;
+                Eigen::Vector3d n,o;
+                fit_plane_to_polygon(poly,n,o);
+                // compute mean distance to plane
+                double dist = 0.0;
+                for(auto v : mesh.vertices(f)){
+                    Eigen::Vector3d p(vpoint[v][0],vpoint[v][1],vpoint[v][2]);
+                    dist += abs(n.dot(p-o));
+                }
+                dist /= (double)mesh.valence(f);
+                dist_sum+=dist;
             }
             write_all_laplace_data(mesh, file_noise_quad, function, sphere_dist, l, m);
-            file_noise_quad << max_sum/(double)mesh.n_faces() << std::endl;
+            file_noise_quad << dist_sum/(double)mesh.n_faces() << std::endl;
         }
         file_noise_quad.close();
     }

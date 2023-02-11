@@ -27,4 +27,9 @@ void setup_face_point_properties(pmp::SurfaceMesh &mesh, unsigned int min_point)
 void find_area_minimizer_weights(const Eigen::MatrixXd &poly,
                        Eigen::VectorXd &weights);
 
+//------------------------ Miscellaneous-----------------------------------------------------------------
+
+void fit_plane_to_polygon(const Eigen::MatrixXd &poly, Eigen::Vector3d &normal, Eigen::Vector3d &origin);
+
+
 //=============================================================================

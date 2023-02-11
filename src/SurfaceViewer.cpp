@@ -268,42 +268,34 @@ void Viewer::process_imgui()
         if (ImGui::Button("Check for non-planarity")) {
             auto vpoint = mesh_.get_vertex_property<Point>("v:point");
             int ctr = 0;
-            double max_sum = 0.0;
+            double dist_sum = 0.0;
             for (auto f: mesh_.faces()) {
-                Point p0, p1, p2;
-                for(auto h :mesh_.halfedges(f)) {
-                    p0 = vpoint[mesh_.from_vertex(h)];
-                    p1 = vpoint[mesh_.to_vertex(h)];
-                    p2 = vpoint[mesh_.to_vertex(mesh_.next_halfedge(h))];
-                    break;
-                }
-                Point n = normalize(cross(p0-p1,p2-p1));
-                for (auto v: mesh_.vertices(f)) {
+                // fit plane to face
+                Eigen::MatrixXd poly(mesh_.valence(f),3);
+                int i =0;
+                for(auto v : mesh_.vertices(f)){
                     Point p = vpoint[v];
-                    if (abs(dot(n, p - p1)) > 0.0001) {
-                        ctr += 1;
-                        break;
-                    }
+                    poly(i,0) = p[0];
+                    poly(i,1) = p[1];
+                    poly(i,2) = p[2];
+                    i++;
                 }
-
-                double max = -1000000;
-                for(auto h :mesh_.halfedges(f)) {
-                    p0 = vpoint[mesh_.from_vertex(h)];
-                    p1 = vpoint[mesh_.to_vertex(h)];
-                    p2 = vpoint[mesh_.to_vertex(mesh_.next_halfedge(h))];
-
-                    n = normalize(cross(p0-p1,p2-p1));
-                    for (auto v: mesh_.vertices(f)) {
-                        Point p = vpoint[v];
-                        if (abs(dot(n, p - p1)) > max) {
-                            max = abs(dot(n, p - p1));
-                        }
-                    }
+                Eigen::Vector3d n,o;
+                fit_plane_to_polygon(poly,n,o);
+                // compute mean distance to plane
+                double dist = 0.0;
+                for(auto v : mesh_.vertices(f)){
+                    Eigen::Vector3d p(vpoint[v][0],vpoint[v][1],vpoint[v][2]);
+                    dist += abs(n.dot(p-o));
                 }
-                max_sum += max;
+                dist /= (double)mesh_.valence(f);
+                if(dist > 0.0001){
+                    ctr +=1;
+                }
+                dist_sum+=dist;
             }
             std::cout << "Nr. non planar faces: " << ctr << std::endl;
-            std::cout << "Mean maximum plane distance " << max_sum/mesh_.n_faces() << std::endl;
+            std::cout << "Mean plane distance " << dist_sum/(double)mesh_.n_faces() << std::endl;
         }
     }
 

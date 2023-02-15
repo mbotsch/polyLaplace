@@ -313,6 +313,11 @@ void Viewer::process_imgui()
                 lumped = false;
             rmse_sh(mesh_, laplace_matrix, min_point_, lumped);
         }
+        if (ImGui::Button("Condition Number"))
+        {
+            Eigen::Vector3d values;
+            condition_number(mesh_, laplace_matrix, min_point_,values);
+        }
     }
     ImGui::Spacing();
     ImGui::Spacing();

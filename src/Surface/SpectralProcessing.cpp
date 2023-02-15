@@ -351,7 +351,13 @@ double condition_number(pmp::SurfaceMesh &mesh, int laplace, int minpoint, Eigen
     std::cout << "DoF: " << nv << std::endl;
     double l_max = geigs2.eigenvalues()(0);
     std::cout << "Max evalue: " << l_max << std::endl;
-    double l_min = geigs.eigenvalues()(0);
+    int idx_min;
+    if(nv == (int)indices.size()){
+        idx_min = num_eval-2;
+    }else{
+        idx_min = num_eval-1;
+    }
+    double l_min = geigs.eigenvalues()(idx_min);
     std::cout << "Min (non-zero) evalue: " << l_min << std::endl;
     double cond = l_max / l_min;
     std::cout << "Condition Nr.: " << cond << std::endl;

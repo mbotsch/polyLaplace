@@ -94,11 +94,6 @@ double solve_poisson_system(pmp::SurfaceMesh &mesh, int laplace, int minpoint,
         }
         solver.analyzePattern(M);
         solver.factorize(M);
-// Astrid
-//        analytic_solution.normalize();
-// Fernando
-//        analytic_solution /= sqrt(analytic_solution.transpose() * M * analytic_solution);
-
         X = solver.solve(S * analytic_solution);
         if (solver.info() != Eigen::Success) {
             std::cout << "Issue: " << solver.info() << std::endl;

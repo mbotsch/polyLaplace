@@ -1,7 +1,4 @@
 //=============================================================================
-// Copyright 2021 Astrid Bunge, Mario Botsch, Marc Alexa.
-// Distributed under MIT license, see file LICENSE for details.
-//=============================================================================
 
 #include <imgui.h>
 #include <VolumeSubdivision.h>

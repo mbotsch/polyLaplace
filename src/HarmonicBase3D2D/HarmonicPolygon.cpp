@@ -3,7 +3,6 @@
 #include <fstream>
 #include "GaussQuadrature.h"
 #include "pmp/SurfaceMesh.h"
-#include "pmp/algorithms/Triangulation.h"
 #include "../Surface/diffgeo.h"
 
 Eigen::Vector3d HarmonicPolygon::getScaledNormal() const {

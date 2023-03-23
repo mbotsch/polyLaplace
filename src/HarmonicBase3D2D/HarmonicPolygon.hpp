@@ -4,8 +4,6 @@
 #include <Eigen/Dense>
 #include <vector>
 
-
-
 class HarmonicPolygon {
 
     int n = 0;

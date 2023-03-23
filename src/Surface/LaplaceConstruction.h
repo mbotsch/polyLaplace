@@ -8,7 +8,6 @@
 #include <pmp/algorithms/DifferentialGeometry.h>
 #include <pmp/algorithms/Triangulation.h>
 #include <unsupported/Eigen/NonLinearOptimization>
-
 //=============================================================================
 
 using namespace pmp;

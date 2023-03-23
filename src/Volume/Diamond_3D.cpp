@@ -1,12 +1,7 @@
 //=============================================================================
-// Copyright 2021 Astrid Bunge, Mario Botsch, Marc Alexa.
-// Distributed under MIT license, see file LICENSE for details.
-//=============================================================================
-
 #include "Diamond_3D.h"
 #include <pmp/MatVec.h>
 #include "diffgeo_3D.h"
-
 //=============================================================================
 
 using SparseMatrix = Eigen::SparseMatrix<double>;

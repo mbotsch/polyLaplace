@@ -107,8 +107,6 @@ double solve_eigenvalue_problem(SurfaceMesh &mesh, int laplace, int face_point,
     analytic_eigenvalues_unitsphere(analytic, num_eval);
 
     for (int i = 1; i < evalues.size(); i++) {
-//            std::cout << evalues(i) << "," << analytic(i) << ","
-//                      << evalues(i) - analytic(i) << std::endl;
         ev_file << evalues(i) << "," << analytic(i) << ","
                 << evalues(i) - analytic(i) << std::endl;
         error += pow(evalues(i) - analytic(i), 2);

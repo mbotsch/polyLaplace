@@ -144,9 +144,6 @@ void setup_3D_harmonic_stiffness_matrix(PolyhedralMesh &mesh, Eigen::SparseMatri
         vector<vector<int>> faces;
         allCellVertices[i] = mesh.getCellGeometry(i, vertices, faces);
         harmonicPolyhedra[i] = HarmonicPolyhedron(vertices, faces);
-
-//        if(i % 10 == 0) std::cout << i << " / " << nc << std::endl;
-
     }, nc);
 
     // cannot parallelize quadrature initialization because tetgen seems to be not thread safe
@@ -155,9 +152,7 @@ void setup_3D_harmonic_stiffness_matrix(PolyhedralMesh &mesh, Eigen::SparseMatri
     threadHelper<6>([&](const int i){
 
         harmonicPolyhedra[i].stiffnessMatrix(allK[i]);
-//        harmonicPolyhedra[i].massMatrix(allM[i]);
-//        if(i % 10 == 0) std::cout << i << " / " << nc << std::endl;
-//
+
     }, nc);
 
     vector<Eigen::Triplet<double>> tripK;
@@ -277,7 +272,6 @@ double setup_3D_harmonic_stiffness_matrix(PolyhedralMesh &mesh, Eigen::SparseMat
     time += t.elapsed();
     file << t.elapsed() << ",";
     t.start();
-//    std::cout << "Basis construction << t.elapsed() <<
     // cannot parallelize quadrature initialization because tetgen seems to be not thread safe
     for(int i = 0; i < nc; ++i) harmonicPolyhedra[i].initQuadrature();
     t.stop();
@@ -287,7 +281,6 @@ double setup_3D_harmonic_stiffness_matrix(PolyhedralMesh &mesh, Eigen::SparseMat
     threadHelper<8>([&](const int i){
 
         harmonicPolyhedra[i].stiffnessMatrix(allK[i]);
-//        if(i % 10 == 0) std::cout << i << " / " << nc << std::endl;
 
     }, nc);
 

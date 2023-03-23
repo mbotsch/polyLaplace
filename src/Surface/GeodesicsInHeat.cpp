@@ -266,22 +266,6 @@ void GeodesicsInHeat::distance_to_texture_coordinates() const {
     auto distances = mesh_.get_vertex_property<Scalar>("v:dist");
     assert(distances);
 
-//    // scale with boundingbox size for comparable geodesic rings
-//    Scalar bb_size;
-//    bb_size = mesh_.bounds().size();
-//    auto tex = mesh_.vertex_property<TexCoord>("v:tex");
-//    for (auto v : mesh_.vertices())
-//    {
-//        if (distances[v] <= FLT_MAX)
-//        {
-//            tex[v] = TexCoord(distances[v] / bb_size, 0.0);
-//        }
-//        else
-//        {
-//            tex[v] = TexCoord(1.0, 0.0);
-//        }
-//    }
-
     // find maximum distance
     Scalar maxdist(0);
     for (auto v: mesh_.vertices()) {

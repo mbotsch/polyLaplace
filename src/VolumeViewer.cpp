@@ -104,15 +104,15 @@ void VolumeViewer::process_imgui() {
     ImGui::Spacing();
     ImGui::Spacing();
     if (ImGui::CollapsingHeader("Polyhedra!")) {
-        if (ImGui::Button("virtual Points")) {
+        if (ImGui::Button("Virtual Points")) {
             VolumeSubdivision(mesh_).tetrahedra(face_point_, cell_point_);
             update_mesh();
         }
-        if (ImGui::Button("irregular pyrmaids")) {
+        if (ImGui::Button("Irregular Pyramids")) {
             VolumeSubdivision(mesh_).irregular_mesh(5);
             update_mesh();
         }
-        if (ImGui::Button("full truncation")) {
+        if (ImGui::Button("Full Truncation")) {
             VolumeSubdivision(mesh_).full_truncation();
             update_mesh();
         }

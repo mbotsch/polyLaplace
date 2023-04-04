@@ -4,9 +4,6 @@ file(GLOB HEADERS ./Surface/*.h  ./Volume/*.h ./HarmonicBase3D2D/*.h)
 add_subdirectory(VolumeMesh)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/VolumeMesh)
 
-#SET(OBJS
-#        /home/abunge/programs/libigl/external/triangle/triangle.o
-#        )
 
 if (EMSCRIPTEN)
 

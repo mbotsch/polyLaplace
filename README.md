@@ -6,7 +6,7 @@ Since we use [pmp-library](http://www.pmp-library.org/) as submodule, you have t
 
 Configure and build:
 
-    cd PolygonLaplacians && mkdir build && cd build && cmake .. && make
+    cd polyLaplace && mkdir build && cd build && cmake .. && make
 
 This will automatically build our code and all dependencies. Finally, start the GUI app with a polygon mesh or a polyhedral mesh:
 

@@ -7,6 +7,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/VolumeMesh)
 
 if (EMSCRIPTEN)
 
+    add_executable(poly_demo poly_demo.cpp)
+    target_link_libraries(poly_demo ${OBJS} pmp poly)
+
+    add_executable(poly_param poly_parameterization.cpp)
+    target_link_libraries(poly_param ${OBJS} pmp poly)
+
     add_library(poly STATIC ${HEADERS} ${SOURCES})
     target_link_libraries(poly pmp_vis VolumeMesh)
 
@@ -26,6 +32,12 @@ if (EMSCRIPTEN)
     target_link_libraries(take_timings poly VolumeMesh)
 
 else ()
+
+    add_executable(poly_demo poly_demo.cpp)
+    target_link_libraries(poly_demo ${OBJS} pmp poly)
+
+    add_executable(poly_param poly_parameterization.cpp)
+    target_link_libraries(poly_param ${OBJS} pmp poly)
 
     add_library(poly STATIC ${HEADERS} ${SOURCES})
     target_link_libraries(poly pmp_vis VolumeMesh)

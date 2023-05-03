@@ -202,5 +202,55 @@ void fit_plane_to_polygon(const Eigen::MatrixXd &poly, Eigen::Vector3d &normal, 
     normal.normalize();
     origin = Eigen::Vector3d(1.0,0.0,-x(0)-x(2));
 }
+//--------------------------------------------------------------------------------
 
+double poly_face_area(const pmp::SurfaceMesh &mesh, pmp::Face f)
+{
 
+    double a = 0.0;
+    pmp::Point C = centroid(mesh, f);
+    pmp::Point Q, R;
+    for (auto h : mesh.halfedges(f))
+    {
+        // three vertex positions
+        Q = mesh.position(mesh.from_vertex(h));
+        R = mesh.position(mesh.to_vertex(h));
+
+        a += pmp::triangle_area(C, Q, R);
+    }
+
+    return a;
+}
+//--------------------------------------------------------------------------------
+pmp::Scalar poly_surface_area(const pmp::SurfaceMesh &mesh)
+{
+    pmp::Scalar area(0);
+    for (auto f : mesh.faces())
+    {
+        area += poly_face_area(mesh, f);
+    }
+    return area;
+}
+
+//--------------------------------------------------------------------------------
+
+pmp::Point poly_centroid(const pmp::SurfaceMesh &mesh)
+{
+    pmp::Point center(0, 0, 0), c;
+    pmp::Scalar area(0), a;
+    for (auto f : mesh.faces())
+    {
+        int count = 0;
+        c = pmp::Point(0, 0, 0);
+        for (auto v : mesh.vertices(f))
+        {
+            c += mesh.position(v);
+            count++;
+        }
+        c /= (pmp::Scalar)count;
+        a = (pmp::Scalar)poly_face_area(mesh, f);
+        area += a;
+        center += a * c;
+    }
+    return center /= area;
+}

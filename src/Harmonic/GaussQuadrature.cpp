@@ -14,204 +14,236 @@
 
 struct GaussQuadRule
 {
-	//! For even n: Contains n / 2 positions. For odd n: Contains the value 0, then n / 2 positions
-	double m_positions[(MAX_GAUSS_QUAD_POINTS + 1) / 2];
+    //! For even n: Contains n / 2 positions. For odd n: Contains the value 0, then n / 2 positions
+    double m_positions[(MAX_GAUSS_QUAD_POINTS + 1) / 2];
 
-	//! For even n: Contains n / 2 weights. For odd n: Contains the weight for pos 0, then n / 2 weights
-	double m_weights[(MAX_GAUSS_QUAD_POINTS + 1) / 2];
+    //! For even n: Contains n / 2 weights. For odd n: Contains the weight for pos 0, then n / 2 weights
+    double m_weights[(MAX_GAUSS_QUAD_POINTS + 1) / 2];
 
-	//! Degree of polynomials that are integrated correctly by the method
-	int m_degree;
+    //! Degree of polynomials that are integrated correctly by the method
+    int m_degree;
 };
 
 // Values from: http://pathfinder.scar.utoronto.ca/~dyer/csca57/book_P/node44.html
 static const GaussQuadRule g_rules[MAX_GAUSS_QUAD_POINTS] = {
-	{{0.0},												{2.0},						1},							// 1 point
-	{{0.577350269},										{1.0},						3},							// 2 points
-	{{0.0, 0.77459667},									{0.88888889, 0.55555555},	5},							// 3 points
-	{{0.33998104, 0.86113631},							{0.65214515, 0.34785485},	7},							// 4 points
-	{{0.0, 0.53846931, 0.90617985},						{0.56888889, 0.47862867, 0.23692689}, 9},				// 5 points
-	{{0.23861918, 0.66120939, 0.93246951},				{0.46791393, 0.36076157, 0.17132449}, 11},				// 6 points
-	{{0.0, 0.40584515, 0.74153119, 0.94910791},			{0.41795918, 0.38183005, 0.27970539, 0.12948497}, 13},	// 7 points
-	{{0.18343464, 0.52553241, 0.79666648, 0.96028986},	{0.36268378, 0.31370665, 0.22238103, 0.10122854}, 15},	// 8 points
-	{{0}, {0}, 17},	// 9 points
-	{{0.14887434, 0.43339539, 0.67940957, 0.86506337, 0.97390653}, {0.29552422, 0.26926672, 0.21908636, 0.14945135, 0.06667134}, 19}	// 10 points
+    {{0.0}, {2.0}, 1},                                       // 1 point
+    {{0.577350269}, {1.0}, 3},                               // 2 points
+    {{0.0, 0.77459667}, {0.88888889, 0.55555555}, 5},        // 3 points
+    {{0.33998104, 0.86113631}, {0.65214515, 0.34785485}, 7}, // 4 points
+    {{0.0, 0.53846931, 0.90617985},
+     {0.56888889, 0.47862867, 0.23692689},
+     9}, // 5 points
+    {{0.23861918, 0.66120939, 0.93246951},
+     {0.46791393, 0.36076157, 0.17132449},
+     11}, // 6 points
+    {{0.0, 0.40584515, 0.74153119, 0.94910791},
+     {0.41795918, 0.38183005, 0.27970539, 0.12948497},
+     13}, // 7 points
+    {{0.18343464, 0.52553241, 0.79666648, 0.96028986},
+     {0.36268378, 0.31370665, 0.22238103, 0.10122854},
+     15},           // 8 points
+    {{0}, {0}, 17}, // 9 points
+    {{0.14887434, 0.43339539, 0.67940957, 0.86506337, 0.97390653},
+     {0.29552422, 0.26926672, 0.21908636, 0.14945135, 0.06667134},
+     19} // 10 points
 };
 
-
-void GaussQuadrature::GetEvalPoint(int totalEvalPoints, int i, double &weight, double &position)
+void GaussQuadrature::GetEvalPoint(int totalEvalPoints, int i, double& weight,
+                                   double& position)
 {
-	if(totalEvalPoints - 1 >= MAX_GAUSS_QUAD_POINTS)
-	{
-		weight = 0;
-		position = 0;
-		return;
-	}
+    if (totalEvalPoints - 1 >= MAX_GAUSS_QUAD_POINTS)
+    {
+        weight = 0;
+        position = 0;
+        return;
+    }
 
-	if(i < 0 || i >= totalEvalPoints)
-	{
+    if (i < 0 || i >= totalEvalPoints)
+    {
         assert(0);
-		weight = 0;
-		position = 0;
-		return;
-	}
+        weight = 0;
+        position = 0;
+        return;
+    }
 
-	const GaussQuadRule &rule = g_rules[totalEvalPoints - 1];
+    const GaussQuadRule& rule = g_rules[totalEvalPoints - 1];
 
-	if(rule.m_weights[0] <= 0)
-	{
-        assert(0);	// Rule not defined!
-		weight = 0;
-		position = 0;
-		return;
-	}
+    if (rule.m_weights[0] <= 0)
+    {
+        assert(0); // Rule not defined!
+        weight = 0;
+        position = 0;
+        return;
+    }
 
-	if(totalEvalPoints % 2 == 1)
-	{
-		if(i == 0)
-		{
-			weight = rule.m_weights[0];
-			position = rule.m_positions[0];
-		}
-		else
-		{
-			weight = rule.m_weights[(i - 1) / 2 + 1];
-			position = rule.m_positions[(i - 1) / 2 + 1];
+    if (totalEvalPoints % 2 == 1)
+    {
+        if (i == 0)
+        {
+            weight = rule.m_weights[0];
+            position = rule.m_positions[0];
+        }
+        else
+        {
+            weight = rule.m_weights[(i - 1) / 2 + 1];
+            position = rule.m_positions[(i - 1) / 2 + 1];
 
-			if(i % 2 == 0)
-				position = -position;
-		}
-	}
-	else
-	{
-		weight = rule.m_weights[i / 2];
-		position = rule.m_positions[i / 2];
+            if (i % 2 == 0)
+                position = -position;
+        }
+    }
+    else
+    {
+        weight = rule.m_weights[i / 2];
+        position = rule.m_positions[i / 2];
 
-		if(i % 2 == 1)
-			position = -position;
-	}
+        if (i % 2 == 1)
+            position = -position;
+    }
 }
 
 namespace {
 #include "GaussRules2d.h"
 }
 
-
-
-double area(const Eigen::Vector2d& a,
-            const Eigen::Vector2d& b,
-            const Eigen::Vector2d& c) {
-    
-    
-    return std::abs(0.5 * (-a(1) * b(0) + a(0) * b(1) + a(1) * c(0) - b(1) * c(0) - a(0) * c(1) + b(0) * c(1)));
+double area(const Eigen::Vector2d& a, const Eigen::Vector2d& b,
+            const Eigen::Vector2d& c)
+{
+    return std::abs(0.5 * (-a(1) * b(0) + a(0) * b(1) + a(1) * c(0) -
+                           b(1) * c(0) - a(0) * c(1) + b(0) * c(1)));
 }
 
 double gaussQuadratureTriangle(const Eigen::Vector2d& p,
                                const Eigen::Vector2d& q,
                                const Eigen::Vector2d& r,
-                               const std::function<double(double, double)>& g,  int n) {
-    
-    if(n >= (int)gaussRules2d.size()) n = (int)gaussRules2d.size() - 1;
-    if(n < 1) n = 1;
-    
+                               const std::function<double(double, double)>& g,
+                               int n)
+{
+    if (n >= (int)gaussRules2d.size())
+        n = (int)gaussRules2d.size() - 1;
+    if (n < 1)
+        n = 1;
+
     double val = 0;
-    
-    for(auto& gr : gaussRules2d[n - 1]) {
+
+    for (auto& gr : gaussRules2d[n - 1])
+    {
         Eigen::Vector2d x = (1. - gr[0] - gr[1]) * p + gr[0] * q + gr[1] * r;
         val += gr[2] * g(x(0), x(1));
     }
 
     return val * area(p, q, r);
-    
 }
 
 double gaussQuadratureTriangle(const Eigen::MatrixXd& tri,
-                               const std::function<double(double, double)>& g, const int n) {
-
+                               const std::function<double(double, double)>& g,
+                               const int n)
+{
     return gaussQuadratureTriangle(tri.row(0), tri.row(1), tri.row(2), g, n);
 }
- 
-void PolyhedralQuadrature::add(const Eigen::Vector3d& pi, const double wi) {
+
+void PolyhedralQuadrature::add(const Eigen::Vector3d& pi, const double wi)
+{
     p.push_back(pi);
     w.push_back(wi);
 }
 
-
-double PolyhedralQuadrature::apply(const std::function<double(Eigen::Vector3d)>& fun) {
+double PolyhedralQuadrature::apply(
+    const std::function<double(Eigen::Vector3d)>& fun)
+{
     double val = .0;
     const int n = (int)p.size();
-    
-    for(int i = 0; i < n; ++i) {
+
+    for (int i = 0; i < n; ++i)
+    {
         val += w[i] * fun(p[i]);
     }
-    
+
     return val;
 }
 
-PolyhedralQuadrature::PolyhedralQuadrature(const Eigen::Vector3d& min, const Eigen::Vector3d& max,
-                                           const std::function<bool(Eigen::Vector3d)>& inside,
-                                           const int pts, const int ptsg) {
-    
+PolyhedralQuadrature::PolyhedralQuadrature(
+    const Eigen::Vector3d& min, const Eigen::Vector3d& max,
+    const std::function<bool(Eigen::Vector3d)>& inside, const int pts,
+    const int ptsg)
+{
     const Eigen::Vector3d step = (max - min) / pts;
     double boxVol = step.prod();
-    
-    for(int i = 0; i < pts - 1; ++i) {
-        for(int j = 0; j < pts - 1; ++j) {
-            for(int k = 0; k < pts - 1; ++k) {
-                Eigen::Vector3d bmin = min + step.cwiseProduct(Eigen::Vector3d(i, j, k));
-                
-                for(int ig = 0; ig < ptsg; ++ig) {
-                    for(int jg = 0; jg < ptsg; ++jg) {
-                        for(int kg = 0; kg < ptsg; ++kg) {
+
+    for (int i = 0; i < pts - 1; ++i)
+    {
+        for (int j = 0; j < pts - 1; ++j)
+        {
+            for (int k = 0; k < pts - 1; ++k)
+            {
+                Eigen::Vector3d bmin =
+                    min + step.cwiseProduct(Eigen::Vector3d(i, j, k));
+
+                for (int ig = 0; ig < ptsg; ++ig)
+                {
+                    for (int jg = 0; jg < ptsg; ++jg)
+                    {
+                        for (int kg = 0; kg < ptsg; ++kg)
+                        {
                             Eigen::Vector3d pi, wi;
-                            
-                            GaussQuadrature::GetEvalPoint(ptsg, ig, wi[0], pi[0]);
-                            GaussQuadrature::GetEvalPoint(ptsg, jg, wi[1], pi[1]);
-                            GaussQuadrature::GetEvalPoint(ptsg, kg, wi[2], pi[2]);
-                            
+
+                            GaussQuadrature::GetEvalPoint(ptsg, ig, wi[0],
+                                                          pi[0]);
+                            GaussQuadrature::GetEvalPoint(ptsg, jg, wi[1],
+                                                          pi[1]);
+                            GaussQuadrature::GetEvalPoint(ptsg, kg, wi[2],
+                                                          pi[2]);
+
                             pi = (pi + Eigen::Vector3d::Ones()) / 2.;
                             pi = pi.cwiseProduct(step) + bmin;
-                            
-                            if(inside(pi)) add(pi, wi.prod() * boxVol / 8.);
+
+                            if (inside(pi))
+                                add(pi, wi.prod() * boxVol / 8.);
                         }
                     }
                 }
             }
         }
     }
-    
-                
+
     std::cout << "grid quad points " << p.size() << std::endl;
 }
 
-
 double gridQuadrature(const Eigen::Vector3d& min, const Eigen::Vector3d& max,
-                   //   std::function<bool(Eigen::Vector3d)> inside,
-                      const std::function<double(Eigen::Vector3d)>& fun, const int pts) {
-    
+                      //   std::function<bool(Eigen::Vector3d)> inside,
+                      const std::function<double(Eigen::Vector3d)>& fun,
+                      const int pts)
+{
     const Eigen::Vector3d step = (max - min) / pts;
     double boxVol = step.prod();
     double sum = .0;
     int ptsg = 10;
-    
-    for(int i = 0; i < pts - 1; ++i) {
-        for(int j = 0; j < pts - 1; ++j) {
-            for(int k = 0; k < pts - 1; ++k) {
-                Eigen::Vector3d bmin = min + step.cwiseProduct(Eigen::Vector3d(i, j, k));
-                
-                for(int ig = 0; ig < ptsg; ++ig) {
-                    for(int jg = 0; jg < ptsg; ++jg) {
-                        for(int kg = 0; kg < ptsg; ++kg) {
+
+    for (int i = 0; i < pts - 1; ++i)
+    {
+        for (int j = 0; j < pts - 1; ++j)
+        {
+            for (int k = 0; k < pts - 1; ++k)
+            {
+                Eigen::Vector3d bmin =
+                    min + step.cwiseProduct(Eigen::Vector3d(i, j, k));
+
+                for (int ig = 0; ig < ptsg; ++ig)
+                {
+                    for (int jg = 0; jg < ptsg; ++jg)
+                    {
+                        for (int kg = 0; kg < ptsg; ++kg)
+                        {
                             Eigen::Vector3d p, w;
-                            
+
                             GaussQuadrature::GetEvalPoint(ptsg, ig, w[0], p[0]);
                             GaussQuadrature::GetEvalPoint(ptsg, jg, w[1], p[1]);
                             GaussQuadrature::GetEvalPoint(ptsg, kg, w[2], p[2]);
-                            
+
                             p = (p + Eigen::Vector3d::Ones()) / 2.;
                             p = p.cwiseProduct(step) + bmin;
-                            
-                            //if(inside(p)) 
+
+                            //if(inside(p))
                             sum += fun(p) * w.prod() * boxVol / 8.;
                         }
                     }
@@ -219,27 +251,33 @@ double gridQuadrature(const Eigen::Vector3d& min, const Eigen::Vector3d& max,
             }
         }
     }
-    
+
     return sum;
 }
 
-
 TetrahedralQuadrature::TetrahedralQuadrature(std::vector<Eigen::MatrixXd> tets_)
-: tets(std::move(tets_)) {
-    
-    for(auto & tet : tets) {
-        volumes.push_back(std::abs((tet.topRows(3).rowwise() - tet.row(3)).determinant() / 6.));
+    : tets(std::move(tets_))
+{
+    for (auto& tet : tets)
+    {
+        volumes.push_back(std::abs(
+            (tet.topRows(3).rowwise() - tet.row(3)).determinant() / 6.));
     }
 }
 
-double TetrahedralQuadrature::apply(const std::function<double (Eigen::Vector3d)> &fun) {
-    
+double TetrahedralQuadrature::apply(
+    const std::function<double(Eigen::Vector3d)>& fun)
+{
     double ret = 0.;
-    for(int i = 0; i < (int)tets.size(); ++i) {
+    for (int i = 0; i < (int)tets.size(); ++i)
+    {
         double val = .0;
-        
-        for(int j = 0; j < N; ++j) {
-            Eigen::Vector3d p = tets[i].transpose() * Eigen::Map<Eigen::Vector4d>(&quadPoints[j][0], 4);
+
+        for (int j = 0; j < N; ++j)
+        {
+            Eigen::Vector3d p =
+                tets[i].transpose() *
+                Eigen::Map<Eigen::Vector4d>(&quadPoints[j][0], 4);
             val += quadPoints[j][4] * fun(p);
         }
         ret += val * volumes[i];
@@ -247,11 +285,50 @@ double TetrahedralQuadrature::apply(const std::function<double (Eigen::Vector3d)
     return ret;
 }
 
-
 TetrahedralQuadrature::TetrahedralQuadrature() = default;
 
 int TetrahedralQuadrature::N = 8;
-double TetrahedralQuadrature::quadPoints[8][5]{{0.3281633025163816867896358645815337845,0.3281633025163816867896358645815337845,0.3281633025163816867896358645815337845,0.01551009245085493963109240625539864640,0.13621784253708735706757154019171552070},{0.3281633025163816867896358645815337845,0.3281633025163816867896358645815337845,0.01551009245085493963109240625539864640,0.3281633025163816867896358645815337845,0.13621784253708735706757154019171552070},{0.3281633025163816867896358645815337845,0.01551009245085493963109240625539864640,0.3281633025163816867896358645815337845,0.3281633025163816867896358645815337845,0.13621784253708735706757154019171552070},{0.015510092450854939631092406255398646395,0.32816330251638168678963586458153378454,0.32816330251638168678963586458153378454,0.32816330251638168678963586458153378454,0.13621784253708735706757154019171552070},{0.10804724989842860411756338920581330828,0.10804724989842860411756338920581330828,0.10804724989842860411756338920581330828,0.6758582503047141876473098323825600752,0.11378215746291264293242845980828447930},{0.10804724989842860411756338920581330827,0.10804724989842860411756338920581330828,0.6758582503047141876473098323825600752,0.10804724989842860411756338920581330828,0.11378215746291264293242845980828447930},{0.10804724989842860411756338920581330828,0.6758582503047141876473098323825600752,0.10804724989842860411756338920581330828,0.10804724989842860411756338920581330828,0.11378215746291264293242845980828447930},{0.67585825030471418764730983238256007516,0.10804724989842860411756338920581330828,0.10804724989842860411756338920581330828,0.10804724989842860411756338920581330828,0.11378215746291264293242845980828447930}};
+double TetrahedralQuadrature::quadPoints[8][5]{
+    {0.3281633025163816867896358645815337845,
+     0.3281633025163816867896358645815337845,
+     0.3281633025163816867896358645815337845,
+     0.01551009245085493963109240625539864640,
+     0.13621784253708735706757154019171552070},
+    {0.3281633025163816867896358645815337845,
+     0.3281633025163816867896358645815337845,
+     0.01551009245085493963109240625539864640,
+     0.3281633025163816867896358645815337845,
+     0.13621784253708735706757154019171552070},
+    {0.3281633025163816867896358645815337845,
+     0.01551009245085493963109240625539864640,
+     0.3281633025163816867896358645815337845,
+     0.3281633025163816867896358645815337845,
+     0.13621784253708735706757154019171552070},
+    {0.015510092450854939631092406255398646395,
+     0.32816330251638168678963586458153378454,
+     0.32816330251638168678963586458153378454,
+     0.32816330251638168678963586458153378454,
+     0.13621784253708735706757154019171552070},
+    {0.10804724989842860411756338920581330828,
+     0.10804724989842860411756338920581330828,
+     0.10804724989842860411756338920581330828,
+     0.6758582503047141876473098323825600752,
+     0.11378215746291264293242845980828447930},
+    {0.10804724989842860411756338920581330827,
+     0.10804724989842860411756338920581330828,
+     0.6758582503047141876473098323825600752,
+     0.10804724989842860411756338920581330828,
+     0.11378215746291264293242845980828447930},
+    {0.10804724989842860411756338920581330828,
+     0.6758582503047141876473098323825600752,
+     0.10804724989842860411756338920581330828,
+     0.10804724989842860411756338920581330828,
+     0.11378215746291264293242845980828447930},
+    {0.67585825030471418764730983238256007516,
+     0.10804724989842860411756338920581330828,
+     0.10804724989842860411756338920581330828,
+     0.10804724989842860411756338920581330828,
+     0.11378215746291264293242845980828447930}};
 
 #if 0
 int TetrahedralQuadrature::N = 81;

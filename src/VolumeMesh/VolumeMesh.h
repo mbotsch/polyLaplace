@@ -36,7 +36,6 @@ public:
     //! read file
     bool read(const std::string& filename);
 
-
 public:
     struct BoundingSphere
     {

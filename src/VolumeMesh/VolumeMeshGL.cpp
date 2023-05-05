@@ -233,12 +233,10 @@ void VolumeMeshGL::update_opengl_buffers()
 
         for (auto c_it = c_iter(); c_it.valid(); ++c_it)
         {
-
             auto c_bary = barycenter(*c_it);
 
             for (auto chf_it = chf_iter(*c_it); chf_it.valid(); ++chf_it)
             {
-
                 corner_positions.clear();
                 corner_normals.clear();
                 corner_embeddings.clear();
@@ -302,14 +300,12 @@ void VolumeMeshGL::update_opengl_buffers()
     }
     else if (n_vertices())
     {
-
         position_array.reserve(n_vertices());
         normal_attrib_.update_vertex_normals();
 
         for (auto vert_iter = vertices_begin(); vert_iter != vertices_end();
              ++vert_iter)
         {
-
             v = vertex(*vert_iter);
             normal = normal_attrib_[*vert_iter];
 

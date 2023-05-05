@@ -23,7 +23,7 @@ int choose_viewer(std::string filename)
     return viewer;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     int viewer = 0;
     if (argc == 2)

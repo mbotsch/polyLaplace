@@ -15,7 +15,8 @@ enum InsertedPoint
     AreaMinimizer = 2,
 };
 
-enum LaplaceMethods {
+enum LaplaceMethods
+{
     PolySimpleLaplace = 0,
     AlexaWardetzkyLaplace = 1,
     Diamond = 2,
@@ -38,7 +39,8 @@ private:
 Viewer::Viewer(const char* title, int width, int height)
     : MeshViewer(title, width, height), smoother_(mesh_)
 {
-    crease_angle_ = 180.0;
+    set_draw_mode("Hidden Line");
+    crease_angle_ = 0.0;
 }
 
 void Viewer::process_imgui()
@@ -52,8 +54,8 @@ void Viewer::process_imgui()
     ImGui::SliderFloat("Hyperparameter Alexa & Wardetzky Laplace",
                        &poly_laplace_lambda_, 0.01, 3.0);
     ImGui::PushItemWidth(100);
-    ImGui::SliderFloat("Hyperparameter deGoes Laplace",
-                       &deGoes_laplace_lambda_, 0.01, 3.0);
+    ImGui::SliderFloat("Hyperparameter deGoes Laplace", &deGoes_laplace_lambda_,
+                       0.01, 3.0);
     ImGui::PopItemWidth();
 
     ImGui::Spacing();
@@ -88,8 +90,8 @@ void Viewer::process_imgui()
         ImGui::PopItemWidth();
 
         static float timestep = 0.001;
-        float lb =  0.001;
-        float ub =  1.0;
+        float lb = 0.001;
+        float ub = 1.0;
         ImGui::PushItemWidth(100);
         ImGui::SliderFloat("TimeStep", &timestep, lb, ub);
         ImGui::PopItemWidth();
@@ -105,10 +107,10 @@ void Viewer::process_imgui()
             // only re-scale if we don't have a (fixed) boundary
             bool rescale = !has_boundary;
 
-            Scalar dt =  timestep * radius_ * radius_;
+            Scalar dt = timestep * radius_ * radius_;
             try
             {
-                smoother_.implicit_smoothing(dt, laplace, min_point,rescale);
+                smoother_.implicit_smoothing(dt, laplace, min_point, rescale);
             }
             catch (const SolverException& e)
             {
@@ -129,7 +131,9 @@ void Viewer::process_imgui()
             set_draw_mode("Texture");
         }
     }
-    if (ImGui::CollapsingHeader("Geodesic in Heat", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGui::CollapsingHeader("Geodesic in Heat",
+                                ImGuiTreeNodeFlags_DefaultOpen))
+    {
         static int ts = 0;
         ImGui::Text("Choose your diffusion time step ");
 
@@ -137,10 +141,10 @@ void Viewer::process_imgui()
         ImGui::RadioButton("Max edge length", &ts, 1);
         ImGui::RadioButton("Max diagonal length", &ts, 2);
 
-        if (ImGui::Button("Compute Distances Vertex 0")) {
-
-            GeodesicsInHeat heat(mesh_, laplace, min_point,
-                                 false, false, DiffusionStep(ts));
+        if (ImGui::Button("Compute Distances Vertex 0"))
+        {
+            GeodesicsInHeat heat(mesh_, laplace, min_point, false, false,
+                                 DiffusionStep(ts));
             Eigen::VectorXd dist, geodist;
 
             heat.compute_geodesics();

@@ -12,13 +12,15 @@ float poly_laplace_lambda_ = 2.0;
 bool Herholz_version_ = true;
 //=============================================================================
 
-void setup_E_and_B_perFace(pmp::SurfaceMesh &mesh, pmp::Face f,
-                           Eigen::MatrixXd &E, Eigen::MatrixXd &B) {
-    const int n = (int) mesh.valence(f);
+void setup_E_and_B_perFace(pmp::SurfaceMesh& mesh, pmp::Face f,
+                           Eigen::MatrixXd& E, Eigen::MatrixXd& B)
+{
+    const int n = (int)mesh.valence(f);
     Eigen::MatrixXd X(n, 3);
 
     int i = 0;
-    for (auto v: mesh.vertices(f)) {
+    for (auto v : mesh.vertices(f))
+    {
         const auto p = mesh.position(v);
         X(i, 0) = p[0];
         X(i, 1) = p[1];
@@ -29,57 +31,63 @@ void setup_E_and_B_perFace(pmp::SurfaceMesh &mesh, pmp::Face f,
     E.resizeLike(X);
     B.resizeLike(X);
 
-    for (i = 0; i < n; ++i) {
+    for (i = 0; i < n; ++i)
+    {
         E.row(i) = X.row((i + 1) % n) - X.row(i);
         B.row(i) = 0.5 * (X.row((i + 1) % n) + X.row(i));
     }
 }
 //-----------------------------------------------------------------------------
 
-void setup_poly_gradient_operator(pmp::SurfaceMesh &mesh,
-                                  Eigen::SparseMatrix<double> &G) {
+void setup_poly_gradient_operator(pmp::SurfaceMesh& mesh,
+                                  Eigen::SparseMatrix<double>& G)
+{
     std::vector<Eigen::Triplet<double>> triplets;
     int cnt = 0;
 
-    for (auto f: mesh.faces()) {
+    for (auto f : mesh.faces())
+    {
         const unsigned int n = mesh.valence(f);
         Eigen::VectorXi F(n);
 
         int idx = 0;
-        for (auto v: mesh.vertices(f)) {
-            F(idx) = (int) v.idx();
+        for (auto v : mesh.vertices(f))
+        {
+            F(idx) = (int)v.idx();
             ++idx;
         }
 
-        for (unsigned int i = 0; i < n; ++i) {
+        for (unsigned int i = 0; i < n; ++i)
+        {
             triplets.emplace_back(cnt, F(i), -1);
             triplets.emplace_back(cnt, F((i + 1) % n), 1);
             ++cnt;
         }
     }
 
-    G.resize(cnt, (int) mesh.n_vertices());
+    G.resize(cnt, (int)mesh.n_vertices());
     G.setFromTriplets(triplets.begin(), triplets.end());
-
-
 }
 //-----------------------------------------------------------------------------
 
-void setup_poly_divergence_operator(pmp::SurfaceMesh &mesh,
-                                    Eigen::SparseMatrix<double> &D) {
+void setup_poly_divergence_operator(pmp::SurfaceMesh& mesh,
+                                    Eigen::SparseMatrix<double>& D)
+{
     double lambda = poly_laplace_lambda_;
 
     std::vector<Eigen::Triplet<double>> triplets;
     int colCnt = 0;
 
-    for (auto f: mesh.faces()) {
-        const int n = (int) mesh.valence(f);
+    for (auto f : mesh.faces())
+    {
+        const int n = (int)mesh.valence(f);
         Eigen::VectorXi F(n);
         Eigen::MatrixXd E, B;
         setup_E_and_B_perFace(mesh, f, E, B);
         int idx = 0;
-        for (auto v: mesh.vertices(f)) {
-            F(idx) = (int) v.idx();
+        for (auto v : mesh.vertices(f))
+        {
+            F(idx) = (int)v.idx();
             ++idx;
         }
         // compute vector area
@@ -93,22 +101,28 @@ void setup_poly_divergence_operator(pmp::SurfaceMesh &mesh,
         Eigen::MatrixXd d(n, n);
         d.setZero();
 
-        for (int i = 0; i < n; ++i) {
+        for (int i = 0; i < n; ++i)
+        {
             d(i, i) = -1;
             d(i, (i + 1) % n) = 1;
         }
 
         Eigen::MatrixXd Lf;
 
-        if (lambda > 0.0) {
+        if (lambda > 0.0)
+        {
             // fill kernel
-            if (Herholz_version_) {
+            if (Herholz_version_)
+            {
                 E -= E * af * af.transpose();
-            } else {
+            }
+            else
+            {
                 // Marc's version
                 Eigen::MatrixXd X(3, n);
                 int i = 0;
-                for (auto v: mesh.vertices(f)) {
+                for (auto v : mesh.vertices(f))
+                {
                     X(0, i) = mesh.position(v)[0];
                     X(1, i) = mesh.position(v)[1];
                     X(2, i) = mesh.position(v)[2];
@@ -125,15 +139,20 @@ void setup_poly_divergence_operator(pmp::SurfaceMesh &mesh,
             }
             Eigen::MatrixXd C;
             // Philipp's version to compute the kernel of E^T
-            if (Herholz_version_) {
-                Eigen::JacobiSVD<Eigen::MatrixXd> svd(E.transpose(),Eigen::ComputeFullV);
+            if (Herholz_version_)
+            {
+                Eigen::JacobiSVD<Eigen::MatrixXd> svd(E.transpose(),
+                                                      Eigen::ComputeFullV);
                 C = svd.matrixV().rightCols(n - 2);
-            } else {
+            }
+            else
+            {
                 // Marc's version
                 Eigen::MatrixXd CLU =
-                        Eigen::FullPivLU<Eigen::MatrixXd>(E.transpose()).kernel();
-                C = Eigen::JacobiSVD<Eigen::MatrixXd>(CLU, Eigen::ComputeThinU | Eigen::ComputeThinV).matrixU();
-
+                    Eigen::FullPivLU<Eigen::MatrixXd>(E.transpose()).kernel();
+                C = Eigen::JacobiSVD<Eigen::MatrixXd>(
+                        CLU, Eigen::ComputeThinU | Eigen::ComputeThinV)
+                        .matrixU();
             }
             if ((E.transpose() * C).norm() > 1e-10)
                 std::cerr << "Should not happen\n";
@@ -141,12 +160,15 @@ void setup_poly_divergence_operator(pmp::SurfaceMesh &mesh,
             // assemble face divergence
             Lf = d.transpose() *
                  ((B * B.transpose()) / area + lambda * C * C.transpose());
-        } else
+        }
+        else
             Lf = d.transpose() * ((B * B.transpose()) / area);
 
         // add local laplacian to global matrix entries
-        for (int k = 0; k < n; ++k) {
-            for (int l = 0; l < n; ++l) {
+        for (int k = 0; k < n; ++k)
+        {
+            for (int l = 0; l < n; ++l)
+            {
                 triplets.emplace_back(F(k), colCnt + l, -2.0 * Lf(k, l));
             }
         }
@@ -154,27 +176,30 @@ void setup_poly_divergence_operator(pmp::SurfaceMesh &mesh,
         colCnt += n;
     }
 
-    D.resize((int) mesh.n_vertices(), colCnt);
+    D.resize((int)mesh.n_vertices(), colCnt);
     D.setFromTriplets(triplets.begin(), triplets.end());
 }
 //-----------------------------------------------------------------------------
 
-void normalize_poly_gradients(pmp::SurfaceMesh &mesh, Eigen::VectorXd &g,
-                              const Eigen::VectorXd &h) {
+void normalize_poly_gradients(pmp::SurfaceMesh& mesh, Eigen::VectorXd& g,
+                              const Eigen::VectorXd& h)
+{
     double lambda = poly_laplace_lambda_;
-    assert(h.rows() == (int) mesh.n_vertices());
+    assert(h.rows() == (int)mesh.n_vertices());
     assert((int)mesh.n_halfedges() == g.rows());
 
     int hedgeCnt = 0;
 
-    for (auto f: mesh.faces()) {
+    for (auto f : mesh.faces())
+    {
         const unsigned int n = mesh.valence(f);
         Eigen::VectorXi F(n);
         Eigen::MatrixXd E, B;
         setup_E_and_B_perFace(mesh, f, E, B);
         int idx = 0;
-        for (auto v: mesh.vertices(f)) {
-            F(idx) = (int) v.idx();
+        for (auto v : mesh.vertices(f))
+        {
+            F(idx) = (int)v.idx();
             ++idx;
         }
         // compute vector area
@@ -188,22 +213,28 @@ void normalize_poly_gradients(pmp::SurfaceMesh &mesh, Eigen::VectorXd &g,
         Eigen::MatrixXd d(n, n);
         d.setZero();
 
-        for (unsigned int i = 0; i < n; ++i) {
+        for (unsigned int i = 0; i < n; ++i)
+        {
             d(i, i) = -1;
             d(i, (i + 1) % n) = 1;
         }
 
         Eigen::MatrixXd Lf;
 
-        if (lambda > 0.0) {
+        if (lambda > 0.0)
+        {
             // fill kernel
-            if (Herholz_version_) {
+            if (Herholz_version_)
+            {
                 E -= E * af * af.transpose();
-            } else {
+            }
+            else
+            {
                 // Marc's version
                 Eigen::MatrixXd X(3, n);
                 int i = 0;
-                for (auto v: mesh.vertices(f)) {
+                for (auto v : mesh.vertices(f))
+                {
                     X(0, i) = mesh.position(v)[0];
                     X(1, i) = mesh.position(v)[1];
                     X(2, i) = mesh.position(v)[2];
@@ -220,15 +251,20 @@ void normalize_poly_gradients(pmp::SurfaceMesh &mesh, Eigen::VectorXd &g,
             }
             Eigen::MatrixXd C;
             // Philipp's version to compute the kernel of E^T
-            if (Herholz_version_) {
-                Eigen::JacobiSVD<Eigen::MatrixXd> svd(E.transpose(),Eigen::ComputeFullV);
+            if (Herholz_version_)
+            {
+                Eigen::JacobiSVD<Eigen::MatrixXd> svd(E.transpose(),
+                                                      Eigen::ComputeFullV);
                 C = svd.matrixV().rightCols(n - 2);
-            } else {
+            }
+            else
+            {
                 // Marc's version
                 Eigen::MatrixXd CLU =
-                        Eigen::FullPivLU<Eigen::MatrixXd>(E.transpose()).kernel();
-                C = Eigen::JacobiSVD<Eigen::MatrixXd>(CLU, Eigen::ComputeThinU | Eigen::ComputeThinV).matrixU();
-
+                    Eigen::FullPivLU<Eigen::MatrixXd>(E.transpose()).kernel();
+                C = Eigen::JacobiSVD<Eigen::MatrixXd>(
+                        CLU, Eigen::ComputeThinU | Eigen::ComputeThinV)
+                        .matrixU();
             }
             if ((E.transpose() * C).norm() > 1e-10)
                 std::cerr << "Should not happen\n";
@@ -236,7 +272,8 @@ void normalize_poly_gradients(pmp::SurfaceMesh &mesh, Eigen::VectorXd &g,
             // assemble face laplacian
             Lf = d.transpose() *
                  ((B * B.transpose()) / area + lambda * C * C.transpose()) * d;
-        } else
+        }
+        else
             Lf = d.transpose() * ((B * B.transpose()) / area) * d;
 
         // get heat values for face f
@@ -254,20 +291,22 @@ void normalize_poly_gradients(pmp::SurfaceMesh &mesh, Eigen::VectorXd &g,
 }
 //-----------------------------------------------------------------------------
 
-void setup_poly_Laplace_matrix(SurfaceMesh &mesh,
-                               Eigen::SparseMatrix<double> &L) {
-
+void setup_poly_Laplace_matrix(SurfaceMesh& mesh,
+                               Eigen::SparseMatrix<double>& L)
+{
     double lambda = poly_laplace_lambda_;
     std::vector<Eigen::Triplet<double>> triplets;
     //    Eigen::MatrixXd E, B;
-    for (auto f: mesh.faces()) {
+    for (auto f : mesh.faces())
+    {
         const unsigned int n = mesh.valence(f);
         Eigen::VectorXi F(n);
         Eigen::MatrixXd E, B;
         setup_E_and_B_perFace(mesh, f, E, B);
         int idx = 0;
-        for (auto v: mesh.vertices(f)) {
-            F(idx) = (int) v.idx();
+        for (auto v : mesh.vertices(f))
+        {
+            F(idx) = (int)v.idx();
             ++idx;
         }
         // compute vector area
@@ -281,22 +320,28 @@ void setup_poly_Laplace_matrix(SurfaceMesh &mesh,
         Eigen::MatrixXd d(n, n);
         d.setZero();
 
-        for (unsigned int i = 0; i < n; ++i) {
+        for (unsigned int i = 0; i < n; ++i)
+        {
             d(i, i) = -1;
             d(i, (i + 1) % n) = 1;
         }
 
         Eigen::MatrixXd Lf;
 
-        if (lambda > 0) {
+        if (lambda > 0)
+        {
             // Philipp's verion to flatten matrix E
-            if (Herholz_version_) {
+            if (Herholz_version_)
+            {
                 E -= E * af * af.transpose();
-            } else {
+            }
+            else
+            {
                 // Marc's version
                 Eigen::MatrixXd X(3, n);
                 int i = 0;
-                for (auto v: mesh.vertices(f)) {
+                for (auto v : mesh.vertices(f))
+                {
                     X(0, i) = mesh.position(v)[0];
                     X(1, i) = mesh.position(v)[1];
                     X(2, i) = mesh.position(v)[2];
@@ -313,18 +358,20 @@ void setup_poly_Laplace_matrix(SurfaceMesh &mesh,
             }
             Eigen::MatrixXd C;
             // Philipp's version to compute the kernel of E^T
-            if (Herholz_version_) {
+            if (Herholz_version_)
+            {
                 Eigen::JacobiSVD<Eigen::MatrixXd> svd(E.transpose(),
                                                       Eigen::ComputeFullV);
                 C = svd.matrixV().rightCols(n - 2);
-            } else {
+            }
+            else
+            {
                 // Marc's version
                 Eigen::MatrixXd CLU =
-                        Eigen::FullPivLU<Eigen::MatrixXd>(E.transpose()).kernel();
-                C =
-                        Eigen::JacobiSVD<Eigen::MatrixXd>(
-                                CLU, Eigen::ComputeThinU | Eigen::ComputeThinV)
-                                .matrixU();
+                    Eigen::FullPivLU<Eigen::MatrixXd>(E.transpose()).kernel();
+                C = Eigen::JacobiSVD<Eigen::MatrixXd>(
+                        CLU, Eigen::ComputeThinU | Eigen::ComputeThinV)
+                        .matrixU();
 
                 // uncomment to see that Marc's flattening leads to round-off errors
                 // that in turn lead to a wrong estimation of the kernel dimension
@@ -338,32 +385,38 @@ void setup_poly_Laplace_matrix(SurfaceMesh &mesh,
             // assemble face laplacian
             Lf = d.transpose() *
                  ((B * B.transpose()) / area + lambda * C * C.transpose()) * d;
-        } else
+        }
+        else
             Lf = d.transpose() * ((B * B.transpose()) / area) * d;
 
         // add local laplacian to global matrix entries
-        for (unsigned int k = 0; k < n; ++k) {
-            for (unsigned int l = 0; l < n; ++l) {
+        for (unsigned int k = 0; k < n; ++k)
+        {
+            for (unsigned int l = 0; l < n; ++l)
+            {
                 triplets.emplace_back(F(k), F(l), -2.0 * Lf(k, l));
             }
         }
     }
 
-    L.resize((int) mesh.n_vertices(), (int) mesh.n_vertices());
+    L.resize((int)mesh.n_vertices(), (int)mesh.n_vertices());
     L.setFromTriplets(triplets.begin(), triplets.end());
 }
 
 //-----------------------------------------------------------------------------
 
-void setup_poly_mass_matrix(pmp::SurfaceMesh &mesh,
-                            Eigen::SparseMatrix<double> &M) {
-    M.resize((int) mesh.n_vertices(), (int) mesh.n_vertices());
+void setup_poly_mass_matrix(pmp::SurfaceMesh& mesh,
+                            Eigen::SparseMatrix<double>& M)
+{
+    M.resize((int)mesh.n_vertices(), (int)mesh.n_vertices());
 
     std::vector<Triplet> tripletsM;
     double sum = 0.0;
     Eigen::MatrixXd E, B;
-    for (auto v: mesh.vertices()) {
-        for (auto f: mesh.faces(v)) {
+    for (auto v : mesh.vertices())
+    {
+        for (auto f : mesh.faces(v))
+        {
             const unsigned int n = mesh.valence(f);
             setup_E_and_B_perFace(mesh, f, E, B);
             // compute vector area
@@ -378,5 +431,3 @@ void setup_poly_mass_matrix(pmp::SurfaceMesh &mesh,
     // build sparse matrix from triplets
     M.setFromTriplets(tripletsM.begin(), tripletsM.end());
 }
-
-

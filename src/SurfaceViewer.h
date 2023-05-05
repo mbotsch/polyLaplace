@@ -19,6 +19,7 @@ public: // public methods
         set_draw_mode("Hidden Line");
     }
     void load_mesh(const char* filename) override;
+
 protected:
     // overload GUI callbacks
     void keyboard(int key, int code, int action, int mod) override;

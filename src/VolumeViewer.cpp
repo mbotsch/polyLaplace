@@ -10,37 +10,44 @@
 
 //=============================================================================
 
-enum VolumePoints {
+enum VolumePoints
+{
     Quadratic_Volume_ = 0,
     Cell_Centroid_ = 1
 };
 
-enum AreaPoints {
+enum AreaPoints
+{
     Quadratic_Areas_ = 0,
     Face_Centroid = 1
 };
 
-enum LaplaceMethods {
+enum LaplaceMethods
+{
     Diamond = 0,
     Harmonic = 1,
     PolySimpleLaplace = 2,
 };
 
-bool VolumeViewer::load_mesh(const char *filename) {
-    if (VolumeMeshViewer::load_mesh(filename)) {
+bool VolumeViewer::load_mesh(const char* filename)
+{
+    if (VolumeMeshViewer::load_mesh(filename))
+    {
         filename_ = filename;
         return true;
     }
     return false;
 }
 
-void VolumeViewer::keyboard(int key, int code, int action, int mod) {
+void VolumeViewer::keyboard(int key, int code, int action, int mod)
+{
     if (action != GLFW_PRESS) // only react on key press events
         return;
 
-    switch (key) {
-
-        case GLFW_KEY_B: {
+    switch (key)
+    {
+        case GLFW_KEY_B:
+        {
             auto mesh = static_cast<VolumeMesh>(mesh_);
             std::string name = filename_;
             int last_slash = name.find_last_of('/');
@@ -53,7 +60,8 @@ void VolumeViewer::keyboard(int key, int code, int action, int mod) {
             break;
         }
 
-        default: {
+        default:
+        {
             VolumeMeshViewer::keyboard(key, code, action, mod);
             break;
         }
@@ -61,7 +69,8 @@ void VolumeViewer::keyboard(int key, int code, int action, int mod) {
 }
 //----------------------------------------------------------------------------
 
-void VolumeViewer::process_imgui() {
+void VolumeViewer::process_imgui()
+{
     VolumeMeshViewer::process_imgui();
 
     ImGui::Spacing();
@@ -88,45 +97,57 @@ void VolumeViewer::process_imgui() {
     ImGui::RadioButton("Cell Centroid", &cell_point, Cell_Centroid_);
     cell_point_ = cell_point;
 
-    if (ImGui::Button("RMSE Eigenvalues Sphere")) {
+    if (ImGui::Button("RMSE Eigenvalues Sphere"))
+    {
         Eigen::VectorXd evalues;
-        solve_eigenvalue_problem(mesh_,  evalues, laplace_matrix, face_point_,
+        solve_eigenvalue_problem(mesh_, evalues, laplace_matrix, face_point_,
                                  cell_point_);
     }
-    if (ImGui::Button("RMSE Franke Poisson System")) {
-
-        if(laplace == Harmonic){
+    if (ImGui::Button("RMSE Franke Poisson System"))
+    {
+        if (laplace == Harmonic)
+        {
             solve_3D_Franke_harmonic(filename_);
-        }else {
-            solve_franke_poisson(mesh_, laplace_matrix, face_point_, cell_point_);
+        }
+        else
+        {
+            solve_franke_poisson(mesh_, laplace_matrix, face_point_,
+                                 cell_point_);
         }
     }
     ImGui::Spacing();
     ImGui::Spacing();
-    if (ImGui::CollapsingHeader("Polyhedra!")) {
-        if (ImGui::Button("Virtual Points")) {
+    if (ImGui::CollapsingHeader("Polyhedra!"))
+    {
+        if (ImGui::Button("Virtual Points"))
+        {
             VolumeSubdivision(mesh_).tetrahedra(face_point_, cell_point_);
             update_mesh();
         }
-        if (ImGui::Button("Irregular Pyramids")) {
+        if (ImGui::Button("Irregular Pyramids"))
+        {
             VolumeSubdivision(mesh_).irregular_mesh(5);
             update_mesh();
         }
-        if (ImGui::Button("Full Truncation")) {
+        if (ImGui::Button("Full Truncation"))
+        {
             VolumeSubdivision(mesh_).full_truncation();
             update_mesh();
         }
-        if (ImGui::Button("Quads")) {
+        if (ImGui::Button("Quads"))
+        {
             VolumeSubdivision(mesh_).quads();
             update_mesh();
         }
-        if (ImGui::Button("Linear Subdivision")) {
+        if (ImGui::Button("Linear Subdivision"))
+        {
             VolumeSubdivision(mesh_).linear_subdivision();
             update_mesh();
         }
     }
 }
 
-void VolumeViewer::mouse(int button, int action, int mods) {
+void VolumeViewer::mouse(int button, int action, int mods)
+{
     VolumeMeshViewer::mouse(button, action, mods);
 }

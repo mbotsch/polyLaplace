@@ -4,14 +4,17 @@
 #include "Surface/diffgeo.h"
 #include "Surface/Curvature.h"
 #include "Surface/SpectralProcessing.h"
-#include <pmp/algorithms/Triangulation.h>
-#include <pmp/algorithms/Subdivision.h>
-#include <pmp/algorithms/Normals.h>
-#include <imgui.h>
 #include "Surface/GeodesicsInHeat.h"
 #include "Surface/[dGBD20]Laplace.h"
 #include "Surface/Poisson_System.h"
+
+#include <pmp/algorithms/triangulation.h>
+#include <pmp/algorithms/subdivision.h>
+#include <pmp/algorithms/normals.h>
+#include <pmp/utilities.h>
 #include <pmp/Timer.h>
+
+#include <imgui.h>
 #include <random>
 
 using namespace pmp;
@@ -24,7 +27,8 @@ enum InsertedPoint
     AreaMinimizer = 2,
 };
 
-enum LaplaceMethods {
+enum LaplaceMethods
+{
     PolySimpleLaplace = 0,
     AlexaWardetzkyLaplace = 1,
     Diamond = 2,
@@ -39,7 +43,8 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
 
     switch (key)
     {
-        default: {
+        default:
+        {
             MeshViewer::keyboard(key, scancode, action, mods);
             break;
         }
@@ -109,7 +114,7 @@ void Viewer::process_imgui()
         // Catmull-Clark subdivision
         if (ImGui::Button("Catmull-Clark"))
         {
-            Subdivision(mesh_).catmull_clark();
+            catmull_clark_subdivision(mesh_);
             update_mesh();
         }
         if (ImGui::Button("insert virtual points"))
@@ -147,15 +152,13 @@ void Viewer::process_imgui()
 
         if (ImGui::Button("Triangulate mesh (min area)"))
         {
-            Triangulation tesselator(mesh_);
-            tesselator.triangulate(Triangulation::Objective::MIN_AREA);
+            triangulate(mesh_, TriangulationObjective::min_area);
             update_mesh();
         }
 
         if (ImGui::Button("Triangulate mesh (max angle)"))
         {
-            Triangulation tesselator(mesh_);
-            tesselator.triangulate(Triangulation::Objective::MAX_ANGLE);
+            triangulate(mesh_, TriangulationObjective::max_angle);
             update_mesh();
         }
         if (ImGui::Button("Kugelize"))
@@ -168,7 +171,7 @@ void Viewer::process_imgui()
         {
             for (auto v : mesh_.vertices())
             {
-                Point n = Normals::compute_vertex_normal(mesh_, v);
+                Point n = vertex_normal(mesh_, v);
                 Scalar r = 2.0 * static_cast<float>(rand()) /
                                static_cast<float>(RAND_MAX) -
                            1.0;
@@ -185,7 +188,7 @@ void Viewer::process_imgui()
         {
             // create random generator
             // upper and lower bounds are proportional to bounding box and inverse of smoothness
-            auto l = mesh_.bounds().size();
+            auto l = bounds(mesh_).size();
             double upper_bound = l / 1000.0;
             double lower_bound = -upper_bound;
             std::uniform_real_distribution<double> unif(lower_bound,
@@ -194,7 +197,7 @@ void Viewer::process_imgui()
 
             re.seed(42); // fixed seed
 
-            double rand =0.0;
+            double rand = 0.0;
             if (fixed_)
             {
                 rand = unif(re);
@@ -202,7 +205,7 @@ void Viewer::process_imgui()
 
             for (auto v : mesh_.vertices())
             {
-                auto n = pmp::Normals::compute_vertex_normal(mesh_, v);
+                auto n = vertex_normal(mesh_, v);
                 if (normal_)
                 {
                     if (fixed_)
@@ -227,28 +230,31 @@ void Viewer::process_imgui()
         {
             Edge origin_edge;
             auto min = DBL_MAX;
-            for(auto e: mesh_.edges()){
-                Vertex v1 = mesh_.vertex(e,1);
-                Vertex v0 = mesh_.vertex(e,0);
-                Point p = 0.5*(mesh_.position(v0)+mesh_.position(v1));
-                Point origin(0.0,0.0,0.0);
-                if(norm(origin-p)<min){
+            for (auto e : mesh_.edges())
+            {
+                Vertex v1 = mesh_.vertex(e, 1);
+                Vertex v0 = mesh_.vertex(e, 0);
+                Point p = 0.5 * (mesh_.position(v0) + mesh_.position(v1));
+                Point origin(0.0, 0.0, 0.0);
+                if (norm(origin - p) < min)
+                {
                     origin_edge = e;
-                    min = norm(origin-p);
+                    min = norm(origin - p);
                 }
             }
-            Vertex v1 = mesh_.vertex(origin_edge,1);
-            Vertex v0 = mesh_.vertex(origin_edge,0);
-            Point dir = (mesh_.position(v1)-mesh_.position(v0));
+            Vertex v1 = mesh_.vertex(origin_edge, 1);
+            Vertex v0 = mesh_.vertex(origin_edge, 0);
+            Point dir = (mesh_.position(v1) - mesh_.position(v0));
             std::cout << mesh_.position(v0) << std::endl;
-            mesh_.position(v0) -= 0.1*dir;
+            mesh_.position(v0) -= 0.1 * dir;
             std::cout << mesh_.position(v0) << std::endl;
             update_mesh();
         }
-        if (ImGui::Button("Add tangential noise")) {
+        if (ImGui::Button("Add tangential noise"))
+        {
             // create random generator
             // upper and lower bounds are proportional to bounding box and inverse of smoothness
-            auto l = mesh_.bounds().size();
+            auto l = bounds(mesh_).size();
             double upper_bound = l / 1000.0;
             double lower_bound = -upper_bound;
             std::uniform_real_distribution<double> unif(lower_bound,
@@ -257,45 +263,52 @@ void Viewer::process_imgui()
 
             re.seed(42); // fixed seed
 
-            for (auto e: mesh_.edges()) {
-                auto n = mesh_.position(mesh_.vertex(e, 0)) - mesh_.position(mesh_.vertex(e, 1));
+            for (auto e : mesh_.edges())
+            {
+                auto n = mesh_.position(mesh_.vertex(e, 0)) -
+                         mesh_.position(mesh_.vertex(e, 1));
                 n.normalize();
-                mesh_.position(mesh_.vertex(e, 0)) += n * unif(re) ;
-
+                mesh_.position(mesh_.vertex(e, 0)) += n * unif(re);
             }
             update_mesh();
         }
-        if (ImGui::Button("Check for non-planarity")) {
+        if (ImGui::Button("Check for non-planarity"))
+        {
             auto vpoint = mesh_.get_vertex_property<Point>("v:point");
             int ctr = 0;
             double dist_sum = 0.0;
-            for (auto f: mesh_.faces()) {
+            for (auto f : mesh_.faces())
+            {
                 // fit plane to face
-                Eigen::MatrixXd poly(mesh_.valence(f),3);
-                int i =0;
-                for(auto v : mesh_.vertices(f)){
+                Eigen::MatrixXd poly(mesh_.valence(f), 3);
+                int i = 0;
+                for (auto v : mesh_.vertices(f))
+                {
                     Point p = vpoint[v];
-                    poly(i,0) = p[0];
-                    poly(i,1) = p[1];
-                    poly(i,2) = p[2];
+                    poly(i, 0) = p[0];
+                    poly(i, 1) = p[1];
+                    poly(i, 2) = p[2];
                     i++;
                 }
-                Eigen::Vector3d n,o;
-                fit_plane_to_polygon(poly,n,o);
+                Eigen::Vector3d n, o;
+                fit_plane_to_polygon(poly, n, o);
                 // compute mean distance to plane
                 double dist = 0.0;
-                for(auto v : mesh_.vertices(f)){
-                    Eigen::Vector3d p(vpoint[v][0],vpoint[v][1],vpoint[v][2]);
-                    dist += abs(n.dot(p-o));
+                for (auto v : mesh_.vertices(f))
+                {
+                    Eigen::Vector3d p(vpoint[v][0], vpoint[v][1], vpoint[v][2]);
+                    dist += abs(n.dot(p - o));
                 }
                 dist /= (double)mesh_.valence(f);
-                if(dist > 0.0001){
-                    ctr +=1;
+                if (dist > 0.0001)
+                {
+                    ctr += 1;
                 }
-                dist_sum+=dist;
+                dist_sum += dist;
             }
             std::cout << "Nr. non planar faces: " << ctr << std::endl;
-            std::cout << "Mean plane distance " << dist_sum/(double)mesh_.n_faces() << std::endl;
+            std::cout << "Mean plane distance "
+                      << dist_sum / (double)mesh_.n_faces() << std::endl;
         }
     }
 
@@ -316,7 +329,7 @@ void Viewer::process_imgui()
         if (ImGui::Button("Condition Number"))
         {
             Eigen::Vector3d values;
-            condition_number(mesh_, laplace_matrix, min_point_,values);
+            condition_number(mesh_, laplace_matrix, min_point_, values);
         }
     }
     ImGui::Spacing();
@@ -331,12 +344,13 @@ void Viewer::process_imgui()
         ImGui::PushItemWidth(100);
         static int l = 4;
         static int m = 2;
-        ImGui::SliderInt("SH l (degree):",&l, 0, 5);
-        ImGui::SliderInt("SH m (band):",&m, -l, l);
+        ImGui::SliderInt("SH l (degree):", &l, 0, 5);
+        ImGui::SliderInt("SH m (band):", &m, -l, l);
         ImGui::PopItemWidth();
         if (ImGui::Button("Solve!"))
         {
-            solve_poisson_system(mesh_, laplace_matrix, min_point_,function, l, m);
+            solve_poisson_system(mesh_, laplace_matrix, min_point_, function, l,
+                                 m);
         }
     }
     ImGui::Spacing();
@@ -353,7 +367,7 @@ void Viewer::process_imgui()
         {
             Curvature analyzer(mesh_, curvature_sphere_);
 
-                analyzer.visualize_curvature(laplace_matrix, min_point_, true);
+            analyzer.visualize_curvature(laplace_matrix, min_point_, true);
             mesh_.use_cold_warm_texture();
             update_mesh();
             set_draw_mode("Texture");
@@ -362,25 +376,28 @@ void Viewer::process_imgui()
     if (ImGui::CollapsingHeader("Geodesics in Heat",
                                 ImGuiTreeNodeFlags_DefaultOpen))
     {
-
         static int geodesics = 2;
-        ImGui::RadioButton("Compare distances to arc lengths", &geodesics,0);
-        ImGui::RadioButton("Compare to euclidean distances", &geodesics,1);
-        ImGui::RadioButton("No comparison", &geodesics,2);
+        ImGui::RadioButton("Compare distances to arc lengths", &geodesics, 0);
+        ImGui::RadioButton("Compare to euclidean distances", &geodesics, 1);
+        ImGui::RadioButton("No comparison", &geodesics, 2);
 
-        if(geodesics == 0){
+        if (geodesics == 0)
+        {
             compare_sphere = true;
             compare_cube = false;
-        }else if (geodesics == 1){
+        }
+        else if (geodesics == 1)
+        {
             compare_sphere = false;
             compare_cube = true;
-        }else if (geodesics == 2){
+        }
+        else if (geodesics == 2)
+        {
             compare_sphere = false;
             compare_cube = false;
         }
         if (ImGui::Button("Compute Distances Vertex 0"))
         {
-
             GeodesicsInHeat heat(mesh_, laplace_matrix, min_point_,
                                  compare_sphere, compare_cube, time_step_);
             Eigen::VectorXd dist, geodist;
@@ -401,7 +418,7 @@ void Viewer::process_imgui()
 
 //----------------------------------------------------------------------------
 
-void Viewer::draw(const std::string &draw_mode)
+void Viewer::draw(const std::string& draw_mode)
 {
     // normal mesh draw
     mesh_.draw(projection_matrix_, modelview_matrix_, draw_mode);
@@ -482,7 +499,6 @@ void Viewer::close_holes()
 //----------------------------------------------------------------------------
 void Viewer::insert_points(unsigned int minpoint)
 {
-
     Eigen::MatrixXd poly;
     Eigen::VectorXd w;
 
@@ -555,13 +571,14 @@ void Viewer::mouse(int button, int action, int mods)
             mesh_.use_checkerboard_texture();
             set_draw_mode("Texture");
         }
-    }else
+    }
+    else
     {
         MeshViewer::mouse(button, action, mods);
     }
 }
 
-void Viewer::load_mesh(const char *filename)
+void Viewer::load_mesh(const char* filename)
 {
     MeshViewer::load_mesh(filename);
     set_draw_mode("Hidden Line");

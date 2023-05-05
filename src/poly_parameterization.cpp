@@ -23,6 +23,8 @@ protected:
 Viewer::Viewer(const char* title, int width, int height)
     : MeshViewer(title, width, height)
 {
+    set_draw_mode("Hidden Line");
+    crease_angle_ = 0.0;
 }
 
 void Viewer::load_mesh(const char* filename)
@@ -53,8 +55,8 @@ void Viewer::process_imgui()
     ImGui::SliderFloat("Hyperparameter Alexa & Wardetzky Laplace",
                        &poly_laplace_lambda_, 0.01, 3.0);
     ImGui::PushItemWidth(100);
-    ImGui::SliderFloat("Hyperparameter deGoes Laplace",
-                       &deGoes_laplace_lambda_, 0.01, 3.0);
+    ImGui::SliderFloat("Hyperparameter deGoes Laplace", &deGoes_laplace_lambda_,
+                       0.01, 3.0);
     ImGui::PopItemWidth();
 
     ImGui::Spacing();
@@ -101,23 +103,23 @@ void Viewer::process_imgui()
             update_mesh();
         }
 
-//        ImGui::Spacing();
-//        if (ImGui::Button("Least Squares Conformal Map"))
-//        {
-//            try
-//            {
-//                Parameterization param(mesh_);
-//                param.lscm();
-//            }
-//            catch (const std::exception& e)
-//            {
-//                std::cerr << e.what() << std::endl;
-//                return;
-//            }
-//            mesh_.use_checkerboard_texture();
-//            set_draw_mode("Texture");
-//            update_mesh();
-//        }
+        //        ImGui::Spacing();
+        //        if (ImGui::Button("Least Squares Conformal Map"))
+        //        {
+        //            try
+        //            {
+        //                Parameterization param(mesh_);
+        //                param.lscm();
+        //            }
+        //            catch (const std::exception& e)
+        //            {
+        //                std::cerr << e.what() << std::endl;
+        //                return;
+        //            }
+        //            mesh_.use_checkerboard_texture();
+        //            set_draw_mode("Texture");
+        //            update_mesh();
+        //        }
     }
 }
 

@@ -16,7 +16,6 @@ public: // public methods
     }
     bool load_mesh(const char* filename) override;
 
-
 protected:
     // overload GUI callbacks
     void keyboard(int key, int code, int action, int mod) override;

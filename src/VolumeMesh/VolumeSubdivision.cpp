@@ -8,14 +8,14 @@
 
 //=============================================================================
 
-VolumeSubdivision::VolumeSubdivision(VolumeMesh &mesh) : mesh_(mesh) {}
+VolumeSubdivision::VolumeSubdivision(VolumeMesh& mesh) : mesh_(mesh) {}
 
-void VolumeSubdivision::tetrahedra(int face_point, int cell_point) {
-
+void VolumeSubdivision::tetrahedra(int face_point, int cell_point)
+{
     auto fp_prop =
-            mesh_.request_face_property<VolumeMesh::PointT>("face points");
+        mesh_.request_face_property<VolumeMesh::PointT>("face points");
     auto cp_prop =
-            mesh_.request_cell_property<VolumeMesh::PointT>("cell points");
+        mesh_.request_cell_property<VolumeMesh::PointT>("cell points");
 
     compute_3D_virtual_points_and_weights(mesh_, face_point, cell_point);
     // save current faces
@@ -39,16 +39,19 @@ void VolumeSubdivision::tetrahedra(int face_point, int cell_point) {
     auto c_prop = mesh_.request_cell_property<VHandle>();
 
     // we precompute them so they are ordered
-    for (auto f_it = mesh_.f_iter(); f_it.valid(); ++f_it) {
+    for (auto f_it = mesh_.f_iter(); f_it.valid(); ++f_it)
+    {
         f_prop[*f_it] = mesh_.add_vertex(fp_prop[*f_it]);
     }
 
-    for (auto c_it = mesh_.c_iter(); c_it.valid(); ++c_it) {
+    for (auto c_it = mesh_.c_iter(); c_it.valid(); ++c_it)
+    {
         c_prop[*c_it] = mesh_.add_vertex(cp_prop[*c_it]);
     }
 
     auto c_it_pair = mesh_.cells();
-    for (auto c_it = c_it_pair.first; c_it < c_it_pair.second; ++c_it) {
+    for (auto c_it = c_it_pair.first; c_it < c_it_pair.second; ++c_it)
+    {
         // get cell barycenter vertex
         auto c_bary = c_prop[*c_it];
 
@@ -56,8 +59,8 @@ void VolumeSubdivision::tetrahedra(int face_point, int cell_point) {
         auto he_prop = mesh_.request_halfedge_property<HFHandle>();
 
         // create tetrahedrons for all halffaces of a cell
-        for (auto c_hf_it = mesh_.chf_iter(*c_it); c_hf_it.valid(); ++c_hf_it) {
-
+        for (auto c_hf_it = mesh_.chf_iter(*c_it); c_hf_it.valid(); ++c_hf_it)
+        {
             // get face barycenter vertex
             auto f_bary = f_prop[VolumeMesh::face_handle(*c_hf_it)];
 
@@ -71,38 +74,48 @@ void VolumeSubdivision::tetrahedra(int face_point, int cell_point) {
             std::vector<HFHandle> hf_hfs;
 
             // check if the halffacewas already split into the smaller triangles
-            if (hf_prop[*c_hf_it].empty()) {
+            if (hf_prop[*c_hf_it].empty())
+            {
                 // create triangles constructed from one halfedge and the halfface barycenter
                 for (auto hf_he_it = hf_hes_it_pair.first;
-                     hf_he_it != hf_hes_it_pair.second; ++hf_he_it) {
+                     hf_he_it != hf_hes_it_pair.second; ++hf_he_it)
+                {
                     auto he = mesh_.halfedge(*hf_he_it);
                     v_handles.clear();
                     v_handles.emplace_back(f_bary);
                     v_handles.emplace_back(he.from_vertex());
                     v_handles.emplace_back(he.to_vertex());
                     face_handle = mesh_.add_face(v_handles);
-                    hf_hfs.emplace_back(VolumeMesh::halfface_handle(face_handle, 0));
+                    hf_hfs.emplace_back(
+                        VolumeMesh::halfface_handle(face_handle, 0));
                     // add them to the opposite halfface
                     hf_prop[VolumeMesh::opposite_halfface_handle(*c_hf_it)]
-                            .emplace_back(VolumeMesh::halfface_handle(face_handle, 1));
+                        .emplace_back(
+                            VolumeMesh::halfface_handle(face_handle, 1));
                 }
                 // reversing the vector because the edges of the opposite halface have a reversed order
                 std::reverse(
-                        hf_prop[VolumeMesh::opposite_halfface_handle(*c_hf_it)].begin(),
-                        hf_prop[VolumeMesh::opposite_halfface_handle(*c_hf_it)].end());
-            } else {
+                    hf_prop[VolumeMesh::opposite_halfface_handle(*c_hf_it)]
+                        .begin(),
+                    hf_prop[VolumeMesh::opposite_halfface_handle(*c_hf_it)]
+                        .end());
+            }
+            else
+            {
                 // get triangles for this halfface
                 hf_hfs = hf_prop[*c_hf_it];
             }
 
             int counter = 0;
             for (auto hf_he_it = hf_hes_it_pair.first;
-                 hf_he_it != hf_hes_it_pair.second; ++hf_he_it, ++counter) {
+                 hf_he_it != hf_hes_it_pair.second; ++hf_he_it, ++counter)
+            {
                 c_halffaces.clear();
                 auto he = mesh_.halfedge(*hf_he_it);
 
                 // check if halfface from halfedge to cell barycenter already exists
-                if (!he_prop[*hf_he_it].is_valid()) {
+                if (!he_prop[*hf_he_it].is_valid())
+                {
                     v_handles.clear();
                     v_handles.emplace_back(c_bary);
                     v_handles.emplace_back(he.from_vertex());
@@ -110,15 +123,17 @@ void VolumeSubdivision::tetrahedra(int face_point, int cell_point) {
                     face_handle = mesh_.add_face(v_handles);
 
                     // add created halffaces to the corresponding halfedges
-                    he_prop[*hf_he_it] = VolumeMesh::halfface_handle(face_handle, 1);
+                    he_prop[*hf_he_it] =
+                        VolumeMesh::halfface_handle(face_handle, 1);
                     he_prop[VolumeMesh::opposite_halfedge_handle(*hf_he_it)] =
-                            VolumeMesh::halfface_handle(face_handle, 0);
+                        VolumeMesh::halfface_handle(face_handle, 0);
                 }
                 c_halffaces.push_back(he_prop[*hf_he_it]);
 
                 // check if halfface between from_vertex, halfface barycenter
                 // and cell barycenter already exists
-                if (!v_prop[he.from_vertex()].is_valid()) {
+                if (!v_prop[he.from_vertex()].is_valid())
+                {
                     v_handles.clear();
                     v_handles.emplace_back(f_bary);
                     v_handles.emplace_back(he.from_vertex());
@@ -127,17 +142,20 @@ void VolumeSubdivision::tetrahedra(int face_point, int cell_point) {
 
                     // add created halffaces to the corresponding vertices
                     c_halffaces.push_back(
-                            VolumeMesh::halfface_handle(face_handle, 1));
+                        VolumeMesh::halfface_handle(face_handle, 1));
                     v_prop[he.from_vertex()] =
-                            VolumeMesh::halfface_handle(face_handle, 0);
-                } else {
+                        VolumeMesh::halfface_handle(face_handle, 0);
+                }
+                else
+                {
                     // get previously calculated halfface
                     c_halffaces.push_back(v_prop[he.from_vertex()]);
                 }
 
                 // check if halfface between from_vertex, halfface barycenter
                 // and cell barycenter already exists
-                if (!v_prop[he.to_vertex()].is_valid()) {
+                if (!v_prop[he.to_vertex()].is_valid())
+                {
                     v_handles.clear();
                     v_handles.emplace_back(f_bary);
                     v_handles.emplace_back(he.to_vertex());
@@ -146,10 +164,12 @@ void VolumeSubdivision::tetrahedra(int face_point, int cell_point) {
 
                     // add created halffaces to the corresponding vertices
                     c_halffaces.push_back(
-                            VolumeMesh::halfface_handle(face_handle, 0));
+                        VolumeMesh::halfface_handle(face_handle, 0));
                     v_prop[he.to_vertex()] =
-                            VolumeMesh::halfface_handle(face_handle, 1);
-                } else {
+                        VolumeMesh::halfface_handle(face_handle, 1);
+                }
+                else
+                {
                     // get previously calculated halfface
                     c_halffaces.push_back(v_prop[he.to_vertex()]);
                 }
@@ -166,7 +186,8 @@ void VolumeSubdivision::tetrahedra(int face_point, int cell_point) {
     // derefence all faces
     // we can not directly delete them because then the indices would not match
     // the ones we had before adding cells
-    for (auto f_it = f_it_pair.first; f_it < f_it_pair.second; ++f_it) {
+    for (auto f_it = f_it_pair.first; f_it < f_it_pair.second; ++f_it)
+    {
         mesh_.delete_face(*f_it);
     }
 
@@ -174,32 +195,39 @@ void VolumeSubdivision::tetrahedra(int face_point, int cell_point) {
     mesh_.collect_garbage();
 }
 
-void VolumeSubdivision::irregular_mesh(int n) {
+void VolumeSubdivision::irregular_mesh(int n)
+{
     auto divide_cell = mesh_.request_cell_property<bool>();
 
     int min = 0;
     int max = (int)mesh_.n_cells();
-    for (int i = 0; i < n && i < max; ++i) {
+    for (int i = 0; i < n && i < max; ++i)
+    {
         int random = min + (rand() % static_cast<int>(max - min + 1));
         divide_cell[CHandle(random)] = true;
     }
 
     auto c_it_pair = mesh_.cells();
-    for (auto c_it = c_it_pair.first; c_it < c_it_pair.second; ++c_it) {
-        if (divide_cell[*c_it]) {
+    for (auto c_it = c_it_pair.first; c_it < c_it_pair.second; ++c_it)
+    {
+        if (divide_cell[*c_it])
+        {
             auto v = mesh_.add_vertex(mesh_.barycenter(*c_it));
             std::vector<OpenVolumeMesh::VertexHandle> vertices;
             std::vector<OpenVolumeMesh::HalfFaceHandle> halffaces;
 
             auto he_prop = mesh_.request_halfedge_property<HFHandle>();
 
-            for (auto hf: mesh_.cell_halffaces(*c_it)) {
+            for (auto hf : mesh_.cell_halffaces(*c_it))
+            {
                 halffaces.clear();
 
                 halffaces.emplace_back(hf);
 
-                for (auto he: mesh_.halfface_halfedges(hf)) {
-                    if (!he_prop[he].is_valid()) {
+                for (auto he : mesh_.halfface_halfedges(hf))
+                {
+                    if (!he_prop[he].is_valid())
+                    {
                         vertices.clear();
 
                         auto e = mesh_.halfedge(he);
@@ -209,10 +237,13 @@ void VolumeSubdivision::irregular_mesh(int n) {
 
                         auto f = mesh_.add_face(vertices);
 
-                        halffaces.emplace_back(VolumeMesh::halfface_handle(f, 1));
+                        halffaces.emplace_back(
+                            VolumeMesh::halfface_handle(f, 1));
                         he_prop[VolumeMesh::opposite_halfedge_handle(he)] =
-                                VolumeMesh::halfface_handle(f, 0);
-                    } else {
+                            VolumeMesh::halfface_handle(f, 0);
+                    }
+                    else
+                    {
                         halffaces.emplace_back(he_prop[he]);
                     }
                 }
@@ -224,14 +255,15 @@ void VolumeSubdivision::irregular_mesh(int n) {
     }
 }
 
-void VolumeSubdivision::full_truncation() {
-
+void VolumeSubdivision::full_truncation()
+{
     auto edges = mesh_.edges();
 
     auto e_prop = mesh_.request_edge_property<VHandle>();
 
     // precompute edge middle vertices
-    for (auto e: mesh_.edges()) {
+    for (auto e : mesh_.edges())
+    {
         e_prop[e] = mesh_.add_vertex(mesh_.barycenter(e));
     }
 
@@ -246,26 +278,31 @@ void VolumeSubdivision::full_truncation() {
     auto hf_prop2 = mesh_.request_halfface_property<std::vector<HFHandle>>();
 
     auto c_it_pair = mesh_.cells();
-    for (auto c_it = c_it_pair.first; c_it < c_it_pair.second; ++c_it) {
+    for (auto c_it = c_it_pair.first; c_it < c_it_pair.second; ++c_it)
+    {
         c_halffaces.clear();
 
         // create center cell
-        for (auto hf: mesh_.cell_halffaces(*c_it)) {
-            if (!hf_prop[hf].is_valid()) {
+        for (auto hf : mesh_.cell_halffaces(*c_it))
+        {
+            if (!hf_prop[hf].is_valid())
+            {
                 c_vertices.clear();
-                for (auto he: mesh_.halfface_halfedges(hf)) {
+                for (auto he : mesh_.halfface_halfedges(hf))
+                {
                     c_vertices.push_back(e_prop[VolumeMesh::edge_handle(he)]);
                 }
                 f = mesh_.add_face(c_vertices);
                 hf_prop[hf] = VolumeMesh::halfface_handle(f, 0);
                 hf_prop[VolumeMesh::opposite_halfface_handle(hf)] =
-                        VolumeMesh::halfface_handle(f, 1);
+                    VolumeMesh::halfface_handle(f, 1);
             }
             c_halffaces.push_back(hf_prop[hf]);
         }
 
         // create cell for each vertex in cell
-        for (auto v: mesh_.cell_vertices(*c_it)) {
+        for (auto v : mesh_.cell_vertices(*c_it))
+        {
             v_halffaces.clear();
             c_vertices.clear();
 
@@ -273,18 +310,24 @@ void VolumeSubdivision::full_truncation() {
             OpenVolumeMesh::HalfEdgeHandle first_he;
 
             // find any halfedge that is incident to the cell and vertex
-            for (auto v_he: mesh_.outgoing_halfedges(v)) {
-                for (auto c_he: mesh_.cell_halfedges(*c_it)) {
-                    if (v_he.idx() == c_he.idx()) {
+            for (auto v_he : mesh_.outgoing_halfedges(v))
+            {
+                for (auto c_he : mesh_.cell_halfedges(*c_it))
+                {
+                    if (v_he.idx() == c_he.idx())
+                    {
                         first_he = v_he;
                     }
                 }
             }
 
             // find any halfface that is incident to halfedge and cell
-            for (auto he_hf: mesh_.halfedge_halffaces(first_he)) {
-                for (auto c_hf: mesh_.cell_halffaces(*c_it)) {
-                    if (he_hf.idx() == c_hf.idx()) {
+            for (auto he_hf : mesh_.halfedge_halffaces(first_he))
+            {
+                for (auto c_hf : mesh_.cell_halffaces(*c_it))
+                {
+                    if (he_hf.idx() == c_hf.idx())
+                    {
                         hf = c_hf;
                     }
                 }
@@ -293,15 +336,19 @@ void VolumeSubdivision::full_truncation() {
             auto cur_he = first_he;
 
             // iterate over faces incident to vertex and cell in order
-            do {
+            do
+            {
                 c_vertices.push_back(e_prop[VolumeMesh::edge_handle(cur_he)]);
                 v_vertices.clear();
                 v_vertices.push_back(v);
                 v_vertices.push_back(e_prop[VolumeMesh::edge_handle(cur_he)]);
 
-                for (auto he: mesh_.halfface_halfedges(hf)) {
-                    for (auto hee: mesh_.incoming_halfedges(v)) {
-                        if (he.idx() == hee.idx() && he.idx() != cur_he.idx()) {
+                for (auto he : mesh_.halfface_halfedges(hf))
+                {
+                    for (auto hee : mesh_.incoming_halfedges(v))
+                    {
+                        if (he.idx() == hee.idx() && he.idx() != cur_he.idx())
+                        {
                             cur_he = VolumeMesh::opposite_halfedge_handle(he);
                             break;
                         }
@@ -310,10 +357,13 @@ void VolumeSubdivision::full_truncation() {
                 v_vertices.push_back(e_prop[VolumeMesh::edge_handle(cur_he)]);
 
                 auto hff = mesh_.halfface(v_vertices);
-                if (!hff.is_valid()) {
+                if (!hff.is_valid())
+                {
                     f = mesh_.add_face(v_vertices);
                     v_halffaces.push_back(VolumeMesh::halfface_handle(f, 0));
-                } else {
+                }
+                else
+                {
                     v_halffaces.push_back(hff);
                 }
 
@@ -332,14 +382,16 @@ void VolumeSubdivision::full_truncation() {
         mesh_.add_cell(c_halffaces);
     }
 
-    for (auto e_it = edges.first; e_it < edges.second; ++e_it) {
+    for (auto e_it = edges.first; e_it < edges.second; ++e_it)
+    {
         mesh_.delete_edge(*e_it);
     }
 
     mesh_.collect_garbage();
 }
 
-void VolumeSubdivision::quads() {
+void VolumeSubdivision::quads()
+{
     auto c_vertex = mesh_.request_cell_property<VHandle>();
     auto f_vertex = mesh_.request_face_property<VHandle>();
     auto e_vertex = mesh_.request_edge_property<VHandle>();
@@ -347,17 +399,20 @@ void VolumeSubdivision::quads() {
     auto vertices = mesh_.vertices();
 
     Vec3d v_pos;
-    for (auto c: mesh_.cells()) {
+    for (auto c : mesh_.cells())
+    {
         v_pos = mesh_.barycenter(c);
         c_vertex[c] = mesh_.add_vertex(v_pos);
     }
 
-    for (auto f: mesh_.faces()) {
+    for (auto f : mesh_.faces())
+    {
         v_pos = mesh_.barycenter(f);
         f_vertex[f] = mesh_.add_vertex(v_pos);
     }
 
-    for (auto e: mesh_.edges()) {
+    for (auto e : mesh_.edges())
+    {
         v_pos = mesh_.barycenter(e);
         e_vertex[e] = mesh_.add_vertex(v_pos);
     }
@@ -365,25 +420,32 @@ void VolumeSubdivision::quads() {
     auto edges = mesh_.edges();
 
     auto cells = mesh_.cells();
-    for (auto c_it = cells.first; c_it < cells.second; ++c_it) {
-        for (auto v: mesh_.cell_vertices(*c_it)) {
-
+    for (auto c_it = cells.first; c_it < cells.second; ++c_it)
+    {
+        for (auto v : mesh_.cell_vertices(*c_it))
+        {
             HFHandle hf;
             OpenVolumeMesh::HalfEdgeHandle he;
 
             // find any halfedge that is incident to the cell and vertex
-            for (auto v_he: mesh_.outgoing_halfedges(v)) {
-                for (auto c_he: mesh_.cell_halfedges(*c_it)) {
-                    if (v_he.idx() == c_he.idx()) {
+            for (auto v_he : mesh_.outgoing_halfedges(v))
+            {
+                for (auto c_he : mesh_.cell_halfedges(*c_it))
+                {
+                    if (v_he.idx() == c_he.idx())
+                    {
                         he = v_he;
                     }
                 }
             }
 
             // find any halfface that is incident to halfedge and cell
-            for (auto he_hf: mesh_.halfedge_halffaces(he)) {
-                for (auto c_hf: mesh_.cell_halffaces(*c_it)) {
-                    if (he_hf.idx() == c_hf.idx()) {
+            for (auto he_hf : mesh_.halfedge_halffaces(he))
+            {
+                for (auto c_hf : mesh_.cell_halffaces(*c_it))
+                {
+                    if (he_hf.idx() == c_hf.idx())
+                    {
                         hf = c_hf;
                     }
                 }
@@ -399,18 +461,22 @@ void VolumeSubdivision::quads() {
             std::vector<HFHandle> halffaces;
 
             // iterate over faces ad edges incident to vertex and cell in order
-            do {
-                for (auto hee: mesh_.halfface_halfedges(cur_hf)) {
-                    for (auto heee: mesh_.incoming_halfedges(v)) {
+            do
+            {
+                for (auto hee : mesh_.halfface_halfedges(cur_hf))
+                {
+                    for (auto heee : mesh_.incoming_halfedges(v))
+                    {
                         if (hee.idx() == heee.idx() &&
-                            hee.idx() != cur_he.idx()) {
+                            hee.idx() != cur_he.idx())
+                        {
                             next_he = VolumeMesh::opposite_halfedge_handle(hee);
                             goto found;
                         }
                     }
                 }
 
-                found:
+            found:
 
                 Vertices.clear();
                 Vertices.push_back(e_vertex[VolumeMesh::edge_handle(cur_he)]);
@@ -419,10 +485,13 @@ void VolumeSubdivision::quads() {
                 Vertices.push_back(v);
 
                 auto hff = mesh_.halfface(Vertices);
-                if (!hff.is_valid()) {
+                if (!hff.is_valid())
+                {
                     auto f = mesh_.add_face(Vertices);
                     halffaces.push_back(VolumeMesh::halfface_handle(f, 0));
-                } else {
+                }
+                else
+                {
                     halffaces.push_back(hff);
                 }
 
@@ -435,10 +504,13 @@ void VolumeSubdivision::quads() {
                 Vertices.push_back(c_vertex[*c_it]);
 
                 hff = mesh_.halfface(Vertices);
-                if (!hff.is_valid()) {
+                if (!hff.is_valid())
+                {
                     auto f = mesh_.add_face(Vertices);
                     halffaces.push_back(VolumeMesh::halfface_handle(f, 0));
-                } else {
+                }
+                else
+                {
                     halffaces.push_back(hff);
                 }
 
@@ -450,26 +522,30 @@ void VolumeSubdivision::quads() {
         }
     }
 
-    for (auto e_it = edges.first; e_it < edges.second; ++e_it) {
+    for (auto e_it = edges.first; e_it < edges.second; ++e_it)
+    {
         mesh_.delete_edge(*e_it);
     }
 
     mesh_.collect_garbage();
 }
 
-void VolumeSubdivision::linear_subdivision() {
+void VolumeSubdivision::linear_subdivision()
+{
     auto c_vertex = mesh_.request_cell_property<VHandle>();
     auto e_vertex = mesh_.request_edge_property<VHandle>();
 
     auto vertices = mesh_.vertices();
 
     Vec3d v_pos;
-    for (auto c: mesh_.cells()) {
+    for (auto c : mesh_.cells())
+    {
         v_pos = mesh_.barycenter(c);
         c_vertex[c] = mesh_.add_vertex(v_pos);
     }
 
-    for (auto e: mesh_.edges()) {
+    for (auto e : mesh_.edges())
+    {
         v_pos = mesh_.barycenter(e);
         e_vertex[e] = mesh_.add_vertex(v_pos);
     }
@@ -477,25 +553,32 @@ void VolumeSubdivision::linear_subdivision() {
     auto edges = mesh_.edges();
 
     auto cells = mesh_.cells();
-    for (auto c_it = cells.first; c_it < cells.second; ++c_it) {
-        for (auto v: mesh_.cell_vertices(*c_it)) {
-
+    for (auto c_it = cells.first; c_it < cells.second; ++c_it)
+    {
+        for (auto v : mesh_.cell_vertices(*c_it))
+        {
             HFHandle hf;
             OpenVolumeMesh::HalfEdgeHandle he;
 
             // find any halfedge that is incident to the cell and vertex
-            for (auto v_he: mesh_.outgoing_halfedges(v)) {
-                for (auto c_he: mesh_.cell_halfedges(*c_it)) {
-                    if (v_he.idx() == c_he.idx()) {
+            for (auto v_he : mesh_.outgoing_halfedges(v))
+            {
+                for (auto c_he : mesh_.cell_halfedges(*c_it))
+                {
+                    if (v_he.idx() == c_he.idx())
+                    {
                         he = v_he;
                     }
                 }
             }
 
             // find any halfface that is incident to halfedge and cell
-            for (auto he_hf: mesh_.halfedge_halffaces(he)) {
-                for (auto c_hf: mesh_.cell_halffaces(*c_it)) {
-                    if (he_hf.idx() == c_hf.idx()) {
+            for (auto he_hf : mesh_.halfedge_halffaces(he))
+            {
+                for (auto c_hf : mesh_.cell_halffaces(*c_it))
+                {
+                    if (he_hf.idx() == c_hf.idx())
+                    {
                         hf = c_hf;
                     }
                 }
@@ -511,18 +594,22 @@ void VolumeSubdivision::linear_subdivision() {
             std::vector<HFHandle> halffaces;
 
             // iterate over faces ad edges incident to vertex and cell in order
-            do {
-                for (auto hee: mesh_.halfface_halfedges(cur_hf)) {
-                    for (auto heee: mesh_.incoming_halfedges(v)) {
+            do
+            {
+                for (auto hee : mesh_.halfface_halfedges(cur_hf))
+                {
+                    for (auto heee : mesh_.incoming_halfedges(v))
+                    {
                         if (hee.idx() == heee.idx() &&
-                            hee.idx() != cur_he.idx()) {
+                            hee.idx() != cur_he.idx())
+                        {
                             next_he = VolumeMesh::opposite_halfedge_handle(hee);
                             goto found;
                         }
                     }
                 }
 
-                found:
+            found:
 
                 Vertices.clear();
                 Vertices.push_back(e_vertex[VolumeMesh::edge_handle(cur_he)]);
@@ -530,10 +617,13 @@ void VolumeSubdivision::linear_subdivision() {
                 Vertices.push_back(v);
 
                 auto hff = mesh_.halfface(Vertices);
-                if (!hff.is_valid()) {
+                if (!hff.is_valid())
+                {
                     auto f = mesh_.add_face(Vertices);
                     halffaces.push_back(VolumeMesh::halfface_handle(f, 0));
-                } else {
+                }
+                else
+                {
                     halffaces.push_back(hff);
                 }
 
@@ -545,10 +635,13 @@ void VolumeSubdivision::linear_subdivision() {
                 next_hf = mesh_.adjacent_halfface_in_cell(cur_hf, next_he);
 
                 hff = mesh_.halfface(Vertices);
-                if (!hff.is_valid()) {
+                if (!hff.is_valid())
+                {
                     auto f = mesh_.add_face(Vertices);
                     halffaces.push_back(VolumeMesh::halfface_handle(f, 0));
-                } else {
+                }
+                else
+                {
                     halffaces.push_back(hff);
                 }
 
@@ -565,7 +658,8 @@ void VolumeSubdivision::linear_subdivision() {
         std::vector<VHandle> hf_vertices;
         std::vector<HFHandle> halffaces;
 
-        for (auto hf: mesh_.cell_halffaces(*c_it)) {
+        for (auto hf : mesh_.cell_halffaces(*c_it))
+        {
             halffaces.clear();
             hf_vertices.clear();
 
@@ -574,31 +668,39 @@ void VolumeSubdivision::linear_subdivision() {
             auto cur_he = first_he;
             auto prev_he = mesh_.prev_halfedge_in_halfface(cur_he, hf);
 
-            do {
+            do
+            {
                 Vertices.clear();
                 Vertices.push_back(e_vertex[VolumeMesh::edge_handle(prev_he)]);
                 Vertices.push_back(c_vertex[*c_it]);
                 Vertices.push_back(e_vertex[VolumeMesh::edge_handle(cur_he)]);
 
                 auto hff = mesh_.halfface(Vertices);
-                if (!hff.is_valid()) {
+                if (!hff.is_valid())
+                {
                     auto f = mesh_.add_face(Vertices);
                     halffaces.push_back(VolumeMesh::halfface_handle(f, 0));
-                } else {
+                }
+                else
+                {
                     halffaces.push_back(hff);
                 }
 
-                hf_vertices.push_back(e_vertex[VolumeMesh::edge_handle(cur_he)]);
+                hf_vertices.push_back(
+                    e_vertex[VolumeMesh::edge_handle(cur_he)]);
 
                 prev_he = cur_he;
                 cur_he = mesh_.next_halfedge_in_halfface(cur_he, hf);
             } while (cur_he.idx() != first_he.idx());
 
             auto hff = mesh_.halfface(hf_vertices);
-            if (!hff.is_valid()) {
+            if (!hff.is_valid())
+            {
                 auto f = mesh_.add_face(hf_vertices);
                 halffaces.push_back(VolumeMesh::halfface_handle(f, 0));
-            } else {
+            }
+            else
+            {
                 halffaces.push_back(hff);
             }
 
@@ -606,11 +708,10 @@ void VolumeSubdivision::linear_subdivision() {
         }
     }
 
-    for (auto e_it = edges.first; e_it < edges.second; ++e_it) {
+    for (auto e_it = edges.first; e_it < edges.second; ++e_it)
+    {
         mesh_.delete_edge(*e_it);
     }
 
     mesh_.collect_garbage();
 }
-
-

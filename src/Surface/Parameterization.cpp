@@ -38,28 +38,31 @@ bool Parameterization::harmonic(unsigned int laplace, unsigned int min_point)
         }
         else
         {
-            B(v.idx(), 0)= tex[v][0];
-            B(v.idx(), 1)= tex[v][1];
+            B(v.idx(), 0) = tex[v][0];
+            B(v.idx(), 1) = tex[v][1];
         }
     }
-    setup_stiffness_matrices(mesh_,L, laplace,min_point);
+    setup_stiffness_matrices(mesh_, L, laplace, min_point);
 
     // Adjust the right-hand-side to account for the locked nodes
     for (unsigned int i = 0; i < L.outerSize(); i++)
-        for (Eigen::SparseMatrix<double>::InnerIterator iter(L, i);
-             iter; ++iter) {
+        for (Eigen::SparseMatrix<double>::InnerIterator iter(L, i); iter;
+             ++iter)
+        {
             Vertex row = pmp::Vertex(iter.row());
             Vertex col = pmp::Vertex(iter.col());
-            if (!mesh_.is_boundary(row) && mesh_.is_boundary(col)) {
-                B(iter.row(),0) -= B(iter.col(),0) * iter.value();
-                B(iter.row(),1) -= B(iter.col(),1) * iter.value();
+            if (!mesh_.is_boundary(row) && mesh_.is_boundary(col))
+            {
+                B(iter.row(), 0) -= B(iter.col(), 0) * iter.value();
+                B(iter.row(), 1) -= B(iter.col(), 1) * iter.value();
             }
         }
 
     // Adjust the system matrix to account for the locked nodes
     for (unsigned int i = 0; i < L.outerSize(); i++)
-        for (Eigen::SparseMatrix<double>::InnerIterator iter(L, i);
-             iter; ++iter) {
+        for (Eigen::SparseMatrix<double>::InnerIterator iter(L, i); iter;
+             ++iter)
+        {
             Vertex row = pmp::Vertex(iter.row());
             Vertex col = pmp::Vertex(iter.col());
             if (mesh_.is_boundary(row))
@@ -78,7 +81,8 @@ bool Parameterization::harmonic(unsigned int laplace, unsigned int min_point)
     else
     {
         // copy solution
-       for(auto v : mesh_.vertices()){
+        for (auto v : mesh_.vertices())
+        {
             if (!mesh_.is_boundary(v))
             {
                 tex[v][0] = X(v.idx(), 0);

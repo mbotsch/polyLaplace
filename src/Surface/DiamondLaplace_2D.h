@@ -15,13 +15,13 @@ using namespace pmp;
 
 //=============================================================================
 
-void setup_diamond_mass_matrix(SurfaceMesh &mesh,
-                               Eigen::SparseMatrix<double> &M);
+void setup_diamond_mass_matrix(SurfaceMesh& mesh,
+                               Eigen::SparseMatrix<double>& M);
 
-void compute_primal_points(SurfaceMesh &mesh, int minpoint);
+void compute_primal_points(SurfaceMesh& mesh, int minpoint);
 
 void setup_diamond_gradient_divergence_intrinsic(
-    SurfaceMesh &mesh, Eigen::SparseMatrix<double> &G,
-    Eigen::SparseMatrix<double> &D);
+    SurfaceMesh& mesh, Eigen::SparseMatrix<double>& G,
+    Eigen::SparseMatrix<double>& D);
 
 //----------------------------------------------------------------------------------

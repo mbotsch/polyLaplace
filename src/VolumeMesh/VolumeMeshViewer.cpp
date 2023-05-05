@@ -80,13 +80,11 @@ bool VolumeMeshViewer::load_mesh(const char* filename)
     return false;
 }
 
-
 void VolumeMeshViewer::update_mesh()
 {
     mesh_.update_bounding_sphere();
     mesh_.update_opengl_buffers();
 }
-
 
 void VolumeMeshViewer::process_imgui()
 {
@@ -192,7 +190,8 @@ void VolumeMeshViewer::keyboard(int key, int scancode, int action, int mods)
             break;
         }
 
-        default: {
+        default:
+        {
             TrackballViewer::keyboard(key, scancode, action, mods);
             break;
         }

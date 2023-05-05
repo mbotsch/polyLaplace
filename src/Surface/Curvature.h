@@ -7,7 +7,6 @@
 #include "[AW11]Laplace.h"
 #include "LaplaceConstruction.h"
 #include "[dGBD20]Laplace.h"
-#include <pmp/algorithms/Normals.h>
 
 //=============================================================================
 
@@ -19,14 +18,15 @@ class Curvature
 {
 public:
     Curvature(SurfaceMesh& mesh, bool compare)
-            : mesh_(mesh), compare_to_sphere(compare)
+        : mesh_(mesh), compare_to_sphere(compare)
     {
     }
 
     //! Visualizes the mean curvature of our mesh.
-    void visualize_curvature(int laplace, int min_point_, bool lumped=true);
+    void visualize_curvature(int laplace, int min_point_, bool lumped = true);
 
-    double compute_curvature_error(int laplace,  int min_point_, bool lumped=true);
+    double compute_curvature_error(int laplace, int min_point_,
+                                   bool lumped = true);
 
 private:
     SurfaceMesh& mesh_;

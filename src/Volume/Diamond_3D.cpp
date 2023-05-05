@@ -9,10 +9,9 @@ using Triplet = Eigen::Triplet<double>;
 
 //=============================================================================
 
-void setup_3D_diamond_mass_matrix(VolumeMesh &mesh,
-                                  Eigen::SparseMatrix<double> &M)
+void setup_3D_diamond_mass_matrix(VolumeMesh& mesh,
+                                  Eigen::SparseMatrix<double>& M)
 {
-
     std::vector<T> triplets;
     auto f_prop = mesh.request_face_property<VolumeMesh::PointT>("face points");
     auto c_prop = mesh.request_cell_property<VolumeMesh::PointT>("cell points");
@@ -63,7 +62,6 @@ void setup_3D_diamond_mass_matrix(VolumeMesh &mesh,
             hf = mesh.face_halffaces(f)[1];
         for (auto halfedge : mesh.halfface_halfedges(hf))
         {
-
             A = mesh.vertex(mesh.halfedge_vertices(halfedge)[1]);
             B = mesh.vertex(mesh.halfedge_vertices(halfedge)[0]);
 
@@ -88,10 +86,9 @@ void setup_3D_diamond_mass_matrix(VolumeMesh &mesh,
 
 //===========================Face and Volume Point Fitting=============================================================
 
-void setup_3D_diamond_gradient(VolumeMesh &mesh, Eigen::SparseMatrix<double> &G,
-                               Eigen::SparseMatrix<double> &V)
+void setup_3D_diamond_gradient(VolumeMesh& mesh, Eigen::SparseMatrix<double>& G,
+                               Eigen::SparseMatrix<double>& V)
 {
-
     std::vector<T> triplets, triplets_volume;
 
     auto f_prop = mesh.request_face_property<VolumeMesh::PointT>("face points");
@@ -153,7 +150,6 @@ void setup_3D_diamond_gradient(VolumeMesh &mesh, Eigen::SparseMatrix<double> &G,
             hf = mesh.face_halffaces(f)[1];
         for (auto halfedge : mesh.halfface_halfedges(hf))
         {
-
             A = mesh.vertex(mesh.halfedge_vertices(halfedge)[1]);
             B = mesh.vertex(mesh.halfedge_vertices(halfedge)[0]);
 

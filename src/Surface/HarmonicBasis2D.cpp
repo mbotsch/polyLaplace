@@ -1,19 +1,26 @@
 #include "HarmonicBasis2D.h"
 #include "Spectra/MatOp/SparseSymMatProd.h"
-#include "../HarmonicBase3D2D/HarmonicPolygon.hpp"
+#include "../Harmonic/HarmonicPolygon.h"
 
-void buildStiffnessAndMass2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>& K, Eigen::SparseMatrix<double>& M,int nKernel, int nProbes)
+void buildStiffnessAndMass2d(pmp::SurfaceMesh& mesh,
+                             Eigen::SparseMatrix<double>& K,
+                             Eigen::SparseMatrix<double>& M, int nKernel,
+                             int nProbes)
 {
-    Eigen::MatrixXd V(mesh.n_vertices(),3);
+    Eigen::MatrixXd V(mesh.n_vertices(), 3);
     std::vector<std::vector<int>> poly;
 
-    for(auto v: mesh.vertices()){
-        Eigen::Vector3d p (mesh.position(v)[0],mesh.position(v)[1],mesh.position(v)[2]);
+    for (auto v : mesh.vertices())
+    {
+        Eigen::Vector3d p(mesh.position(v)[0], mesh.position(v)[1],
+                          mesh.position(v)[2]);
         V.row(v.idx()) = p;
     }
-    for(auto f : mesh.faces()){
+    for (auto f : mesh.faces())
+    {
         std::vector<int> face;
-        for (auto fv: mesh.vertices(f)){
+        for (auto fv : mesh.vertices(f))
+        {
             face.emplace_back(fv.idx());
         }
         poly.emplace_back(face);
@@ -22,23 +29,27 @@ void buildStiffnessAndMass2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>
     const int nv = (int)V.rows();
     std::vector<Eigen::Triplet<double>> tripK, tripM;
 
-    for(auto& p : poly) {
+    for (auto& p : poly)
+    {
         Eigen::MatrixXd pts(p.size(), 3);
-        for(int i = 0; i < (int)p.size(); ++i) {
+        for (int i = 0; i < (int)p.size(); ++i)
+        {
             pts(i, 0) = V(p[i], 0);
             pts(i, 1) = V(p[i], 1);
             pts(i, 2) = V(p[i], 2);
         }
 
-        HarmonicPolygon hp(pts, nKernel,nProbes);
+        HarmonicPolygon hp(pts, nKernel, nProbes);
 
         Eigen::MatrixXd Ki, Mi;
 
         hp.stiffnessMatrix(Ki);
         hp.massMatrix(Mi);
 
-        for(int i = 0; i <(int)p.size(); ++i) {
-            for(int j = 0; j < (int)p.size(); ++j) {
+        for (int i = 0; i < (int)p.size(); ++i)
+        {
+            for (int j = 0; j < (int)p.size(); ++j)
+            {
                 tripK.emplace_back(p[i], p[j], Ki(i, j));
                 tripM.emplace_back(p[i], p[j], Mi(i, j));
             }
@@ -52,17 +63,23 @@ void buildStiffnessAndMass2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>
     M.setFromTriplets(tripM.begin(), tripM.end());
 }
 
-void buildStiffness2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>& K,int nKernel, int nProbes){
-    Eigen::MatrixXd V(mesh.n_vertices(),3);
+void buildStiffness2d(pmp::SurfaceMesh& mesh, Eigen::SparseMatrix<double>& K,
+                      int nKernel, int nProbes)
+{
+    Eigen::MatrixXd V(mesh.n_vertices(), 3);
     std::vector<std::vector<int>> poly;
 
-    for(auto v: mesh.vertices()){
-        Eigen::Vector3d p (mesh.position(v)[0],mesh.position(v)[1],mesh.position(v)[2]);
+    for (auto v : mesh.vertices())
+    {
+        Eigen::Vector3d p(mesh.position(v)[0], mesh.position(v)[1],
+                          mesh.position(v)[2]);
         V.row(v.idx()) = p;
     }
-    for(auto f : mesh.faces()){
+    for (auto f : mesh.faces())
+    {
         std::vector<int> face;
-        for (auto fv: mesh.vertices(f)){
+        for (auto fv : mesh.vertices(f))
+        {
             face.emplace_back(fv.idx());
         }
         poly.emplace_back(face);
@@ -71,20 +88,24 @@ void buildStiffness2d(pmp::SurfaceMesh &mesh, Eigen::SparseMatrix<double>& K,int
     const int nv = (int)V.rows();
     std::vector<Eigen::Triplet<double>> tripK, tripM;
 
-    for(auto& p : poly) {
+    for (auto& p : poly)
+    {
         Eigen::MatrixXd pts(p.size(), 3);
-        for(int i = 0; i <(int)p.size(); ++i) {
+        for (int i = 0; i < (int)p.size(); ++i)
+        {
             pts(i, 0) = V(p[i], 0);
             pts(i, 1) = V(p[i], 1);
             pts(i, 2) = V(p[i], 2);
         }
-        HarmonicPolygon hp(pts, nKernel,nProbes);
+        HarmonicPolygon hp(pts, nKernel, nProbes);
 
         Eigen::MatrixXd Ki, Mi;
         hp.stiffnessMatrix(Ki);
 
-        for(int i = 0; i < (int)p.size(); ++i) {
-            for(int j = 0; j < (int)p.size(); ++j) {
+        for (int i = 0; i < (int)p.size(); ++i)
+        {
+            for (int j = 0; j < (int)p.size(); ++j)
+            {
                 tripK.emplace_back(p[i], p[j], Ki(i, j));
             }
         }

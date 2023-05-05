@@ -16,7 +16,7 @@ VolumeMesh::~VolumeMesh() = default;
 
 //-----------------------------------------------------------------------------
 
-bool VolumeMesh::read(const std::string &filename)
+bool VolumeMesh::read(const std::string& filename)
 {
     VolumeMeshIO reader(filename);
     return reader.read(*this);

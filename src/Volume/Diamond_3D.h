@@ -4,14 +4,13 @@
 
 #include "../VolumeMesh/VolumeMesh.h"
 
-
 //=============================================================================
 
-void setup_3D_diamond_mass_matrix(VolumeMesh &mesh,
-                                  Eigen::SparseMatrix<double> &M);
+void setup_3D_diamond_mass_matrix(VolumeMesh& mesh,
+                                  Eigen::SparseMatrix<double>& M);
 
-void setup_3D_diamond_gradient(VolumeMesh &mesh, Eigen::SparseMatrix<double> &G,
-                               Eigen::SparseMatrix<double> &V);
+void setup_3D_diamond_gradient(VolumeMesh& mesh, Eigen::SparseMatrix<double>& G,
+                               Eigen::SparseMatrix<double>& V);
 
 //=== Gradient ===================================================================
 

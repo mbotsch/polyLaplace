@@ -13,60 +13,60 @@
 class GaussQuadrature
 {
 public:
-	/*! Gets the \c i-th point of the \c totalEvalPoints - point gauss quadrature rule. \c i must be in
+    /*! Gets the \c i-th point of the \c totalEvalPoints - point gauss quadrature rule. \c i must be in
 		0 .. \c totalEvalPoints - 1. \c position is in the range [-1, 1] and the weights sum up to 2. */
-	static void GetEvalPoint(int totalEvalPoints, int i, double &weight, double &position);
+    static void GetEvalPoint(int totalEvalPoints, int i, double& weight,
+                             double& position);
 
-	static void GetEvalPoint(int totalEvalPoints, int i, float &weight, float &position) {
-		double dWeight;
-		double dPosition;
+    static void GetEvalPoint(int totalEvalPoints, int i, float& weight,
+                             float& position)
+    {
+        double dWeight;
+        double dPosition;
 
-		GetEvalPoint(totalEvalPoints, i, dWeight, dPosition);
+        GetEvalPoint(totalEvalPoints, i, dWeight, dPosition);
 
-		weight = (float)dWeight;
-		position = (float)dPosition;
-	}
+        weight = (float)dWeight;
+        position = (float)dPosition;
+    }
 };
 
-
 double gridQuadrature(const Eigen::Vector3d& min, const Eigen::Vector3d& max,
-                  //    std::function<bool(Eigen::Vector3d)> inside,
-                      const std::function<double(Eigen::Vector3d)>& fun, const int pts = 10);
+                      //    std::function<bool(Eigen::Vector3d)> inside,
+                      const std::function<double(Eigen::Vector3d)>& fun,
+                      const int pts = 10);
 
-
-class PolyhedralQuadrature {
-    
+class PolyhedralQuadrature
+{
     std::vector<Eigen::Vector3d> p;
     std::vector<double> w;
-    
+
     void add(const Eigen::Vector3d& pi, const double wi);
-    
+
 public:
-    
     double apply(const std::function<double(Eigen::Vector3d)>& fun);
-    
+
     PolyhedralQuadrature(const Eigen::Vector3d& min, const Eigen::Vector3d& max,
                          const std::function<bool(Eigen::Vector3d)>& inside,
                          int pts, int ptsg);
 };
 
-
-
-class TetrahedralQuadrature {
-    
+class TetrahedralQuadrature
+{
     static int N;
     static double quadPoints[8][5];
-    
+
     std::vector<Eigen::MatrixXd> tets;
     std::vector<double> volumes;
+
 public:
-    
     double apply(const std::function<double(Eigen::Vector3d)>& fun);
-    
+
     TetrahedralQuadrature();
-    
-    explicit TetrahedralQuadrature(std::vector<Eigen::MatrixXd>  tets);
+
+    explicit TetrahedralQuadrature(std::vector<Eigen::MatrixXd> tets);
 };
 
-
-double gaussQuadratureTriangle(const Eigen::MatrixXd& tri, const std::function<double(double, double)>& g, const int n);
+double gaussQuadratureTriangle(const Eigen::MatrixXd& tri,
+                               const std::function<double(double, double)>& g,
+                               const int n);

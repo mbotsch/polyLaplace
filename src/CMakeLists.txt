@@ -12,17 +12,10 @@ if (EMSCRIPTEN)
     target_link_libraries(poly_demo poly)
     set_target_properties(poly_demo PROPERTIES LINK_FLAGS "--shell-file ${PROJECT_SOURCE_DIR}/external/pmp-library/examples/data/shell.html --preload-file ${PROJECT_SOURCE_DIR}/data/dual_Bunny.off@input.off")
 
-    add_executable(poly_param poly_parameterization.cpp)
-    target_link_libraries(poly_param ${OBJS} poly)
-    set_target_properties(poly_param PROPERTIES LINK_FLAGS "--shell-file ${PROJECT_SOURCE_DIR}/external/pmp-library/examples/data/shell.html --preload-file ${PROJECT_SOURCE_DIR}/data/suzanne-half.off@input.off")
-
 else ()
 
     add_executable(poly_demo poly_demo.cpp)
     target_link_libraries(poly_demo poly)
-
-    add_executable(poly_param poly_parameterization.cpp)
-    target_link_libraries(poly_param poly)
 
     add_executable(run_volume_tests run_volume_tests.cpp)
     target_link_libraries(run_volume_tests poly)

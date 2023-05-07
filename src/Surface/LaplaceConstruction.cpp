@@ -104,17 +104,8 @@ void setup_mass_matrices(SurfaceMesh& mesh, Eigen::SparseMatrix<double>& M,
             lump_matrix(M);
         }
     }
-
-    double area = 0.0;
-    for (int k = 0; k < M.outerSize(); ++k)
-    {
-        for (SparseMatrix::InnerIterator it(M, k); it; ++it)
-        {
-            area += it.value();
-        }
-    }
-    std::cout << "Surface area: " << area << std::endl;
 }
+
 //----------------------------------------------------------------------------------
 
 void setup_gradient(SurfaceMesh& mesh, Eigen::SparseMatrix<double>& G,

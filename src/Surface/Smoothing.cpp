@@ -27,14 +27,14 @@ void Smoothing::implicit_smoothing(Scalar timestep, unsigned int laplace,
     {
         center_before = poly_centroid(mesh_);
         area_before = poly_surface_area(mesh_);
-    }
-    for (auto v : mesh_.vertices())
-    {
-        mesh_.position(v) -= center_before;
-    }
-    for (auto v : mesh_.vertices())
-    {
-        mesh_.position(v) *= sqrt(1.0 / area_before);
+        for (auto v : mesh_.vertices())
+        {
+            mesh_.position(v) -= center_before;
+        }
+        for (auto v : mesh_.vertices())
+        {
+            mesh_.position(v) *= sqrt(1.0 / area_before);
+        }
     }
 
     const unsigned int nv = mesh_.n_vertices();
@@ -50,6 +50,7 @@ void Smoothing::implicit_smoothing(Scalar timestep, unsigned int laplace,
         B(k, 2) = points[v][2];
         k++;
     }
+
     if (laplace == 2)
     {
         if (!mesh_.has_face_property("f:point") ||
@@ -80,24 +81,22 @@ void Smoothing::implicit_smoothing(Scalar timestep, unsigned int laplace,
         for (unsigned int i = 0; i < nv; ++i)
         {
             Vertex v(i);
-            if (!mesh_.is_boundary(v))
-            {
-                points[v][0] = X(k, 0);
-                points[v][1] = X(k, 1);
-                points[v][2] = X(k, 2);
-                k++;
-            }
+            points[v][0] = X(k, 0);
+            points[v][1] = X(k, 1);
+            points[v][2] = X(k, 2);
+            k++;
         }
     }
+
     if (rescale)
     {
-        //   restore original surface area
         Scalar area_after = poly_surface_area(mesh_);
         Scalar scale = sqrt(area_before / area_after);
         for (auto v : mesh_.vertices())
         {
             mesh_.position(v) *= scale;
         }
+
         Point center_after = poly_centroid(mesh_);
         Point trans = center_before - center_after;
         for (auto v : mesh_.vertices())

@@ -65,6 +65,7 @@ void Viewer::process_imgui()
         ImGui::RadioButton("deGoes Laplace", &laplace, 3);
         ImGui::RadioButton("Polysimple Laplace", &laplace, 0);
         ImGui::RadioButton("Diamond", &laplace, 2);
+        ImGui::RadioButton("Harmonic", &laplace, 4);
 
         ImGui::Spacing();
 

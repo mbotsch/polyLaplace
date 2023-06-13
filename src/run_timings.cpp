@@ -1,4 +1,7 @@
-#include <iostream>
+//=============================================================================
+// Copyright 2023 Astrid Bunge, Mario Botsch.
+// Distributed under MIT license, see file LICENSE for details.
+//=============================================================================#include <iostream>
 #include <Eigen/Dense>
 #include <pmp/Timer.h>
 #include <pmp/io/io.h>

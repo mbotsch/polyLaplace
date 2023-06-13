@@ -1,4 +1,7 @@
-
+//=============================================================================
+// Copyright 2023 Astrid Bunge, Mario Botsch.
+// Distributed under MIT license, see file LICENSE for details.
+//=============================================================================
 #include "Eigenmodes.h"
 #include <cmath>
 #include "LaplaceConstruction_3D.h"

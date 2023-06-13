@@ -1,6 +1,7 @@
-
 //=============================================================================
-
+// Copyright 2023 Astrid Bunge, Mario Botsch.
+// Distributed under MIT license, see file LICENSE for details.
+//=============================================================================
 #include "SpectralProcessing.h"
 #include "LaplaceConstruction.h"
 #include "[dGBD20]Laplace.h"

@@ -1,4 +1,7 @@
-
+//=============================================================================
+// Copyright 2023 Astrid Bunge, Mario Botsch.
+// Distributed under MIT license, see file LICENSE for details.
+//=============================================================================
 #include "Franke_PoissonSystem_3D.h"
 #include "LaplaceConstruction_3D.h"
 #include "HarmonicBasis.h"

@@ -1,4 +1,7 @@
 //=============================================================================
+// Copyright 2023 Astrid Bunge, Mario Botsch.
+// Distributed under MIT license, see file LICENSE for details.
+//=============================================================================
 
 #include "[dGBD20]Laplace.h"
 #include "[AW11]Laplace.h"

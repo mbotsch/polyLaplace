@@ -1,3 +1,8 @@
+//=============================================================================
+// Copyright 2023 Astrid Bunge, Mario Botsch.
+// Distributed under MIT license, see file LICENSE for details.
+//=============================================================================
+
 #include <iomanip>
 #include "Poisson_System.h"
 #include "SpectralProcessing.h"

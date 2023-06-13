@@ -1,3 +1,7 @@
+//=============================================================================
+// Copyright 2023 Astrid Bunge, Mario Botsch.
+// Distributed under MIT license, see file LICENSE for details.
+//=============================================================================
 #include "LaplaceConstruction_3D.h"
 #include "diffgeo_3D.h"
 #include "../Surface/diffgeo.h"

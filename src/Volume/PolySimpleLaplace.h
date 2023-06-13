@@ -1,3 +1,7 @@
+//=============================================================================
+// Copyright 2023 Astrid Bunge, Mario Botsch.
+// Distributed under MIT license, see file LICENSE for details.
+//=============================================================================
 #pragma once
 //=============================================================================
 #include "../VolumeMesh/VolumeMesh.h"

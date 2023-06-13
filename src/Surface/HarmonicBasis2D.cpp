@@ -1,3 +1,7 @@
+//=============================================================================
+// Copyright 2023 Astrid Bunge, Mario Botsch, Philipp Herholz.
+// Distributed under MIT license, see file LICENSE for details.
+//=============================================================================
 #include "HarmonicBasis2D.h"
 #include "Spectra/MatOp/SparseSymMatProd.h"
 #include "../Harmonic/HarmonicPolygon.h"

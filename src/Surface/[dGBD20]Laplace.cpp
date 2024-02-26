@@ -268,8 +268,8 @@ void setup_deGoes_laplace_operator(pmp::SurfaceMesh& mesh,
         }
     }
     L.setFromTriplets(triplets.begin(), triplets.end());
-    std::cout << "deGoes Laplace hyperparamter: " << deGoes_laplace_lambda_
-              << std::endl;
+    //std::cout << "deGoes Laplace hyperparameter: " << deGoes_laplace_lambda_
+    //          << std::endl;
 }
 
 void setup_deGoes_mass_matrix(pmp::SurfaceMesh& mesh,

@@ -3,25 +3,12 @@
 // Distributed under MIT license, see file LICENSE for details.
 //=============================================================================
 
+#include "../common_util.h"
 #include <iomanip>
 #include "Poisson_System.h"
 #include "SpectralProcessing.h"
 
 using namespace std;
-
-enum LaplaceMethods
-{
-    PolySimpleLaplace = 0,
-    AlexaWardetzkyLaplace = 1,
-    Diamond = 2,
-    deGoesLaplace = 3,
-};
-
-enum InsertedPoint
-{
-    Centroid = 0,
-    AreaMinimizer = 2
-};
 
 enum Function
 {
@@ -32,12 +19,13 @@ enum Function
 //-----------------------------------------------------------------------------
 
 double solve_poisson_system(pmp::SurfaceMesh& mesh, int laplace, int minpoint,
-                            int function, int l, int m)
+                            int function, int& iterations, double& condition_number, int l, int m)
 {
     Eigen::SparseMatrix<double> S, M;
     int nv = (int)mesh.n_vertices();
     Eigen::VectorXd b(nv), analytic_solution(nv);
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
+    Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower, Eigen::IdentityPreconditioner> cg;
     Eigen::MatrixXd X;
 
     setup_stiffness_matrices(mesh, S, laplace, minpoint);
@@ -90,7 +78,16 @@ double solve_poisson_system(pmp::SurfaceMesh& mesh, int laplace, int minpoint,
                     iter.valueRef() = 0;
             }
 
+        cg.compute(S);
+        Eigen::VectorXd x_it= cg.solve(b);
+        std::cout << "#iterations:     " << cg.iterations() << std::endl;
+        iterations = cg.iterations();
+
         solver.compute(S);
+
+        // Compute Condition Number of Problem
+        condition_number = get_condition_number(-S);
+
         Eigen::VectorXd x = solver.solve(b);
         for (auto v : mesh.vertices())
         {
@@ -109,8 +106,18 @@ double solve_poisson_system(pmp::SurfaceMesh& mesh, int laplace, int minpoint,
             analytic_solution(v.idx()) =
                 sphericalHarmonic(mesh.position(v), l, m);
         }
+
+        cg.compute(M);
+        Eigen::VectorXd x_it= cg.solve(S*analytic_solution);
+        std::cout << "#iterations:     " << cg.iterations() << std::endl;
+        iterations = cg.iterations();
+
         solver.analyzePattern(M);
         solver.factorize(M);
+
+        // Compute Condition Number of Problem
+        condition_number = get_condition_number(-S, true);
+
         X = solver.solve(S * analytic_solution);
         if (solver.info() != Eigen::Success)
         {

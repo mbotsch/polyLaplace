@@ -3,7 +3,7 @@
 // Distributed under MIT license, see file LICENSE for details.
 //=============================================================================
 
-
+#include "../common_util.h"
 #include <pmp/visualization/MeshViewer.h>
 #include "Surface/Smoothing.h"
 #include <imgui.h>
@@ -13,20 +13,6 @@
 #include "Surface/Curvature.h"
 #include "Surface/Parameterization.h"
 using namespace pmp;
-
-enum InsertedPoint
-{
-    Centroid_ = 0,
-    AreaMinimizer = 2,
-};
-
-enum LaplaceMethods
-{
-    PolySimpleLaplace = 0,
-    AlexaWardetzkyLaplace = 1,
-    Diamond = 2,
-    deGoesLaplace = 3
-};
 
 class Viewer : public MeshViewer
 {
@@ -66,12 +52,25 @@ void Viewer::process_imgui()
     {
         ImGui::RadioButton("Alexa & Wardetzky Laplace", &laplace, 1);
         ImGui::RadioButton("deGoes Laplace", &laplace, 3);
-        ImGui::RadioButton("Polysimple Laplace", &laplace, 0);
+        ImGui::RadioButton("Polysimple/-robust Laplace", &laplace, 0);
         ImGui::RadioButton("Diamond", &laplace, 2);
         ImGui::RadioButton("Harmonic", &laplace, 4);
 
         ImGui::Spacing();
+        if(laplace == 0 || laplace == 2)
+        {
+            ImGui::Text("Choose your minimizing Point ");
 
+            ImGui::Spacing();
+
+            ImGui::RadioButton("Centroid", &min_point, 0);
+            ImGui::RadioButton("Area Minimizer & Min Norm Weights", &min_point,
+                               2);
+            ImGui::RadioButton("Trace Minimizer & Discr. Harm. Weights",
+                               &min_point, 3);
+
+            ImGui::Spacing();
+        }
         if (laplace == 1)
         { 
             ImGui::PushItemWidth(100);
@@ -143,7 +142,8 @@ void Viewer::process_imgui()
                                  DiffusionStep(2));
             Eigen::VectorXd dist, geodist;
 
-            heat.compute_geodesics();
+            double condition_number;
+            heat.compute_geodesics(condition_number);
             heat.getDistance(0, dist, geodist);
 
             update_mesh();

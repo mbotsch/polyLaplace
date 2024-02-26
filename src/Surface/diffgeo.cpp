@@ -3,6 +3,7 @@
 // Distributed under MIT license, see file LICENSE for details.
 //=============================================================================//=============================================================================
 
+#include "../common_util.h"
 #include "diffgeo.h"
 #include <Eigen/Dense>
 #include "[AW11]Laplace.h"
@@ -12,14 +13,6 @@
 
 using SparseMatrix = Eigen::SparseMatrix<double>;
 using Triplet = Eigen::Triplet<double>;
-
-//=============================================================================
-
-enum InsertedPoint
-{
-    Centroid = 0,
-    AreaMinimizer = 2,
-};
 
 //=================== Setup P matrix ==========================================================
 
@@ -87,33 +80,42 @@ void setup_face_point_properties(pmp::SurfaceMesh& mesh, unsigned int min_point)
 
     for (pmp::Face f : mesh.faces())
     {
-        const int n = (int)mesh.valence(f);
-        poly.resize(n, 3);
-        int i = 0;
-        for (pmp::Vertex v : mesh.vertices(f))
-        {
-            for (int h = 0; h < 3; h++)
-            {
-                poly.row(i)(h) = mesh.position(v)[h];
-            }
-            i++;
-        }
-        if (min_point == Centroid)
+        get_polygon_from_face(mesh, f, poly);
+        if (min_point == Centroid_)
         {
             int val = (int)poly.rows();
             w = Eigen::MatrixXd::Ones(val, 1);
             w /= (double)val;
         }
-        else
+        else if (min_point == AreaMinimizer)
         {
             // All other methods not relevant atm, so squared triangle area minimization is default
             find_area_minimizer_weights(poly, w);
+        }else
+        {
+            find_trace_minimizer_weights(poly, w);
         }
 
         Eigen::Vector3d min = poly.transpose() * w;
-        pmp::Point point = pmp::Point(min(0), min(1), min(2));
+        auto point = pmp::Point(min);
         area_points[f] = point;
         area_weights[f] = w;
+    }
+}
+
+
+void get_polygon_from_face(const pmp::SurfaceMesh& mesh, const pmp::Face& fIdx, Eigen::MatrixXd& poly)
+{
+    const int n = (int)mesh.valence(fIdx);
+    poly.resize(n, 3);
+    int i = 0;
+    for (pmp::Vertex v : mesh.vertices(fIdx))
+    {
+        for (int h = 0; h < 3; h++)
+        {
+            poly.row(i)(h) = mesh.position(v)[h];
+        }
+        i++;
     }
 }
 

@@ -34,6 +34,6 @@ double rmse_sh(SurfaceMesh& mesh, int laplace, int min_point_,
                bool lumped = true);
 
 double condition_number(pmp::SurfaceMesh& mesh, int laplace, int minpoint,
-                        Eigen::Vector3d& values);
-
+                        Eigen::Vector3d& values, bool generalized = false);
+double get_condition_number(const Eigen::SparseMatrix<double>& M, bool firstEigZero = false);
 //=============================================================================

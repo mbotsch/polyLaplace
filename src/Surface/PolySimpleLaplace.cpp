@@ -2,15 +2,12 @@
 // Copyright 2023 Astrid Bunge, Mario Botsch.
 // Distributed under MIT license, see file LICENSE for details.
 //=============================================================================
+
+#include "../common_util.h"
 #include "PolySimpleLaplace.h"
 #include "diffgeo.h"
 
 //----------------------------------------------------------------------------------
-enum InsertedPoint
-{
-    Centroid = 0,
-    AreaMinimizer = 2,
-};
 
 void setup_stiffness_matrix(SurfaceMesh& mesh, Eigen::SparseMatrix<double>& S,
                             int minpoint)
@@ -26,28 +23,21 @@ void setup_stiffness_matrix(SurfaceMesh& mesh, Eigen::SparseMatrix<double>& S,
 
     for (Face f : mesh.faces())
     {
-        int n = (int)mesh.valence(f);
-        poly.resize(n, 3);
-        int i = 0;
-        for (Vertex v : mesh.vertices(f))
-        {
-            for (int h = 0; h < 3; h++)
-            {
-                poly.row(i)(h) = mesh.position(v)[h];
-            }
-            i++;
-        }
+        get_polygon_from_face(mesh, f, poly);
 
         // compute weights for the polygon
-        if (minpoint == Centroid)
+        if (minpoint == Centroid_)
         {
             int val = (int)poly.rows();
             w = Eigen::MatrixXd::Ones(val, 1);
             w /= (double)val;
         }
-        else
+        else if (minpoint == AreaMinimizer)
         {
             find_area_minimizer_weights(poly, w);
+        }else
+        {
+            find_trace_minimizer_weights(poly, w);
         }
         Eigen::Vector3d min;
 
@@ -87,28 +77,21 @@ void setup_mass_matrix(SurfaceMesh& mesh, Eigen::SparseMatrix<double>& M,
 
     for (Face f : mesh.faces())
     {
-        const int n = (int)mesh.valence(f);
-        poly.resize(n, 3);
-        int i = 0;
-        for (Vertex v : mesh.vertices(f))
-        {
-            for (int h = 0; h < 3; h++)
-            {
-                poly.row(i)(h) = mesh.position(v)[h];
-            }
-            i++;
-        }
+        get_polygon_from_face(mesh, f, poly);
 
         // setup polygon weights
-        if (minpoint == Centroid)
+        if (minpoint == Centroid_)
         {
             int val = (int)poly.rows();
             w = Eigen::MatrixXd::Ones(val, 1);
             w /= (double)val;
         }
-        else
+        else if (minpoint == AreaMinimizer)
         {
             find_area_minimizer_weights(poly, w);
+        }else
+        {
+            find_trace_minimizer_weights(poly, w);
         }
 
         Eigen::Vector3d min = poly.transpose() * w;
@@ -162,15 +145,18 @@ void setup_gradient_matrix(SurfaceMesh& mesh, Eigen::SparseMatrix<double>& G,
             row++;
         }
         // compute weights for the polygon
-        if (minpoint == Centroid)
+        if (minpoint == Centroid_)
         {
             int val = (int)poly.rows();
             w = Eigen::MatrixXd::Ones(val, 1);
             w /= (double)val;
         }
-        else
+        else if (minpoint == AreaMinimizer)
         {
             find_area_minimizer_weights(poly, w);
+        }else
+        {
+            find_trace_minimizer_weights(poly, w);
         }
         Eigen::Vector3d min;
 
@@ -239,15 +225,18 @@ void setup_divergence_matrix(SurfaceMesh& mesh, Eigen::SparseMatrix<double>& D,
         }
 
         // compute weights for the polygon
-        if (minpoint == Centroid)
+        if (minpoint == Centroid_)
         {
             int val = (int)poly.rows();
             w = Eigen::MatrixXd::Ones(val, 1);
             w /= (double)val;
         }
-        else
+        else if (minpoint == AreaMinimizer)
         {
             find_area_minimizer_weights(poly, w);
+        }else
+        {
+            find_trace_minimizer_weights(poly, w);
         }
 
         Eigen::Vector3d min = poly.transpose() * w;

@@ -4,7 +4,7 @@ file(GLOB HEADERS ./Surface/*.h  ./Volume/*.h ./VolumeMesh/*.h ./Harmonic/*.h)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/VolumeMesh)
 
 add_library(poly STATIC ${HEADERS} ${SOURCES})
-target_link_libraries(poly OpenVolumeMesh pmp_vis)
+target_link_libraries(poly OpenVolumeMesh pmp_vis TinyAD)
 
 if (EMSCRIPTEN)
 

@@ -36,6 +36,7 @@ protected:
     void close_holes();
     void Centroid();
     void insert_points(unsigned int min_point);
+    static void calc_colors(int minpoint, SurfaceMesh& mesh);
 
 private: // private methods
     int laplace_matrix, min_point_;

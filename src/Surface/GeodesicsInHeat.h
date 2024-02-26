@@ -4,16 +4,13 @@
 //=============================================================================
 #pragma once
 //=============================================================================
+
+#include "../common_util.h"
 #include <pmp/SurfaceMesh.h>
 #include "[AW11]Laplace.h"
 #include <Eigen/Sparse>
 //=============================================================================
-enum DiffusionStep
-{
-    MeanEdge = 0,
-    MaxEdge = 1,
-    MaxDiagonal = 2
-};
+
 class GeodesicsInHeat
 {
 public:
@@ -23,11 +20,11 @@ public:
     ~GeodesicsInHeat();
 
     double getDistance(int vertex, Eigen::VectorXd& dist,
-                       Eigen::VectorXd& orthodist);
+                       Eigen::VectorXd& orthodist, bool verbose = true);
 
     void distance_to_texture_coordinates() const;
 
-    void compute_geodesics(bool lumped = true);
+    void compute_geodesics(double& condition_number, bool lumped = true);
 
 private:
     pmp::SurfaceMesh& mesh_;

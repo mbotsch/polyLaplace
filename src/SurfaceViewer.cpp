@@ -3,6 +3,7 @@
 // Distributed under MIT license, see file LICENSE for details.
 //=============================================================================//=============================================================================
 
+#include "../common_util.h"
 #include "SurfaceViewer.h"
 #include "Surface/diffgeo.h"
 #include "Surface/Curvature.h"
@@ -10,6 +11,8 @@
 #include "Surface/GeodesicsInHeat.h"
 #include "Surface/[dGBD20]Laplace.h"
 #include "Surface/Poisson_System.h"
+#include "Surface/PolySmoothing.h"
+#include "Surface/PolySimpleLaplace.h"
 
 #include <pmp/algorithms/triangulation.h>
 #include <pmp/algorithms/subdivision.h>
@@ -23,21 +26,6 @@
 using namespace pmp;
 
 //=============================================================================
-
-enum InsertedPoint
-{
-    Centroid_ = 0,
-    AreaMinimizer = 2,
-};
-
-enum LaplaceMethods
-{
-    PolySimpleLaplace = 0,
-    AlexaWardetzkyLaplace = 1,
-    Diamond = 2,
-    deGoesLaplace = 3,
-    Harmonic = 4,
-};
 
 void Viewer::keyboard(int key, int scancode, int action, int mods)
 {
@@ -64,24 +52,14 @@ void Viewer::process_imgui()
     ImGui::Spacing();
     ImGui::Spacing();
 
+    static int laplace = 0;
+
     if (ImGui::CollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        ImGui::PushItemWidth(100);
-        ImGui::SliderFloat("Hyperparameter Alexa & Wardetzky Laplace",
-                           &poly_laplace_lambda_, 0.01, 3.0);
-        ImGui::PushItemWidth(100);
-        ImGui::SliderFloat("Hyperparameter deGoes Laplace",
-                           &deGoes_laplace_lambda_, 0.01, 3.0);
-        ImGui::PopItemWidth();
-
-        ImGui::Spacing();
-
         ImGui::Text("Choose your Laplacian");
 
         ImGui::Spacing();
-
-        static int laplace = 0;
-        ImGui::RadioButton("Polysimple Laplace", &laplace, 0);
+        ImGui::RadioButton("Polysimple/-robust Laplace", &laplace, 0);
         ImGui::RadioButton("Alexa & Wardetzky Laplace", &laplace, 1);
         ImGui::RadioButton("Diamond", &laplace, 2);
         ImGui::RadioButton("deGoes Laplace", &laplace, 3);
@@ -89,13 +67,41 @@ void Viewer::process_imgui()
 
         ImGui::Spacing();
 
-        ImGui::Text("Choose your minimizing Point ");
-
-        ImGui::Spacing();
-
         static int min_point = 2;
-        ImGui::RadioButton("Centroid", &min_point, 0);
-        ImGui::RadioButton("Area Minimizer", &min_point, 2);
+
+        if (laplace == 0 || laplace == 2)
+        {
+            ImGui::Text("Choose your minimizing Point ");
+
+            ImGui::Spacing();
+
+            ImGui::RadioButton("Centroid", &min_point, 0);
+            ImGui::RadioButton("Area Minimizer & Min Norm Weights", &min_point,
+                               2);
+            ImGui::RadioButton("Trace Minimizer & Discr. Harm. Weights",
+                               &min_point, 3);
+
+            ImGui::Spacing();
+        }
+
+        if (laplace == 1)
+        {
+            ImGui::PushItemWidth(100);
+            ImGui::Text("Hyperparameter Alexa & Wardetzky Laplace");
+            ImGui::SliderFloat("", &poly_laplace_lambda_, 0.01, 3.0);
+            ImGui::PopItemWidth();
+
+            ImGui::Spacing();
+        }
+        if (laplace == 3)
+        {
+            ImGui::PushItemWidth(100);
+            ImGui::Text("Hyperparameter deGoes Laplace");
+            ImGui::SliderFloat("", &deGoes_laplace_lambda_, 0.01, 3.0);
+            ImGui::PopItemWidth();
+
+            ImGui::Spacing();
+        }
 
         static int ts = 0;
         ImGui::Text("Choose your diffusion time step ");
@@ -108,6 +114,56 @@ void Viewer::process_imgui()
         min_point_ = min_point;
         time_step_ = DiffusionStep(ts);
     }
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    if (ImGui::CollapsingHeader("Smoothing!", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        static int numIters = 25;
+        static bool times10 = false;
+        ImGui::SliderInt("numIters", &numIters, 1, 500);
+        ImGui::SameLine();
+        ImGui::Checkbox("x 10", &times10);
+        ImGui::Spacing();
+
+        static int quadricsTau = 5;
+        ImGui::SliderInt("Tau - Quadrics (-1 = off)", &quadricsTau, -1, 10);
+        ImGui::Spacing();
+
+        static bool fixBoundary = false;
+        ImGui::Checkbox("Fix Boundary Vertices", &fixBoundary);
+        ImGui::Spacing();
+
+        static bool updateQuadrics = false;
+        ImGui::Checkbox("Update Quadrics", &updateQuadrics);
+        ImGui::Spacing();
+        static bool withCnum = true;
+        static bool genCnum = false;
+        ImGui::Checkbox("show Condition Numbers", &withCnum);
+        ImGui::Spacing();
+        static int genEigs = 0;
+
+        if (withCnum)
+        {
+            ImGui::Text("Condition Number: ");
+            ImGui::SameLine();
+            ImGui::RadioButton("Normal", &genEigs, 0);
+            ImGui::SameLine();
+            ImGui::RadioButton("Generalized", &genEigs, 1);
+            ImGui::Spacing();
+            genCnum = genEigs == 1;
+        }
+
+        if (ImGui::Button("Smooth"))
+        {
+            SmoothingConfigs oConf(numIters * (1 + 9 * times10), fixBoundary,
+                                   updateQuadrics, withCnum, genCnum);
+            PolySmoothing polySmoothing(mesh_, oConf); // make this reusable
+            polySmoothing.optimize(quadricsTau);
+            update_mesh();
+        }
+    }
+
     ImGui::Spacing();
     ImGui::Spacing();
 
@@ -168,6 +224,20 @@ void Viewer::process_imgui()
         {
             for (auto v : mesh_.vertices())
                 mesh_.position(v) = normalize(mesh_.position(v));
+            update_mesh();
+        }
+        if (ImGui::Button("Unitize"))
+        {
+            pmp::BoundingBox bb = bounds(mesh_);
+            Point p = (bb.min() + bb.max()) / 2;
+            Point d = bb.max() - bb.min();
+            float s = fmax(fmax(d[0], d[1]), d[2]);
+            for (auto v : mesh_.vertices())
+            {
+                mesh_.position(v) -= p;
+                mesh_.position(v) /= s;
+            }
+
             update_mesh();
         }
         if (ImGui::Button("Add noise"))
@@ -322,6 +392,8 @@ void Viewer::process_imgui()
     if (ImGui::CollapsingHeader("Spectral Processing",
                                 ImGuiTreeNodeFlags_DefaultOpen))
     {
+        static bool color = false;
+
         if (ImGui::Button("SH Reproduction"))
         {
             bool lumped = true;
@@ -329,10 +401,50 @@ void Viewer::process_imgui()
                 lumped = false;
             rmse_sh(mesh_, laplace_matrix, min_point_, lumped);
         }
+        ImGui::Spacing();
+        static int genEigs = 0;
+
+        ImGui::Text("Condition Number: ");
+        ImGui::SameLine();
+        ImGui::RadioButton("Normal##2", &genEigs, 0);
+        ImGui::SameLine();
+        ImGui::RadioButton("Generalized##2", &genEigs, 1);
+        ImGui::Spacing();
+
+        ImGui::Checkbox("Color face stiffness condition number", &color);
         if (ImGui::Button("Condition Number"))
         {
+            auto faceColor =
+                mesh_.face_property("f:color", Color(1.0, 0.0, 0.0));
+            auto faceCond = mesh_.face_property<double>("f:condition");
+
             Eigen::Vector3d values;
-            condition_number(mesh_, laplace_matrix, min_point_, values);
+            double cond = condition_number(mesh_, laplace_matrix, min_point_,
+                                           values, genEigs == 1);
+            std::cout << "Condition Number: " << cond << std::endl;
+            if (!color)
+            {
+                mesh_.remove_face_property(faceColor);
+                mesh_.remove_face_property(faceCond);
+            }
+            else
+            {
+                calc_colors(min_point_, mesh_);
+
+                for (auto f : mesh_.faces())
+                {
+                    Color good_col = Color(0.0, 0.5, 0.5); // Turquoise (good)
+                    Color ok_col = Color(0.66, 0.33, 0.0); // Orange (okay)
+                    Color bad_col = Color(0.5, 0.0, 0.5);  // Purple (bad)
+
+                    double col_metric = fmax(0.0, tanh(log10(faceCond[f])));
+                    faceColor[f] =
+                        (col_metric < 0.7)
+                            ? (1 - col_metric) * good_col + col_metric * ok_col
+                            : (1 - col_metric) * ok_col + col_metric * bad_col;
+                }
+            }
+            update_mesh();
         }
     }
     ImGui::Spacing();
@@ -352,8 +464,10 @@ void Viewer::process_imgui()
         ImGui::PopItemWidth();
         if (ImGui::Button("Solve!"))
         {
-            solve_poisson_system(mesh_, laplace_matrix, min_point_, function, l,
-                                 m);
+            int iterations;
+            double condition_number;
+            solve_poisson_system(mesh_, laplace_matrix, min_point_, function,
+                                 iterations, condition_number, l, m);
         }
     }
     ImGui::Spacing();
@@ -404,8 +518,8 @@ void Viewer::process_imgui()
             GeodesicsInHeat heat(mesh_, laplace_matrix, min_point_,
                                  compare_sphere, compare_cube, time_step_);
             Eigen::VectorXd dist, geodist;
-
-            heat.compute_geodesics();
+            double condition_number;
+            heat.compute_geodesics(condition_number);
             heat.getDistance(0, dist, geodist);
 
             update_mesh();
@@ -527,12 +641,16 @@ void Viewer::insert_points(unsigned int minpoint)
             w = Eigen::MatrixXd::Ones(val, 1);
             w /= (double)val;
         }
-        else
+        else if (minpoint == AreaMinimizer)
         {
             find_area_minimizer_weights(poly, w);
         }
+        else
+        {
+            find_trace_minimizer_weights(poly, w);
+        }
         Eigen::Vector3d point = poly.transpose() * w;
-        Vertex ver = mesh_.add_vertex(Point(point(0), point(1), point(2)));
+        Vertex ver = mesh_.add_vertex(Point(point));
         //        std::cout << "norm of point: " << norm(Point(point(0), point(1), point(2)))  << std::endl;
         mesh_.split(f, ver);
     }
@@ -567,8 +685,8 @@ void Viewer::mouse(int button, int action, int mods)
             GeodesicsInHeat heat(mesh_, laplace_matrix, min_point_,
                                  compare_sphere, compare_cube, time_step_);
             Eigen::VectorXd dist, geodist;
-
-            heat.compute_geodesics();
+            double condition_number;
+            heat.compute_geodesics(condition_number);
             heat.getDistance((int)v.idx(), dist, geodist);
             update_mesh();
             mesh_.use_checkerboard_texture();
@@ -585,6 +703,46 @@ void Viewer::load_mesh(const char* filename)
 {
     MeshViewer::load_mesh(filename);
     set_draw_mode("Hidden Line");
+}
+
+void Viewer::calc_colors(int minpoint, SurfaceMesh& mesh)
+{
+    auto faceCond = mesh.face_property<double>("f:condition");
+
+    Eigen::MatrixXd Si;
+    Eigen::VectorXd w;
+    Eigen::Vector3d p;
+    Eigen::MatrixXd poly;
+
+    for (Face f : mesh.faces())
+    {
+        get_polygon_from_face(mesh, f, poly);
+
+        // compute weights for the polygon
+        if (minpoint == Centroid_)
+        {
+            int val = (int)poly.rows();
+            w = Eigen::MatrixXd::Ones(val, 1);
+            w /= (double)val;
+        }
+        else if (minpoint == AreaMinimizer)
+        {
+            find_area_minimizer_weights(poly, w);
+        }
+        else
+        {
+            find_trace_minimizer_weights(poly, w);
+        }
+        Eigen::Vector3d min;
+
+        min = poly.transpose() * w;
+        localCotanMatrix(poly, min, w, Si);
+
+        Eigen::SelfAdjointEigenSolver<Eigen::SparseMatrix<double>> eigs(Si);
+        double cond = eigs.eigenvalues()[Si.rows() - 1] / eigs.eigenvalues()[1];
+
+        faceCond[f] = cond;
+    }
 }
 
 //=============================================================================

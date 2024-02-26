@@ -2,6 +2,7 @@
 // Copyright 2023 Astrid Bunge, Mario Botsch.
 // Distributed under MIT license, see file LICENSE for details.
 //=============================================================================#include <iostream>
+#include "../common_util.h"
 #include <Eigen/Dense>
 #include <pmp/Timer.h>
 #include <pmp/io/io.h>
@@ -12,14 +13,6 @@
 #include "Volume/Franke_PoissonSystem_3D.h"
 #include "Volume/HarmonicBasis.h"
 
-enum LaplaceMethods2D
-{
-    PolySimpleLaplace = 0,
-    AlexaWardetzkyLaplace = 1,
-    Diamond = 2,
-    deGoesLaplace = 3,
-    Harmonic = 4
-};
 enum LaplaceMethods3D
 {
     Diamond3D = 0,

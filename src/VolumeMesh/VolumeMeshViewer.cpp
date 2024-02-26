@@ -117,17 +117,17 @@ void VolumeMeshViewer::process_imgui()
 
         //control near clipping plane
         ImGui::PushItemWidth(100);
-        float near = near_clipping_;
-        ImGui::SliderFloat("Near clipping", &near, 0.0, 1.0);
+        float near_ = near_clipping_;
+        ImGui::SliderFloat("Near clipping", &near_, 0.0, 1.0);
         ImGui::PopItemWidth();
-        if (near != near_clipping_)
+        if (near_ != near_clipping_)
         {
-            near_clipping_ = near;
+            near_clipping_ = near_;
 
             pmp::vec4 mc(center_, 1.0);
             pmp::vec4 ec = modelview_matrix_ * mc;
             float z = -ec[2];
-            near = std::max(0.001f * radius_,
+            near_ = std::max(0.001f * radius_,
                             z - radius_ + 2 * near_clipping_ * radius_);
 
             std::vector<std::vector<HFHandle>> cells;
@@ -141,7 +141,7 @@ void VolumeMeshViewer::process_imgui()
                                        (float)mesh_.vertex(c_v)[1],
                                        (float)mesh_.vertex(c_v)[2], 1.0);
                     pmp::vec4 e_vertex = modelview_matrix_ * m_vertex;
-                    if (-e_vertex[2] < near)
+                    if (-e_vertex[2] < near_)
                     {
                         mesh_.delete_vertex(c_v);
                     }

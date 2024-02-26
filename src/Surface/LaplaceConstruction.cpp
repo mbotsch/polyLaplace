@@ -2,6 +2,7 @@
 // Copyright 2023 Astrid Bunge, Mario Botsch.
 // Distributed under MIT license, see file LICENSE for details.
 //=============================================================================
+#include "../common_util.h"
 #include "LaplaceConstruction.h"
 #include "[AW11]Laplace.h"
 #include "DiamondLaplace_2D.h"
@@ -19,15 +20,6 @@ using Triplet = Eigen::Triplet<double>;
 //=============================================================================
 
 using namespace std;
-
-enum LaplaceMethods
-{
-    PolySimpleLaplace = 0,
-    AlexaWardetzkyLaplace = 1,
-    Diamond = 2,
-    deGoesLaplace = 3,
-    Harmonic = 4
-};
 
 void setup_stiffness_matrices(SurfaceMesh& mesh, Eigen::SparseMatrix<double>& S,
                               int Laplace, int minpoint)

@@ -3,6 +3,7 @@
 // Distributed under MIT license, see file LICENSE for details.
 //=============================================================================
 
+#include "../common_util.h"
 #include "Curvature.h"
 
 //=============================================================================
@@ -12,20 +13,6 @@ using SparseMatrix = Eigen::SparseMatrix<double>;
 using Triplet = Eigen::Triplet<double>;
 
 //=============================================================================
-
-enum LaplaceMethods
-{
-    PolySimpleLaplace = 0,
-    AlexaWardetzkyLaplace = 1,
-    Diamond = 2,
-    deGoesLaplace = 3
-};
-
-enum InsertedPoint
-{
-    Centroid = 0,
-    AreaMinimizer = 2
-};
 
 void Curvature::visualize_curvature(int laplace, int min_point, bool lumped)
 {
@@ -107,9 +94,14 @@ void Curvature::visualize_curvature(int laplace, int min_point, bool lumped)
                 std::cout << "Curvature deviation (squared area minimizer): "
                           << rms << std::endl;
             }
-            else
+            else if (min_point == Centroid_)
             {
                 std::cout << "Curvature deviation (centroid): " << rms
+                          << std::endl;
+            }
+            else
+            {
+                std::cout << "Curvature deviation (trace minimizer): " << rms
                           << std::endl;
             }
         }
@@ -189,9 +181,13 @@ double Curvature::compute_curvature_error(int laplace, int min_point,
             std::cout << "Curvature deviation (squared area minimizer): " << rms
                       << std::endl;
         }
-        else
+        else if (min_point == Centroid_)
         {
             std::cout << "Curvature deviation (centroid): " << rms << std::endl;
+        }
+        else
+        {
+            std::cout << "Curvature deviation (trace minimizer): " << rms << std::endl;
         }
     }
     return rms;

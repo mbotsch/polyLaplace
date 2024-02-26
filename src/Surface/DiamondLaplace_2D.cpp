@@ -3,6 +3,7 @@
 // Distributed under MIT license, see file LICENSE for details.
 //=============================================================================
 
+#include "../common_util.h"
 #include "DiamondLaplace_2D.h"
 #include "diffgeo.h"
 #include <pmp/algorithms/DifferentialGeometry.h>
@@ -15,12 +16,6 @@ using Triplet = Eigen::Triplet<double>;
 //=============================================================================
 
 using namespace std;
-
-enum InsertedPoint
-{
-    Centroid = 0,
-    AreaMinimizer = 2,
-};
 
 //----------------------------------------------------------------------------------
 
@@ -46,18 +41,22 @@ void compute_primal_points(SurfaceMesh& mesh, int minpoint)
         }
 
         // compute weights for the polygon
-        if (minpoint == Centroid)
+        if (minpoint == Centroid_)
         {
             int val = (int)poly.rows();
             w = Eigen::MatrixXd::Ones(val, 1);
             w /= (double)val;
         }
-        else
+        else if (minpoint == AreaMinimizer)
         {
             find_area_minimizer_weights(poly, w);
         }
+        else
+        {
+            find_trace_minimizer_weights(poly, w);
+        }
         Eigen::Vector3d min = poly.transpose() * w;
-        Point p = Point(min[0], min[1], min[2]);
+        auto p = Point(min);
         area_points[f] = p;
     }
 }

@@ -33,6 +33,7 @@ include_directories(${PROJECT_SOURCE_DIR}/external/pmp-library/external/imgui)
 include_directories(${PROJECT_SOURCE_DIR}/external/pmp-library/external/eigen)
 include_directories(${PROJECT_SOURCE_DIR}/external/spectra/include)
 include_directories(${PROJECT_SOURCE_DIR}/external/OpenVolumeMesh/src)
+include_directories(${PROJECT_SOURCE_DIR}/external/TinyAD/include)
 
 add_definitions(-DINCLUDE_TEMPLATES)
 
@@ -44,7 +45,8 @@ endif()
 
 
 if(WIN32)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_USE_MATH_DEFINES -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_USE_MATH_DEFINES -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -fopenmp")
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 endif()
 
 if (EMSCRIPTEN)
@@ -64,6 +66,8 @@ if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 endif()
 
 # which directories to process
+add_subdirectory(external/eigen-lean)
+add_subdirectory(external/TinyAD)
 add_subdirectory(external/pmp-library)
 add_subdirectory(external/OpenVolumeMesh)
 add_subdirectory(src/)

@@ -14,22 +14,9 @@
 #include "[dGBD20]Laplace.h"
 #include "diffgeo.h"
 #include "LaplaceConstruction.h"
+#include "SpectralProcessing.h"
 
 //=============================================================================
-
-enum LaplaceMethods
-{
-    PolySimpleLaplace = 0,
-    AlexaWardetzkyLaplace = 1,
-    Diamond = 2,
-    deGoesLaplace = 3
-};
-
-enum InsertedPoint
-{
-    Centroid = 0,
-    AreaMinimizer = 2
-};
 
 GeodesicsInHeat::GeodesicsInHeat(pmp::SurfaceMesh& mesh, int laplace,
                                  int min_point, bool geodist, bool euklid,
@@ -124,7 +111,7 @@ double GeodesicsInHeat::maxDiagonalLength(const pmp::SurfaceMesh& mesh)
 }
 //-----------------------------------------------------------------------------
 
-void GeodesicsInHeat::compute_geodesics(bool lumped)
+void GeodesicsInHeat::compute_geodesics(double& condition_number, bool lumped)
 {
     pos.resize((int)mesh_.n_vertices(), 3);
 
@@ -148,7 +135,6 @@ void GeodesicsInHeat::compute_geodesics(bool lumped)
         setup_gradient(mesh_, gradOperator, laplace_, min_point_);
         setup_divergence(mesh_, divOperator, laplace_, min_point_);
     }
-
     Eigen::SparseMatrix<double> S, A, M;
 
     setup_stiffness_matrices(mesh_, S, laplace_, min_point_);
@@ -173,6 +159,8 @@ void GeodesicsInHeat::compute_geodesics(bool lumped)
 
     A = M - h * S;
 
+    condition_number = get_condition_number(A, false);
+
     cholL.analyzePattern(S);
     cholL.factorize(S);
 
@@ -182,7 +170,7 @@ void GeodesicsInHeat::compute_geodesics(bool lumped)
 //-----------------------------------------------------------------------------
 
 double GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd& dist,
-                                    Eigen::VectorXd& orthodist)
+                                    Eigen::VectorXd& orthodist, bool verbose)
 {
     // diffuse heat
     const int N = (int)mesh_.n_vertices();
@@ -279,7 +267,7 @@ double GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd& dist,
         rms = sqrt(rms);
         meshtype = " plane ";
     }
-    if (geodist_cube_ || geodist_sphere_)
+    if ((geodist_cube_ || geodist_sphere_) && verbose)
     {
         if (laplace_ == AlexaWardetzkyLaplace)
         {
@@ -307,9 +295,13 @@ double GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd& dist,
             {
                 std::cout << "squared area minimizer): " << rms << std::endl;
             }
-            else
+            else if (min_point_ == Centroid_)
             {
                 std::cout << "centroid): " << rms << std::endl;
+            }
+            else
+            {
+                std::cout << "trace minimizer): " << rms << std::endl;
             }
         }
     }

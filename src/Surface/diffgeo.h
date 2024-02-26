@@ -4,11 +4,13 @@
 //=============================================================================//=============================================================================
 #pragma once
 //=============================================================================
+
 #include <iostream>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <pmp/SurfaceMesh.h>
 #include <pmp/algorithms/DifferentialGeometry.h>
+#include "PolyRobustLaplace.h"
 
 //=============================================================================
 
@@ -42,4 +44,6 @@ double poly_face_area(const pmp::SurfaceMesh& mesh, pmp::Face f);
 
 //! surface area of the mesh.
 pmp::Scalar poly_surface_area(const pmp::SurfaceMesh& mesh);
+
+void get_polygon_from_face(const pmp::SurfaceMesh& mesh, const pmp::Face& fIdx, Eigen::MatrixXd& poly);
 //=============================================================================

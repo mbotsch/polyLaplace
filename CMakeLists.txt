@@ -66,7 +66,6 @@ if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 endif()
 
 # which directories to process
-add_subdirectory(external/eigen-lean)
 add_subdirectory(external/TinyAD)
 add_subdirectory(external/pmp-library)
 add_subdirectory(external/OpenVolumeMesh)

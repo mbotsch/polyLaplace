@@ -9,10 +9,6 @@ project(TinyAD)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find Eigen if not already present
-if (NOT TARGET Eigen3::Eigen)
-    find_package(Eigen3 REQUIRED)
-endif()
 
 # Find OpenMP (optional)
 if (NOT TARGET OpenMP::OpenMP_CXX)
@@ -33,7 +29,6 @@ add_library(TinyAD INTERFACE)
 add_custom_target(TinyAD-Headers SOURCES ${TINYAD_HEADERS}) # IDE shows TinyAD headers in one place only
 target_include_directories(TinyAD INTERFACE include)
 target_compile_options(TinyAD INTERFACE $<$<CXX_COMPILER_ID:MSVC>:/bigobj>)
-target_link_libraries(TinyAD INTERFACE Eigen3::Eigen)
 if (TARGET OpenMP::OpenMP_CXX)
     target_link_libraries(TinyAD INTERFACE OpenMP::OpenMP_CXX)
 endif()

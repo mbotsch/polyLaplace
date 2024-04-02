@@ -7,7 +7,7 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
-#include <pmp/SurfaceMesh.h>
+#include <pmp/surface_mesh.h>
 
 //=============================================================================
 

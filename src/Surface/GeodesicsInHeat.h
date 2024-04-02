@@ -6,7 +6,7 @@
 //=============================================================================
 
 #include "../common_util.h"
-#include <pmp/SurfaceMesh.h>
+#include <pmp/surface_mesh.h>
 #include "[AW11]Laplace.h"
 #include <Eigen/Sparse>
 //=============================================================================

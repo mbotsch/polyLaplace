@@ -5,7 +5,7 @@
 #pragma once
 //=============================================================================
 
-#include <pmp/visualization/MeshViewer.h>
+#include <pmp/visualization/mesh_viewer.h>
 #include "Surface/SpectralProcessing.h"
 #include "Surface/GeodesicsInHeat.h"
 
@@ -43,7 +43,7 @@ private: // private methods
     bool compare_sphere;
     bool compare_cube;
     DiffusionStep time_step_;
-    SurfaceMeshGL original = mesh_;
+    SurfaceMesh original = mesh_;
 };
 
 //=============================================================================

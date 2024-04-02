@@ -3,7 +3,7 @@
 // Distributed under MIT license, see file LICENSE for details.
 //=============================================================================
 
-#include <pmp/SurfaceMesh.h>
+#include <pmp/surface_mesh.h>
 #include "[AW11]Laplace.h"
 #include "GeodesicsInHeat.h"
 #include <Eigen/Sparse>
@@ -378,11 +378,11 @@ double GeodesicsInHeat::haversine_distance(Vertex v, Vertex vv, double r)
     Point p = mesh_.position(v);
     Point pp = mesh_.position(vv);
 
-    double lamda1 = atan2(p[1], p[0]) + M_PI;
-    double phi1 = M_PI / 2.0 - acos(p[2] / r);
+    double lamda1 = atan2(p[1], p[0]) + std::numbers::pi;
+    double phi1 = std::numbers::pi / 2.0 - acos(p[2] / r);
 
-    double lamda2 = atan2(pp[1], pp[0]) + M_PI;
-    double phi2 = M_PI / 2.0 - acos(pp[2] / r);
+    double lamda2 = atan2(pp[1], pp[0]) + std::numbers::pi;
+    double phi2 = std::numbers::pi / 2.0 - acos(pp[2] / r);
 
     double d_lamda = fabs(lamda1 - lamda2);
     double d_phi = fabs(phi1 - phi2);
@@ -403,11 +403,11 @@ double GeodesicsInHeat::vincenty_distance(Vertex v, Vertex vv, double r)
     Point p = mesh_.position(v);
     Point pp = mesh_.position(vv);
 
-    double lamda1 = atan2(p[1], p[0]) + M_PI;
-    double phi1 = M_PI / 2.0 - acos(p[2] / r);
+    double lamda1 = atan2(p[1], p[0]) + std::numbers::pi;
+    double phi1 = std::numbers::pi / 2.0 - acos(p[2] / r);
 
-    double lamda2 = atan2(pp[1], pp[0]) + M_PI;
-    double phi2 = M_PI / 2.0 - acos(pp[2] / r);
+    double lamda2 = atan2(pp[1], pp[0]) + std::numbers::pi;
+    double phi2 = std::numbers::pi / 2.0 - acos(pp[2] / r);
 
     double d_lamda = fabs(lamda1 - lamda2);
 

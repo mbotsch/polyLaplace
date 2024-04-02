@@ -4,7 +4,7 @@
 //=============================================================================#include <iostream>
 #include "../common_util.h"
 #include <Eigen/Dense>
-#include <pmp/Timer.h>
+#include <pmp/stop_watch.h>
 #include <pmp/io/io.h>
 #include <unsupported/Eigen/SparseExtra>
 #include "Surface/LaplaceConstruction.h"
@@ -37,7 +37,7 @@ using namespace std;
 double StiffnessConstructionTimings2D(SurfaceMesh& mesh, int laplace)
 {
     Eigen::SparseMatrix<double> L;
-    pmp::Timer t;
+    pmp::StopWatch t;
     t.start();
 
     for (int i = 0; i < 20; i++)
@@ -53,7 +53,7 @@ double StiffnessConstructionTimings2D(SurfaceMesh& mesh, int laplace)
 double StiffnessConstructionTimings3D(VolumeMesh& mesh, int laplace)
 {
     Eigen::SparseMatrix<double> L;
-    pmp::Timer t;
+    pmp::StopWatch t;
     t.start();
 
     for (int i = 0; i < 20; i++)
@@ -73,7 +73,7 @@ void takeLaplaceTiming2D(SurfaceMesh& mesh, int laplace,
     auto points = mesh.vertex_property<Point>("v:point");
     Eigen::SparseMatrix<double> L, M, A;
 
-    pmp::Timer t_stiffness, t_solve;
+    pmp::StopWatch t_stiffness, t_solve;
 
     t_stiffness.start();
     setup_stiffness_matrices(mesh, L, laplace, Quadratic_Areas_);
@@ -97,7 +97,7 @@ void takeLaplaceTiming2D(SurfaceMesh& mesh, int laplace,
 
     static Eigen::SimplicialLLT<Eigen::SparseMatrix<double>> solver;
 
-    pmp::Timer t;
+    pmp::StopWatch t;
 
     t_solve.start();
     for (int i = 0; i < 10; i++)
@@ -129,7 +129,7 @@ void takeLaplaceTiming3D(const std::string& meshname, int Laplace,
 {
     Eigen::SparseMatrix<double> L, M, A;
 
-    pmp::Timer t_stiffness, t_solve;
+    pmp::StopWatch t_stiffness, t_solve;
     VolumeMesh mesh;
     mesh.read(meshname);
     Eigen::VectorXd b(mesh.n_vertices());

@@ -4,7 +4,7 @@
 //=============================================================================
 
 #include "../common_util.h"
-#include <pmp/visualization/MeshViewer.h>
+#include <pmp/visualization/mesh_viewer.h>
 #include "Surface/Smoothing.h"
 #include <imgui.h>
 #include "Surface/[AW11]Laplace.h"
@@ -98,7 +98,7 @@ void Viewer::process_imgui()
         {
             Curvature analyzer(mesh_, false);
             analyzer.visualize_curvature(laplace, min_point, true);
-            mesh_.use_cold_warm_texture();
+            renderer_.use_cold_warm_texture();
             update_mesh();
             set_draw_mode("Texture");
             show_uv_layout_ = false;
@@ -147,7 +147,7 @@ void Viewer::process_imgui()
             heat.getDistance(0, dist, geodist);
 
             update_mesh();
-            mesh_.use_checkerboard_texture();
+            renderer_.use_checkerboard_texture();
             set_draw_mode("Texture");
             show_uv_layout_ = false;
         }
@@ -169,7 +169,7 @@ void Viewer::process_imgui()
             }
 
             update_mesh();
-            mesh_.use_checkerboard_texture();
+            renderer_.use_checkerboard_texture();
             set_draw_mode("Texture");
             show_uv_layout_ = true;
         }
@@ -182,7 +182,7 @@ void Viewer::process_imgui()
 void Viewer::draw(const std::string& draw_mode)
 {
     // draw the mesh
-    mesh_.draw(projection_matrix_, modelview_matrix_, draw_mode);
+    renderer_.draw(projection_matrix_, modelview_matrix_, draw_mode);
 
     // draw uv layout
     if (draw_mode == "Texture" && show_uv_layout_)
@@ -199,7 +199,7 @@ void Viewer::draw(const std::string& draw_mode)
         mat4 M = mat4::identity();
 
         // draw mesh once more
-        mesh_.draw(P, M, "Texture Layout");
+        renderer_.draw(P, M, "Texture Layout");
 
         // reset viewport
         glViewport(0, 0, width(), height());

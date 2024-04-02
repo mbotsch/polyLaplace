@@ -6,7 +6,7 @@
 #include "../common_util.h"
 #include "DiamondLaplace_2D.h"
 #include "diffgeo.h"
-#include <pmp/algorithms/DifferentialGeometry.h>
+#include <pmp/algorithms/differential_geometry.h>
 
 //=============================================================================
 

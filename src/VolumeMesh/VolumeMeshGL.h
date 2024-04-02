@@ -5,10 +5,11 @@
 #pragma once
 //=============================================================================
 
-#include <pmp/visualization/GL.h>
-#include <pmp/visualization/Shader.h>
-#include <pmp/MatVec.h>
-#include <pmp/Types.h>
+#include <pmp/visualization/gl.h>
+#include <pmp/visualization/shader.h>
+#include <pmp/mat_vec.h>
+#include <pmp/exceptions.h>
+#include <pmp/types.h>
 
 #include <OpenVolumeMesh/Attribs/NormalAttrib.hh>
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <TinyAD/Support/Common.hh>
-#include <pmp/SurfaceMesh.h>
+#include <pmp/surface_mesh.h>
 
 #ifdef TINYAD_ScalarFunction_DEFINED
     #error Please include this file before ScalarFunction.hh

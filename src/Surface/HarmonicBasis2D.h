@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <Eigen/Dense>
 #include <Eigen/SparseCore>
-#include <pmp/SurfaceMesh.h>
+#include <pmp/surface_mesh.h>
 
 void buildStiffnessAndMass2d(pmp::SurfaceMesh& mesh,
                              Eigen::SparseMatrix<double>& K,

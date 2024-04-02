@@ -8,7 +8,7 @@
 #include "Spectra/MatOp/SparseSymMatProd.h"
 #include "Spectra/SymGEigsShiftSolver.h"
 #include "Eigenmodes.h"
-#include "pmp/Timer.h"
+#include "pmp/stop_watch.h"
 #include "../Surface/diffgeo.h"
 
 double Franke(const Eigen::Vector3d& p)
@@ -272,7 +272,7 @@ double setup_3D_harmonic_stiffness_matrix(PolyhedralMesh& mesh,
                                           std::ofstream& file)
 {
     using namespace std;
-    pmp::Timer t;
+    pmp::StopWatch t;
     double time = 0.0;
 
     const int nc = mesh.numCells();

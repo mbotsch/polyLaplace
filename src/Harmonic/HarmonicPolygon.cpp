@@ -2,7 +2,7 @@
 #include "PolygonSampler.h"
 #include <fstream>
 #include "GaussQuadrature.h"
-#include "pmp/SurfaceMesh.h"
+#include <pmp/surface_mesh.h>
 #include "../Surface/diffgeo.h"
 
 Eigen::Vector3d HarmonicPolygon::getScaledNormal() const

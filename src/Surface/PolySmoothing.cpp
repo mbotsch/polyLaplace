@@ -5,7 +5,7 @@
 #include "SpectralProcessing.h"
 #include "PolySmoothing.h"
 #include <pmp/algorithms/normals.h>
-#include <pmp/utilities.h>
+#include <pmp/algorithms/utilities.h>
 #include <random>
 #include "diffgeo.h"
 

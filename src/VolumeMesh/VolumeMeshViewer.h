@@ -6,7 +6,7 @@
 //=============================================================================
 
 #include "VolumeMeshGL.h"
-#include <pmp/visualization/TrackballViewer.h>
+#include <pmp/visualization/trackball_viewer.h>
 #include <OpenVolumeMesh/FileManager/FileManager.hh>
 
 //=============================================================================

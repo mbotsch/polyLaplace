@@ -62,8 +62,12 @@ void VolumeMeshGL::draw(const mat4& projection_matrix,
 
     if (!phong_shader_.is_valid())
     {
-        if (!phong_shader_.source(phong_vshader, phong_fshader))
+        try {
+            phong_shader_.source(phong_vshader, phong_fshader);
+        }
+        catch (const pmp::GLException& e)
         {
+            std::cerr << e.what() << std::endl;
             exit(1);
         }
     }

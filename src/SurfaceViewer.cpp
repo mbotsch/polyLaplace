@@ -17,8 +17,9 @@
 #include <pmp/algorithms/triangulation.h>
 #include <pmp/algorithms/subdivision.h>
 #include <pmp/algorithms/normals.h>
-#include <pmp/utilities.h>
-#include <pmp/Timer.h>
+#include <pmp/algorithms/utilities.h>
+#include <pmp/algorithms/differential_geometry.h>
+#include <pmp/stop_watch.h>
 
 #include <imgui.h>
 #include <random>
@@ -211,15 +212,10 @@ void Viewer::process_imgui()
 
         if (ImGui::Button("Triangulate mesh (min area)"))
         {
-            triangulate(mesh_, TriangulationObjective::min_area);
+            triangulate(mesh_);
             update_mesh();
         }
 
-        if (ImGui::Button("Triangulate mesh (max angle)"))
-        {
-            triangulate(mesh_, TriangulationObjective::max_angle);
-            update_mesh();
-        }
         if (ImGui::Button("Kugelize"))
         {
             for (auto v : mesh_.vertices())
@@ -485,7 +481,7 @@ void Viewer::process_imgui()
             Curvature analyzer(mesh_, curvature_sphere_);
 
             analyzer.visualize_curvature(laplace_matrix, min_point_, true);
-            mesh_.use_cold_warm_texture();
+            renderer_.use_cold_warm_texture();
             update_mesh();
             set_draw_mode("Texture");
         }
@@ -523,10 +519,10 @@ void Viewer::process_imgui()
             heat.getDistance(0, dist, geodist);
 
             update_mesh();
-            mesh_.use_checkerboard_texture();
+            renderer_.use_checkerboard_texture();
             set_draw_mode("Texture");
 
-            mesh_.use_checkerboard_texture();
+            renderer_.use_checkerboard_texture();
             update_mesh();
             set_draw_mode("Texture");
         }
@@ -538,14 +534,14 @@ void Viewer::process_imgui()
 void Viewer::draw(const std::string& draw_mode)
 {
     // normal mesh draw
-    mesh_.draw(projection_matrix_, modelview_matrix_, draw_mode);
+    renderer_.draw(projection_matrix_, modelview_matrix_, draw_mode);
 }
 
 //----------------------------------------------------------------------------
 
 void Viewer::dualize()
 {
-    SurfaceMeshGL dual;
+    SurfaceMesh dual;
 
     auto fvertex = mesh_.add_face_property<Vertex>("f:vertex");
     for (auto f : mesh_.faces())
@@ -573,7 +569,7 @@ void Viewer::dualize()
 void Viewer::update_mesh()
 {
     // re-compute face and vertex normals
-    mesh_.update_opengl_buffers();
+    renderer_.update_opengl_buffers();
 }
 
 //----------------------------------------------------------------------------
@@ -689,7 +685,7 @@ void Viewer::mouse(int button, int action, int mods)
             heat.compute_geodesics(condition_number);
             heat.getDistance((int)v.idx(), dist, geodist);
             update_mesh();
-            mesh_.use_checkerboard_texture();
+            renderer_.use_checkerboard_texture();
             set_draw_mode("Texture");
         }
     }

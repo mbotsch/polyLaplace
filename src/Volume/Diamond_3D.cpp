@@ -3,7 +3,7 @@
 // Distributed under MIT license, see file LICENSE for details.
 //=============================================================================
 #include "Diamond_3D.h"
-#include <pmp/MatVec.h>
+#include <pmp/mat_vec.h>
 #include "diffgeo_3D.h"
 //=============================================================================
 

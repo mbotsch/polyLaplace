@@ -167,7 +167,7 @@ double factorial(int n)
 double scale(int l, int m)
 {
     double temp = ((2.0 * (double)l + 1.0) * factorial(l - m)) /
-                  (4.0 * M_PI * factorial(l + m));
+                  (4.0 * std::numbers::pi * factorial(l + m));
     return sqrt(temp);
 }
 
@@ -212,7 +212,7 @@ double sphericalHarmonic(pmp::Point p, int l, int m)
     // m in the range [-l..l]
     // transform cartesian to spherical coordinates, assuming r = 1
 
-    double phi = atan2(p[0], p[2]) + M_PI;
+    double phi = atan2(p[0], p[2]) + std::numbers::pi;
     double cos_theta = p[1] / norm(p);
     const double sqrt2 = sqrt(2.0);
     if (m == 0)

@@ -2,10 +2,10 @@
 #pragma once
 //=============================================================================
 
-#include <pmp/SurfaceMesh.h>
+#include <pmp/surface_mesh.h>
 #include "diffgeo.h"
 #include "LaplaceConstruction.h"
-#include "pmp/BoundingBox.h"
+#include "pmp/bounding_box.h"
 
 //=============================================================================
 

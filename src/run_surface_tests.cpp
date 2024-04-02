@@ -3,7 +3,9 @@
 // Distributed under MIT license, see file LICENSE for details.
 //=============================================================================//=============================================================================
 #include "../common_util.h"
-#include <pmp/SurfaceMesh.h>
+#include <pmp/surface_mesh.h>
+#include <pmp/bounding_box.h>
+#include <pmp/algorithms/utilities.h>
 #include <pmp/io/io.h>
 #include <fstream>
 #include <cfloat>
@@ -14,8 +16,6 @@
 #include "Surface/SpectralProcessing.h"
 #include "Surface/GeodesicsInHeat.h"
 #include "Surface/HarmonicBasis2D.h"
-#include "pmp/BoundingBox.h"
-#include "pmp/utilities.h"
 
 //=============================================================================
 

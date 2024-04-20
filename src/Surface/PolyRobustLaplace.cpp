@@ -22,6 +22,7 @@ void find_trace_minimizer_weights(const Eigen::MatrixXd& polyVerts, Eigen::Vecto
     virtualVertex = projMatrix.transpose() * (virtualVertex - fn * virtualVertex.dot(fn)); // use projected as init
     double convergence_eps = 1e-10;
 
+    double oldNd = 0;
     for (int i = 0; i < 1000; ++i) {
         auto [e, g, H_proj] = getEnergyAndGradientAndHessian(virtualVertex, projectedVerts);
         project_positive_definite(H_proj);
@@ -29,10 +30,12 @@ void find_trace_minimizer_weights(const Eigen::MatrixXd& polyVerts, Eigen::Vecto
 
         double nd = -0.5 * d.dot(g);
 
-        if (nd < convergence_eps) {
+        if (nd < convergence_eps || oldNd == nd) {
             break;
         }
         virtualVertex = line_search(virtualVertex, d, e, g, projectedVerts);
+        if (!(i % 10))
+            oldNd = nd;
 
     }
 

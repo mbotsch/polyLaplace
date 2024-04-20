@@ -422,23 +422,37 @@ void Viewer::process_imgui()
             {
                 mesh_.remove_face_property(faceColor);
                 mesh_.remove_face_property(faceCond);
+                renderer_.set_specular(0.6);
             }
             else
             {
+
                 calc_colors(min_point_, mesh_);
+                if (cond_maxi == -1 && cond_mini == -1)
+                {
+                    std::vector<double> cond_numbers;
+                    for (auto f : mesh_.faces())
+                    {
+                        cond_numbers.push_back(faceCond[f]);
+                    }
+                    std::ranges::sort(cond_numbers);
+                    cond_maxi = cond_numbers[int(0.99*mesh_.n_faces())];
+                    cond_mini = cond_numbers[0];
+                }
 
                 for (auto f : mesh_.faces())
                 {
-                    Color good_col = Color(0.0, 0.5, 0.5); // Turquoise (good)
-                    Color ok_col = Color(0.66, 0.33, 0.0); // Orange (okay)
-                    Color bad_col = Color(0.5, 0.0, 0.5);  // Purple (bad)
+                    auto good_col = Color(0.39, 0.74, 1); // Turquoise (good)
+                    auto ok_col = Color(1, 0.74, 0); // Orange (okay)
+                    auto bad_col = Color(1, 0.0, 1);  // Purple (bad)
 
-                    double col_metric = fmax(0.0, tanh(log10(faceCond[f])));
+                    double col_metric = fmin(1.0, fmax(0.0, (faceCond[f]-cond_mini)/(cond_maxi-cond_mini)));
                     faceColor[f] =
-                        (col_metric < 0.7)
+                        (col_metric < 0.5)
                             ? (1 - col_metric) * good_col + col_metric * ok_col
                             : (1 - col_metric) * ok_col + col_metric * bad_col;
                 }
+                renderer_.set_specular(0);
             }
             update_mesh();
         }
@@ -699,6 +713,8 @@ void Viewer::load_mesh(const char* filename)
 {
     MeshViewer::load_mesh(filename);
     set_draw_mode("Hidden Line");
+    cond_maxi = -1;
+    cond_mini = -1;
 }
 
 void Viewer::calc_colors(int minpoint, SurfaceMesh& mesh)

@@ -40,6 +40,7 @@ protected:
 
 private: // private methods
     int laplace_matrix, min_point_;
+    double cond_maxi = -1, cond_mini = -1;
     bool compare_sphere;
     bool compare_cube;
     DiffusionStep time_step_;

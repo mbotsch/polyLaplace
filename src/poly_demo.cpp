@@ -12,6 +12,9 @@
 #include "Surface/GeodesicsInHeat.h"
 #include "Surface/Curvature.h"
 #include "Surface/Parameterization.h"
+#include "Surface/PolySimpleLaplace.h"
+#include "Surface/PolySmoothing.h"
+#include "Surface/SpectralProcessing.h"
 using namespace pmp;
 
 class Viewer : public MeshViewer
@@ -25,9 +28,48 @@ protected:
 
 private:
     Smoothing smoother_;
+    double cond_mini =-1, cond_maxi=-1;
     bool show_uv_layout_;
 };
+void calc_colors(int minpoint, SurfaceMesh& mesh)
+{
+    auto faceCond = mesh.face_property<double>("f:condition");
 
+    Eigen::MatrixXd Si;
+    Eigen::VectorXd w;
+    Eigen::Vector3d p;
+    Eigen::MatrixXd poly;
+
+    for (Face f : mesh.faces())
+    {
+        get_polygon_from_face(mesh, f, poly);
+
+        // compute weights for the polygon
+        if (minpoint == Centroid_)
+        {
+            int val = (int)poly.rows();
+            w = Eigen::MatrixXd::Ones(val, 1);
+            w /= (double)val;
+        }
+        else if (minpoint == AreaMinimizer)
+        {
+            find_area_minimizer_weights(poly, w);
+        }
+        else
+        {
+            find_trace_minimizer_weights(poly, w);
+        }
+        Eigen::Vector3d min;
+
+        min = poly.transpose() * w;
+        localCotanMatrix(poly, min, w, Si);
+
+        Eigen::SelfAdjointEigenSolver<Eigen::SparseMatrix<double>> eigs(Si);
+        double cond = eigs.eigenvalues()[Si.rows() - 1] / eigs.eigenvalues()[1];
+
+        faceCond[f] = cond;
+    }
+}
 Viewer::Viewer(const char* title, int width, int height)
     : MeshViewer(title, width, height), smoother_(mesh_)
 {
@@ -90,6 +132,56 @@ void Viewer::process_imgui()
     ImGui::Spacing();
 
 
+    if (ImGui::CollapsingHeader("Robustness", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        if (ImGui::Button("Mesh Optimization"))
+        {
+            SmoothingConfigs oConf(25, false,
+                                   false, false, false);
+            PolySmoothing polySmoothing(mesh_, oConf);
+            polySmoothing.optimize(5);
+            update_mesh();
+        }
+        if (ImGui::Button("Color Code Condition Number"))
+        {
+            auto faceColor =
+                mesh_.face_property("f:color", Color(1.0, 0.0, 0.0));
+            auto faceCond = mesh_.face_property<double>("f:condition");
+
+            Eigen::Vector3d values;
+            double cond = condition_number(mesh_, laplace, min_point,
+                                           values, false);
+            std::cout << "Condition Number: " << cond << std::endl;
+
+                calc_colors(min_point, mesh_);
+                if (cond_maxi == -1 && cond_mini == -1)
+                {
+                    std::vector<double> cond_numbers;
+                    for (auto f : mesh_.faces())
+                    {
+                        cond_numbers.push_back(faceCond[f]);
+                    }
+                    std::ranges::sort(cond_numbers);
+                    cond_maxi = cond_numbers[int(0.99*mesh_.n_faces())];
+                    cond_mini = cond_numbers[0];
+                }
+
+                for (auto f : mesh_.faces())
+                {
+                    auto good_col = Color(0.39, 0.74, 1); // Turquoise (good)
+                    auto ok_col = Color(1, 0.74, 0); // Orange (okay)
+                    auto bad_col = Color(1, 0.0, 1);  // Purple (bad)
+
+                    double col_metric = fmin(1.0, fmax(0.0, (faceCond[f]-cond_mini)/(cond_maxi-cond_mini)));
+                    faceColor[f] =
+                        (col_metric < 0.5)
+                            ? (1 - col_metric) * good_col + col_metric * ok_col
+                            : (1 - col_metric) * ok_col + col_metric * bad_col;
+                }
+                renderer_.set_specular(0);
+                update_mesh();
+        }
+    }
     if (ImGui::CollapsingHeader("Applications", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::Indent(10);

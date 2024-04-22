@@ -1,4 +1,7 @@
 //=============================================================================
+// Copyright 2024 Astrid Bunge, Sven Wagner, Dennis Bukenberger, Mario Botsch, Marc Alexa
+// Distributed under MIT license, see file LICENSE for details.
+//=============================================================================
 #pragma once
 //=============================================================================
 

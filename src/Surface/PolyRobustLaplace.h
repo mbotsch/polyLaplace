@@ -1,3 +1,7 @@
+//=============================================================================
+// Copyright 2024 Astrid Bunge, Sven Wagner, Dennis Bukenberger, Mario Botsch, Marc Alexa
+// Distributed under MIT license, see file LICENSE for details.
+//=============================================================================
 #pragma once
 
 #include <Eigen/Dense>
@@ -9,6 +13,7 @@
 #define GLOBALS_H
 const int penalty_ = 100000;
 #endif
+
 
 void find_trace_minimizer_weights(const Eigen::MatrixXd& polyVerts, Eigen::VectorXd &weights, bool use_fallback = true);
 

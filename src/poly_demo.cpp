@@ -1,5 +1,5 @@
 //=============================================================================
-// Copyright 2023 Astrid Bunge, Mario Botsch.
+// Copyright 2024 Astrid Bunge, Sven Wagner, Mario Botsch.
 // Distributed under MIT license, see file LICENSE for details.
 //=============================================================================
 

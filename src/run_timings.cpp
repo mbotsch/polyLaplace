@@ -1,7 +1,8 @@
 //=============================================================================
 // Copyright 2023 Astrid Bunge, Mario Botsch.
 // Distributed under MIT license, see file LICENSE for details.
-//=============================================================================#include <iostream>
+//=============================================================================
+#include <iostream>
 #include "../common_util.h"
 #include <Eigen/Dense>
 #include <pmp/stop_watch.h>

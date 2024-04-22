@@ -238,8 +238,7 @@ void normalize(SurfaceMesh& mesh)
 
 void write_data(SurfaceMesh& mesh, int laplace, int virtualVertexMode,
                 std::ofstream& file, int function,
-                bool spheredist, std::ofstream& iter_file,
-                std::ofstream& cond_file, DiffusionStep step,
+                bool spheredist, DiffusionStep step,
                 const std::vector<int>& indices, int l = 2, int m = 0)
 {
 
@@ -262,15 +261,10 @@ void write_data(SurfaceMesh& mesh, int laplace, int virtualVertexMode,
     }
     else if (function == poisson_SH || function == Franke2d)
     {
-        int num_iter = 0;
-        double condition_number = 0;
         double error = solve_poisson_system(
-            mesh, laplace, virtualVertexMode, function, num_iter,
-            condition_number, l, m);
+            mesh, laplace, virtualVertexMode, function, l, m);
         file << error;
         file << ",";
-        iter_file << num_iter << ",";
-        cond_file << condition_number << ",";
     }
     else if (function == Geodesics)
     {
@@ -285,7 +279,7 @@ void write_data(SurfaceMesh& mesh, int laplace, int virtualVertexMode,
             GeodesicsInHeat heat(mesh, laplace, virtualVertexMode, spheredist, !spheredist, step);
             Eigen::VectorXd dist, geodist;
 
-            heat.compute_geodesics(condition_number);
+            heat.compute_geodesics();
 
             double error = 0;
             for (int n : indices)
@@ -343,7 +337,6 @@ void write_data(SurfaceMesh& mesh, int laplace, int virtualVertexMode,
                 }
             }
         }
-        cond_file << condition_number << ",";
     }
 }
 
@@ -363,7 +356,6 @@ double inverse_mean_edge_length(SurfaceMesh& mesh)
 
 void write_all_laplace_data(SurfaceMesh& mesh, std::ofstream& file,
                             int function, bool spheredist,
-                            std::ofstream& iter_file, std::ofstream& cond_file,
                             DiffusionStep st, int l = 2, int m = 2)
 {
     //int num_samples = 100;
@@ -427,7 +419,7 @@ void write_all_laplace_data(SurfaceMesh& mesh, std::ofstream& file,
                     std::cout << "=============================" << std::endl;
                     std::cout << getModeName(mode) << ": hyperparameter " << getVertexName(i) << std::endl;
                     write_data(mesh, mode, i, file, function,
-                               spheredist, iter_file, cond_file, st, indices, l,
+                               spheredist, st, indices, l,
                                m);
                 }
                 break;
@@ -438,7 +430,7 @@ void write_all_laplace_data(SurfaceMesh& mesh, std::ofstream& file,
                     std::cout << getModeName(mode) << ": hyperparameter " << lambda << std::endl;
                     poly_laplace_lambda_ = lambda;
                     write_data(mesh, mode, AreaMinimizer, file,
-                               function, spheredist, iter_file, cond_file, st,
+                               function, spheredist, st,
                                indices, l, m);
                 }
                 break;
@@ -449,7 +441,7 @@ void write_all_laplace_data(SurfaceMesh& mesh, std::ofstream& file,
                     std::cout << getModeName(mode) << ": hyperparameter " << lambda << std::endl;
                     deGoes_laplace_lambda_ = lambda;
                     write_data(mesh, mode, AreaMinimizer, file,
-                               function, spheredist, iter_file, cond_file, st,
+                               function, spheredist, st,
                                indices, l, m);
                 }
                 break;
@@ -457,7 +449,7 @@ void write_all_laplace_data(SurfaceMesh& mesh, std::ofstream& file,
                 std::cout << "=============================" << std::endl;
                 std::cout << getModeName(mode) << std::endl;
                 write_data(mesh, mode, AreaMinimizer, file,
-                           function, spheredist, iter_file, cond_file, st,
+                           function, spheredist, st,
                            indices, l, m);
         }
     }
@@ -567,8 +559,6 @@ void write_convergence_data_csv(Function function,
 {
     SurfaceMesh mesh;
     std::string filename_;
-    std::string iter_filename_;
-    std::string cond_filename_;
 
     std::map<Function, std::string> filename_prefix{
         {Franke2d, "Franke"},
@@ -588,16 +578,6 @@ void write_convergence_data_csv(Function function,
             std::ofstream file(filename_);
             write_text_headers(file);
 
-            iter_filename_ = "./Plane_" + filename_prefix[function] + "_" +
-                             getPlanarMeshNameCSV(p) + "_Iterations.csv";
-            std::ofstream iter_file(iter_filename_);
-            write_text_headers(iter_file);
-
-            cond_filename_ = "./Plane_" + filename_prefix[function] + "_" +
-                             getPlanarMeshNameCSV(p) + "_Condition.csv";
-            std::ofstream cond_file(cond_filename_);
-            write_text_headers(cond_file);
-
             std::string type_name = getPlanarMeshName(p);
             int adjlvl = lvl;
             if (p == PlanarMeshes::Voronoi)
@@ -615,15 +595,11 @@ void write_convergence_data_csv(Function function,
                 std::cout << meshname << std::endl;
                 double res = inverse_mean_edge_length(mesh);
                 write_all_laplace_data(mesh, file, function, sphere_dist,
-                                       iter_file, cond_file, MaxDiagonal);
+                                       MaxDiagonal);
                 //--------------------Inverse Mean Edge length--------------
                 file << res << std::endl;
-                iter_file << res << std::endl;
-                cond_file << res << std::endl;
             }
             file.close();
-            iter_file.close();
-            cond_file.close();
         }
     }
 
@@ -639,12 +615,6 @@ void write_convergence_data_csv(Function function,
                             getPlanarMeshNameCSV(p) + ".csv";
                 std::ofstream file(filename_);
                 write_text_headers(file);
-
-                cond_filename_ = "./Plane_" + filename_prefix[function] +
-                                 getDiffusionStepName(step) + "_" +
-                                 getPlanarMeshNameCSV(p) + "_Condition.csv";
-                std::ofstream cond_file(cond_filename_);
-                write_text_headers(cond_file);
 
                 std::string type_name = getPlanarMeshName(p);
                 int adjlvl = lvl;
@@ -665,13 +635,11 @@ void write_convergence_data_csv(Function function,
 
                     std::ofstream iter_file;
                     write_all_laplace_data(mesh, file, function, sphere_dist,
-                                           iter_file, cond_file, step);
+                                           step);
                     //--------------------Inverse Mean Edge length--------------
                     file << res << std::endl;
-                    cond_file << res << std::endl;
                 }
                 file.close();
-                cond_file.close();
             }
 
             sphere_dist = true;
@@ -684,12 +652,6 @@ void write_convergence_data_csv(Function function,
 
                 std::ofstream file(filename_);
                 write_text_headers(file);
-
-                cond_filename_ = "./Sphere_" + filename_prefix[function] +
-                                 getDiffusionStepName(step) + "_" +
-                                 getSphericalMeshNameCSV(s) + "_Condition.csv";
-                std::ofstream cond_file(cond_filename_);
-                write_text_headers(cond_file);
 
                 std::string type_name = getSphericalMeshName(s);
 
@@ -713,12 +675,10 @@ void write_convergence_data_csv(Function function,
                     double res = inverse_mean_edge_length(mesh);
                     std::ofstream iter_file;
                     write_all_laplace_data(mesh, file, function, sphere_dist,
-                                           iter_file, cond_file, step);
+                                           step);
                     file << res << std::endl;
-                    cond_file << res << std::endl;
                 }
                 file.close();
-                cond_file.close();
             }
         }
     }
@@ -735,21 +695,6 @@ void write_convergence_data_csv(Function function,
             std::ofstream file(filename_);
             write_text_headers(file);
 
-            std::ofstream iter_file;
-            std::ofstream cond_file;
-            if (function == poisson_SH)
-            {
-                iter_filename_ = "./Sphere_" + filename_prefix[function] + "_" +
-                                 getSphericalMeshNameCSV(s) + "_Iterations.csv";
-
-                iter_file = std::ofstream(iter_filename_);
-                write_text_headers(iter_file);
-
-                cond_filename_ = "./Sphere_" + filename_prefix[function] + "_" +
-                                 getSphericalMeshNameCSV(s) + "_Condition.csv";
-                cond_file = std::ofstream(cond_filename_);
-                write_text_headers(cond_file);
-            }
             std::string type_name = getSphericalMeshName(s);
 
             if (s == SphericalMeshes::Cos_Hex ||
@@ -770,20 +715,10 @@ void write_convergence_data_csv(Function function,
                 }
                 double res = inverse_mean_edge_length(mesh);
                 write_all_laplace_data(mesh, file, function, sphere_dist,
-                                       iter_file, cond_file, MaxDiagonal, l, m);
+                                       MaxDiagonal, l, m);
                 file << res << std::endl;
-                if (function == poisson_SH)
-                {
-                    iter_file << res << std::endl;
-                    cond_file << res << std::endl;
-                }
             }
             file.close();
-            if (function == poisson_SH)
-            {
-                iter_file.close();
-                cond_file.close();
-            }
         }
 
         if (function == poisson_SH)
@@ -831,10 +766,8 @@ void write_convergence_data_csv(Function function,
                     dist /= (double)mesh.valence(f);
                     dist_sum += dist;
                 }
-                std::ofstream iter_file;
-                std::ofstream cond_file;
                 write_all_laplace_data(mesh, error_file, function, sphere_dist,
-                                       iter_file, cond_file, MaxDiagonal, l, m);
+                                       MaxDiagonal, l, m);
                 error_file << dist_sum / (double)mesh.n_faces() << std::endl;
             }
             error_file.close();

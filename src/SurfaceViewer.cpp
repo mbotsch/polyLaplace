@@ -1,7 +1,7 @@
 //=============================================================================
 // Copyright 2023 Astrid Bunge, Mario Botsch.
 // Distributed under MIT license, see file LICENSE for details.
-//=============================================================================//=============================================================================
+//=============================================================================
 
 #include "../common_util.h"
 #include "SurfaceViewer.h"
@@ -77,10 +77,8 @@ void Viewer::process_imgui()
             ImGui::Spacing();
 
             ImGui::RadioButton("Naïve (Centroid)", &min_point, 0);
-            ImGui::RadioButton("Simple (Area Minimizer)", &min_point,
-                               2);
-            ImGui::RadioButton("Robust (Trace Minimizer)",
-                               &min_point, 3);
+            ImGui::RadioButton("Simple (Area Minimizer)", &min_point, 2);
+            ImGui::RadioButton("Robust (Trace Minimizer)", &min_point, 3);
 
             ImGui::Spacing();
         }
@@ -426,7 +424,6 @@ void Viewer::process_imgui()
             }
             else
             {
-
                 calc_colors(min_point_, mesh_);
                 if (cond_maxi == -1 && cond_mini == -1)
                 {
@@ -436,17 +433,19 @@ void Viewer::process_imgui()
                         cond_numbers.push_back(faceCond[f]);
                     }
                     std::ranges::sort(cond_numbers);
-                    cond_maxi = cond_numbers[int(0.99*mesh_.n_faces())];
+                    cond_maxi = cond_numbers[int(0.99 * mesh_.n_faces())];
                     cond_mini = cond_numbers[0];
                 }
 
                 for (auto f : mesh_.faces())
                 {
                     auto good_col = Color(0.39, 0.74, 1); // Turquoise (good)
-                    auto ok_col = Color(1, 0.74, 0); // Orange (okay)
-                    auto bad_col = Color(1, 0.0, 1);  // Purple (bad)
+                    auto ok_col = Color(1, 0.74, 0);      // Orange (okay)
+                    auto bad_col = Color(1, 0.0, 1);      // Purple (bad)
 
-                    double col_metric = fmin(1.0, fmax(0.0, (faceCond[f]-cond_mini)/(cond_maxi-cond_mini)));
+                    double col_metric =
+                        fmin(1.0, fmax(0.0, (faceCond[f] - cond_mini) /
+                                                (cond_maxi - cond_mini)));
                     faceColor[f] =
                         (col_metric < 0.5)
                             ? (1 - col_metric) * good_col + col_metric * ok_col
@@ -474,10 +473,8 @@ void Viewer::process_imgui()
         ImGui::PopItemWidth();
         if (ImGui::Button("Solve!"))
         {
-            int iterations;
-            double condition_number;
-            solve_poisson_system(mesh_, laplace_matrix, min_point_, function,
-                                 iterations, condition_number, l, m);
+            solve_poisson_system(mesh_, laplace_matrix, min_point_, function, l,
+                                 m);
         }
     }
     ImGui::Spacing();
@@ -528,8 +525,7 @@ void Viewer::process_imgui()
             GeodesicsInHeat heat(mesh_, laplace_matrix, min_point_,
                                  compare_sphere, compare_cube, time_step_);
             Eigen::VectorXd dist, geodist;
-            double condition_number;
-            heat.compute_geodesics(condition_number);
+            heat.compute_geodesics();
             heat.getDistance(0, dist, geodist);
 
             update_mesh();

@@ -111,7 +111,7 @@ double GeodesicsInHeat::maxDiagonalLength(const pmp::SurfaceMesh& mesh)
 }
 //-----------------------------------------------------------------------------
 
-void GeodesicsInHeat::compute_geodesics(double& condition_number, bool lumped)
+void GeodesicsInHeat::compute_geodesics(bool lumped)
 {
     pos.resize((int)mesh_.n_vertices(), 3);
 
@@ -159,14 +159,13 @@ void GeodesicsInHeat::compute_geodesics(double& condition_number, bool lumped)
 
     A = M - h * S;
 
-    condition_number = get_condition_number(A, false);
-
     cholL.analyzePattern(S);
     cholL.factorize(S);
 
     cholA.analyzePattern(A);
     cholA.factorize(A);
 }
+
 //-----------------------------------------------------------------------------
 
 double GeodesicsInHeat::getDistance(const int vertex, Eigen::VectorXd& dist,

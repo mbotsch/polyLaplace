@@ -118,7 +118,7 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,linux,macos,clion,visualstudiocode
 
-
-
-
-
+# MARIO
+build/
+html/
+.cache/

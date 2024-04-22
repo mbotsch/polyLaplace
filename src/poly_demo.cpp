@@ -31,6 +31,7 @@ private:
     double cond_mini =-1, cond_maxi=-1;
     bool show_uv_layout_;
 };
+
 void calc_colors(int minpoint, SurfaceMesh& mesh)
 {
     auto faceCond = mesh.face_property<double>("f:condition");
@@ -70,6 +71,7 @@ void calc_colors(int minpoint, SurfaceMesh& mesh)
         faceCond[f] = cond;
     }
 }
+
 Viewer::Viewer(const char* title, int width, int height)
     : MeshViewer(title, width, height), smoother_(mesh_)
 {
@@ -90,13 +92,13 @@ void Viewer::process_imgui()
     ImGui::Spacing();
     ImGui::Spacing();
 
-    if (ImGui::CollapsingHeader("Laplace", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader("Polygon Laplace", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::RadioButton("Alexa & Wardetzky Laplace", &laplace, 1);
         ImGui::RadioButton("deGoes Laplace", &laplace, 3);
         ImGui::RadioButton("Virtual Refinement Laplace", &laplace, 0);
-        ImGui::RadioButton("Diamond", &laplace, 2);
-        ImGui::RadioButton("Harmonic", &laplace, 4);
+        ImGui::RadioButton("Diamond Laplace", &laplace, 2);
+        ImGui::RadioButton("Harmonic Laplace", &laplace, 4);
 
         ImGui::Spacing();
         if(laplace == 0 || laplace == 2)
@@ -131,9 +133,10 @@ void Viewer::process_imgui()
     ImGui::Spacing();
     ImGui::Spacing();
 
-
-    if (ImGui::CollapsingHeader("Robustness", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader("Make it robust", ImGuiTreeNodeFlags_DefaultOpen))
     {
+        ImGui::Indent(10);
+
         if (ImGui::Button("Mesh Optimization"))
         {
             SmoothingConfigs oConf(25, false,
@@ -142,6 +145,7 @@ void Viewer::process_imgui()
             polySmoothing.optimize(5);
             update_mesh();
         }
+
         if (ImGui::Button("Color Code Condition Number"))
         {
             auto faceColor =
@@ -153,35 +157,44 @@ void Viewer::process_imgui()
                                            values, false);
             std::cout << "Condition Number: " << cond << std::endl;
 
-                calc_colors(min_point, mesh_);
-                if (cond_maxi == -1 && cond_mini == -1)
-                {
-                    std::vector<double> cond_numbers;
-                    for (auto f : mesh_.faces())
-                    {
-                        cond_numbers.push_back(faceCond[f]);
-                    }
-                    std::ranges::sort(cond_numbers);
-                    cond_maxi = cond_numbers[int(0.99*mesh_.n_faces())];
-                    cond_mini = cond_numbers[0];
-                }
-
+            calc_colors(min_point, mesh_);
+            if (cond_maxi == -1 && cond_mini == -1)
+            {
+                std::vector<double> cond_numbers;
                 for (auto f : mesh_.faces())
                 {
-                    auto good_col = Color(0.39, 0.74, 1); // Turquoise (good)
-                    auto ok_col = Color(1, 0.74, 0); // Orange (okay)
-                    auto bad_col = Color(1, 0.0, 1);  // Purple (bad)
-
-                    double col_metric = fmin(1.0, fmax(0.0, (faceCond[f]-cond_mini)/(cond_maxi-cond_mini)));
-                    faceColor[f] =
-                        (col_metric < 0.5)
-                            ? (1 - col_metric) * good_col + col_metric * ok_col
-                            : (1 - col_metric) * ok_col + col_metric * bad_col;
+                    cond_numbers.push_back(faceCond[f]);
                 }
-                renderer_.set_specular(0);
-                update_mesh();
+                std::ranges::sort(cond_numbers);
+                cond_maxi = cond_numbers[int(0.99*mesh_.n_faces())];
+                cond_mini = cond_numbers[0];
+            }
+
+            for (auto f : mesh_.faces())
+            {
+                auto good_col = Color(0.39, 0.74, 1); // Turquoise (good)
+                auto ok_col = Color(1, 0.74, 0); // Orange (okay)
+                auto bad_col = Color(1, 0.0, 1);  // Purple (bad)
+
+                double col_metric = fmin(1.0, fmax(0.0, (faceCond[f]-cond_mini)/(cond_maxi-cond_mini)));
+                faceColor[f] =
+                    (col_metric < 0.5)
+                        ? (1 - col_metric) * good_col + col_metric * ok_col
+                        : (1 - col_metric) * ok_col + col_metric * bad_col;
+            }
+
+            renderer_.set_specular(0);
+            update_mesh();
+            set_draw_mode("Hidden Line");
         }
+
+        ImGui::Unindent(10);
     }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+    ImGui::Spacing();
+
     if (ImGui::CollapsingHeader("Applications", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::Indent(10);
@@ -234,8 +247,7 @@ void Viewer::process_imgui()
                                  DiffusionStep(2));
             Eigen::VectorXd dist, geodist;
 
-            double condition_number;
-            heat.compute_geodesics(condition_number);
+            heat.compute_geodesics();
             heat.getDistance(0, dist, geodist);
 
             update_mesh();
@@ -302,12 +314,12 @@ void Viewer::draw(const std::string& draw_mode)
 int main(int argc, char** argv)
 {
 #ifndef __EMSCRIPTEN__
-    Viewer window("Laplace Demo", 800, 600);
+    Viewer window("Polygon Laplace Demo", 800, 600);
     if (argc == 2)
         window.load_mesh(argv[1]);
     return window.run();
 #else
-    Viewer window("Smoothing", 800, 600);
+    Viewer window("Polygon Laplace Demo", 800, 600);
     window.load_mesh(argc == 2 ? argv[1] : "input.off");
     return window.run();
 #endif

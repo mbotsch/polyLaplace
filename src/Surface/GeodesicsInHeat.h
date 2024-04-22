@@ -24,7 +24,7 @@ public:
 
     void distance_to_texture_coordinates() const;
 
-    void compute_geodesics(double& condition_number, bool lumped = true);
+    void compute_geodesics(bool lumped = true);
 
 private:
     pmp::SurfaceMesh& mesh_;

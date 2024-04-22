@@ -60,7 +60,7 @@ void Viewer::process_imgui()
         ImGui::Text("Choose your Laplacian");
 
         ImGui::Spacing();
-        ImGui::RadioButton("Polysimple/-robust Laplace", &laplace, 0);
+        ImGui::RadioButton("Virtual Refinement Laplace", &laplace, 0);
         ImGui::RadioButton("Alexa & Wardetzky Laplace", &laplace, 1);
         ImGui::RadioButton("Diamond", &laplace, 2);
         ImGui::RadioButton("deGoes Laplace", &laplace, 3);
@@ -76,10 +76,10 @@ void Viewer::process_imgui()
 
             ImGui::Spacing();
 
-            ImGui::RadioButton("Centroid", &min_point, 0);
-            ImGui::RadioButton("Area Minimizer & Min Norm Weights", &min_point,
+            ImGui::RadioButton("Naïve (Centroid)", &min_point, 0);
+            ImGui::RadioButton("Simple (Area Minimizer)", &min_point,
                                2);
-            ImGui::RadioButton("Trace Minimizer & Discr. Harm. Weights",
+            ImGui::RadioButton("Robust (Trace Minimizer)",
                                &min_point, 3);
 
             ImGui::Spacing();

@@ -17,6 +17,8 @@
 #include "Surface/SpectralProcessing.h"
 using namespace pmp;
 
+//=============================================================================
+
 class Viewer : public MeshViewer
 {
 public:
@@ -25,52 +27,13 @@ public:
 protected:
     void process_imgui() override;
     void draw(const std::string& _draw_mode) override;
+    void color_code_condition_numbers(int laplace, int min_point);
 
 private:
     Smoothing smoother_;
-    double cond_mini =-1, cond_maxi=-1;
+    double min_cond = -1, max_cond = -1;
     bool show_uv_layout_;
 };
-
-void calc_colors(int minpoint, SurfaceMesh& mesh)
-{
-    auto faceCond = mesh.face_property<double>("f:condition");
-
-    Eigen::MatrixXd Si;
-    Eigen::VectorXd w;
-    Eigen::Vector3d p;
-    Eigen::MatrixXd poly;
-
-    for (Face f : mesh.faces())
-    {
-        get_polygon_from_face(mesh, f, poly);
-
-        // compute weights for the polygon
-        if (minpoint == Centroid_)
-        {
-            int val = (int)poly.rows();
-            w = Eigen::MatrixXd::Ones(val, 1);
-            w /= (double)val;
-        }
-        else if (minpoint == AreaMinimizer)
-        {
-            find_area_minimizer_weights(poly, w);
-        }
-        else
-        {
-            find_trace_minimizer_weights(poly, w);
-        }
-        Eigen::Vector3d min;
-
-        min = poly.transpose() * w;
-        localCotanMatrix(poly, min, w, Si);
-
-        Eigen::SelfAdjointEigenSolver<Eigen::SparseMatrix<double>> eigs(Si);
-        double cond = eigs.eigenvalues()[Si.rows() - 1] / eigs.eigenvalues()[1];
-
-        faceCond[f] = cond;
-    }
-}
 
 Viewer::Viewer(const char* title, int width, int height)
     : MeshViewer(title, width, height), smoother_(mesh_)
@@ -92,7 +55,8 @@ void Viewer::process_imgui()
     ImGui::Spacing();
     ImGui::Spacing();
 
-    if (ImGui::CollapsingHeader("Polygon Laplace", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader("Polygon Laplace",
+                                ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::RadioButton("Alexa & Wardetzky Laplace", &laplace, 1);
         ImGui::RadioButton("deGoes Laplace", &laplace, 3);
@@ -101,22 +65,20 @@ void Viewer::process_imgui()
         ImGui::RadioButton("Harmonic Laplace", &laplace, 4);
 
         ImGui::Spacing();
-        if(laplace == 0 || laplace == 2)
+        if (laplace == 0 || laplace == 2)
         {
             ImGui::Text("Choose your minimizing point ");
 
             ImGui::Spacing();
 
             ImGui::RadioButton("Naïve (Centroid)", &min_point, 0);
-            ImGui::RadioButton("Simple (Area Minimizer)", &min_point,
-                               2);
-            ImGui::RadioButton("Robust (Trace Minimizer)",
-                               &min_point, 3);
+            ImGui::RadioButton("Simple (Area Minimizer)", &min_point, 2);
+            ImGui::RadioButton("Robust (Trace Minimizer)", &min_point, 3);
 
             ImGui::Spacing();
         }
         if (laplace == 1)
-        { 
+        {
             ImGui::PushItemWidth(100);
             ImGui::SliderFloat("Lambda", &poly_laplace_lambda_, 0.01, 3.0);
             ImGui::PopItemWidth();
@@ -133,14 +95,14 @@ void Viewer::process_imgui()
     ImGui::Spacing();
     ImGui::Spacing();
 
-    if (ImGui::CollapsingHeader("Make it robust", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader("Make it robust",
+                                ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::Indent(10);
 
         if (ImGui::Button("Mesh Optimization"))
         {
-            SmoothingConfigs oConf(25, false,
-                                   false, false, false);
+            SmoothingConfigs oConf(25, false, false, false, false);
             PolySmoothing polySmoothing(mesh_, oConf);
             polySmoothing.optimize(5);
             update_mesh();
@@ -148,41 +110,7 @@ void Viewer::process_imgui()
 
         if (ImGui::Button("Color Code Condition Number"))
         {
-            auto faceColor =
-                mesh_.face_property("f:color", Color(1.0, 0.0, 0.0));
-            auto faceCond = mesh_.face_property<double>("f:condition");
-
-            Eigen::Vector3d values;
-            double cond = condition_number(mesh_, laplace, min_point,
-                                           values, false);
-            std::cout << "Condition Number: " << cond << std::endl;
-
-            calc_colors(min_point, mesh_);
-            if (cond_maxi == -1 && cond_mini == -1)
-            {
-                std::vector<double> cond_numbers;
-                for (auto f : mesh_.faces())
-                {
-                    cond_numbers.push_back(faceCond[f]);
-                }
-                std::ranges::sort(cond_numbers);
-                cond_maxi = cond_numbers[int(0.99*mesh_.n_faces())];
-                cond_mini = cond_numbers[0];
-            }
-
-            for (auto f : mesh_.faces())
-            {
-                auto good_col = Color(0.39, 0.74, 1); // Turquoise (good)
-                auto ok_col = Color(1, 0.74, 0); // Orange (okay)
-                auto bad_col = Color(1, 0.0, 1);  // Purple (bad)
-
-                double col_metric = fmin(1.0, fmax(0.0, (faceCond[f]-cond_mini)/(cond_maxi-cond_mini)));
-                faceColor[f] =
-                    (col_metric < 0.5)
-                        ? (1 - col_metric) * good_col + col_metric * ok_col
-                        : (1 - col_metric) * ok_col + col_metric * bad_col;
-            }
-
+            color_code_condition_numbers(laplace, min_point);
             renderer_.set_specular(0);
             update_mesh();
             set_draw_mode("Hidden Line");
@@ -282,6 +210,82 @@ void Viewer::process_imgui()
     }
 }
 
+void Viewer::color_code_condition_numbers(int laplace, int min_point)
+{
+    auto face_color = mesh_.face_property<Color>("f:color");
+    auto face_cond = mesh_.face_property<double>("f:condition");
+
+    // compute global condition number
+    Eigen::Vector3d values;
+    double cond = condition_number(mesh_, laplace, min_point, values, false);
+    std::cout << "Condition Number: " << cond << std::endl;
+
+    // compute per-face condition numbers
+    Eigen::MatrixXd Si;
+    Eigen::VectorXd w;
+    Eigen::Vector3d p;
+    Eigen::MatrixXd poly;
+    for (Face f : mesh_.faces())
+    {
+        // collect polygon vertices
+        get_polygon_from_face(mesh_, f, poly);
+
+        // compute weights for the polygon
+        if (min_point == Centroid_)
+        {
+            int val = (int)poly.rows();
+            w = Eigen::MatrixXd::Ones(val, 1);
+            w /= (double)val;
+        }
+        else if (min_point == AreaMinimizer)
+        {
+            find_area_minimizer_weights(poly, w);
+        }
+        else
+        {
+            find_trace_minimizer_weights(poly, w);
+        }
+        Eigen::Vector3d min;
+
+        // compute virtual vertex
+        min = poly.transpose() * w;
+
+        // get per-face Laplace matrix
+        localCotanMatrix(poly, min, w, Si);
+
+        // compute per-face condition number
+        Eigen::SelfAdjointEigenSolver<Eigen::SparseMatrix<double>> eigs(Si);
+        face_cond[f] =
+            eigs.eigenvalues()[Si.rows() - 1] / eigs.eigenvalues()[1];
+    }
+
+    // compute max/min condition number for color coding
+    if (max_cond == -1 && min_cond == -1)
+    {
+        std::vector<double> cond_numbers;
+        for (auto f : mesh_.faces())
+        {
+            cond_numbers.push_back(face_cond[f]);
+        }
+        std::ranges::sort(cond_numbers);
+        max_cond = cond_numbers[int(0.99 * mesh_.n_faces())];
+        min_cond = cond_numbers[0];
+    }
+
+    // turn condition number into color
+    for (auto f : mesh_.faces())
+    {
+        auto good_col = Color(0.39, 0.74, 1); // Turquoise (good)
+        auto ok_col = Color(1, 0.74, 0);      // Orange (okay)
+        auto bad_col = Color(1, 0.0, 1);      // Purple (bad)
+
+        double blend = fmin(
+            1.0, fmax(0.0, (face_cond[f] - min_cond) / (max_cond - min_cond)));
+        face_color[f] = (blend < 0.5)
+                            ? (1 - blend) * good_col + blend * ok_col
+                            : (1 - blend) * ok_col + blend * bad_col;
+    }
+}
 
 void Viewer::draw(const std::string& draw_mode)
 {
@@ -309,7 +313,6 @@ void Viewer::draw(const std::string& draw_mode)
         glViewport(0, 0, width(), height());
     }
 }
-
 
 int main(int argc, char** argv)
 {

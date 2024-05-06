@@ -36,6 +36,7 @@ include_directories(${PROJECT_SOURCE_DIR}/external/OpenVolumeMesh/src)
 include_directories(${PROJECT_SOURCE_DIR}/external/TinyAD/include)
 
 add_definitions(-DINCLUDE_TEMPLATES)
+add_definitions(-DDATA_PATH="${CMAKE_SOURCE_DIR}/data/showcase_models/")
 
 if (NOT EMSCRIPTEN)
   # for EMSCRIPTEN GLEW and GLFW are built-in

@@ -23,6 +23,7 @@ class Viewer : public MeshViewer
 {
 public:
     Viewer(const char* title, int width, int height);
+    void load_mesh(const char* filename) override;
 
 protected:
     void process_imgui() override;
@@ -33,7 +34,16 @@ private:
     Smoothing smoother_;
     double min_cond = -1, max_cond = -1;
     bool show_uv_layout_;
+    int mesh_index_ = 0;
 };
+
+
+void Viewer::load_mesh(const char* filename)
+{
+    min_cond = -1;
+    max_cond = -1;
+    MeshViewer::load_mesh(filename);
+}
 
 Viewer::Viewer(const char* title, int width, int height)
     : MeshViewer(title, width, height), smoother_(mesh_)
@@ -45,6 +55,26 @@ Viewer::Viewer(const char* title, int width, int height)
 
 void Viewer::process_imgui()
 {
+    if (ImGui::CollapsingHeader("Load Mesh", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        const char* listbox_items[] = {"dual_Bunny.off", "fandisk.obj",
+                                       "fertility.obj", "gear.obj",
+                                       "horse.obj", "rockerArm.obj"};
+        int listbox_item_current = mesh_index_;
+        ImGui::ListBox(" ", &listbox_item_current, listbox_items,
+                       IM_ARRAYSIZE(listbox_items), 5);
+        if (listbox_item_current != mesh_index_ || mesh_.n_vertices() == 0)
+        {
+            std::stringstream ss;
+            ss << DATA_PATH << listbox_items[listbox_item_current];
+
+            load_mesh(ss.str().c_str());
+
+            mesh_index_ = listbox_item_current;
+        }
+        ImGui::Spacing();
+        ImGui::Spacing();
+    }
     // initialize settings
     static int laplace = 0;
     static int min_point = 2;
@@ -316,14 +346,8 @@ void Viewer::draw(const std::string& draw_mode)
 
 int main(int argc, char** argv)
 {
-#ifndef __EMSCRIPTEN__
     Viewer window("Polygon Laplace Demo", 800, 600);
     if (argc == 2)
         window.load_mesh(argv[1]);
     return window.run();
-#else
-    Viewer window("Polygon Laplace Demo", 800, 600);
-    window.load_mesh(argc == 2 ? argv[1] : "input.off");
-    return window.run();
-#endif
 }

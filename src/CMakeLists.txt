@@ -10,7 +10,7 @@ if (EMSCRIPTEN)
 
     add_executable(poly_demo poly_demo.cpp)
     target_link_libraries(poly_demo poly)
-    set_target_properties(poly_demo PROPERTIES LINK_FLAGS "--shell-file ${PROJECT_SOURCE_DIR}/external/pmp-library/examples/data/shell.html --preload-file ${PROJECT_SOURCE_DIR}/data/dual_Bunny.off@input.off")
+    set_target_properties(poly_demo PROPERTIES LINK_FLAGS "--shell-file ${PROJECT_SOURCE_DIR}/external/pmp-library/examples/data/shell.html --preload-file \"${CMAKE_SOURCE_DIR}/data/showcase_models\"")
 
 else ()
 
